@@ -47,9 +47,12 @@ func (radio *Radio) Init() {
 
 func (radio *Radio) SendPacket(protobuf_packet []byte) {
 
-	package_length := len(protobuf_packet)
+	package_length := len(string(protobuf_packet))
 
-	header := []byte{START1, START2, byte(package_length>>8) & 0xff, byte(package_length)}
+	header := []byte{START1, START2, byte(package_length>>8) & 0xff, byte(package_length) & 0xff}
+
+	fmt.Printf("Header: %q\n", header)
+	fmt.Printf("proto packet: %q\n", protobuf_packet)
 
 	radio_packet := append(header, protobuf_packet...)
 	_, err := radio.SerialPort.Write(radio_packet)

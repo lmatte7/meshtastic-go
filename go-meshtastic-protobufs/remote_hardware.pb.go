@@ -32,6 +32,7 @@ const (
 	//
 	// We are now interested in watching the gpio_mask gpios.
 	// If the selected gpios change, please broadcast GPIOS_CHANGED.
+	//
 	// Will implicitly change the gpios requested to be INPUT gpios.
 	HardwareMessage_WATCH_GPIOS HardwareMessage_Type = 2
 	//
@@ -92,8 +93,7 @@ func (HardwareMessage_Type) EnumDescriptor() ([]byte, []int) {
 	return file_remote_hardware_proto_rawDescGZIP(), []int{0, 0}
 }
 
-//
-// An example app to show off the plugin system. This message is used for
+// A example app to show off the plugin system. This message is used for
 // REMOTE_HARDWARE_APP PortNums.
 //
 // Also provides easy remote access to any GPIO.
