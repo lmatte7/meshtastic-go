@@ -26,14 +26,14 @@ type Radio struct {
 }
 
 // Init initializes the Serial connection for the radio
-func (radio *Radio) Init() {
+func (r *Radio) Init() {
 	//Configure the serial port
 	/*
 		TODO: Come up with a way to detect the end of the stream
 		* The EOF error comes up and that ends the loop, but it'd be better
 		* to not have the for loop break on a error */
 	options := serial.OpenOptions{
-		PortName:              radio.portNumber,
+		PortName:              r.portNumber,
 		BaudRate:              921600,
 		DataBits:              8,
 		StopBits:              1,
@@ -48,18 +48,18 @@ func (radio *Radio) Init() {
 		log.Fatalf("serial.Open: %v", err)
 	}
 
-	radio.serialPort = port
+	r.serialPort = port
 }
 
 // sendPacket takes a protbuf packet, construct the appropriate header and sends it to the radio
-func (radio *Radio) sendPacket(protobufPacket []byte) (err error) {
+func (r *Radio) sendPacket(protobufPacket []byte) (err error) {
 
 	packageLength := len(string(protobufPacket))
 
 	header := []byte{start1, start2, byte(packageLength>>8) & 0xff, byte(packageLength) & 0xff}
 
 	radioPacket := append(header, protobufPacket...)
-	_, err = radio.serialPort.Write(radioPacket)
+	_, err = r.serialPort.Write(radioPacket)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (radio *Radio) sendPacket(protobufPacket []byte) (err error) {
 }
 
 // readResponse reads any responses in the serial port, convert them to a FromRadio protobuf and return
-func (radio *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error) {
+func (r *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error) {
 
 	b := make([]byte, 1)
 
@@ -88,7 +88,7 @@ func (radio *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error)
 	 */
 	for {
 
-		_, err := radio.serialPort.Read(b)
+		_, err := r.serialPort.Read(b)
 		if err != nil {
 			break
 		}
@@ -137,7 +137,7 @@ func (radio *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error)
 }
 
 // GetRadioInfo retrieves information from the radio including config and adjacent Node information
-func (radio *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
+func (r *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 	// 42 seems to be the config for the CLI client.
 	// TODO: Find if there's more significance or if it's just a hitchhikers refernce
 	nodeInfo := pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
@@ -147,9 +147,9 @@ func (radio *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 		return nil, err
 	}
 
-	radio.sendPacket(out)
+	r.sendPacket(out)
 
-	radioResponses, err = radio.readResponse()
+	radioResponses, err = r.readResponse()
 
 	return
 
@@ -157,7 +157,7 @@ func (radio *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 
 // SendTextMessage sends a free form text message to other radios
 // TODO: Add limit for string
-func (radio *Radio) SendTextMessage(message string) error {
+func (r *Radio) SendTextMessage(message string) error {
 	// node_info := &pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
 	radioMessage := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_Packet{
@@ -184,7 +184,7 @@ func (radio *Radio) SendTextMessage(message string) error {
 		return err
 	}
 
-	if err := radio.sendPacket(out); err != nil {
+	if err := r.sendPacket(out); err != nil {
 		return err
 	}
 
@@ -193,6 +193,6 @@ func (radio *Radio) SendTextMessage(message string) error {
 }
 
 // Close closes the serial port. Added so users can defer the close after opening
-func (radio *Radio) Close() {
-	radio.serialPort.Close()
+func (r *Radio) Close() {
+	r.serialPort.Close()
 }
