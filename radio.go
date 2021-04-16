@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"time"
@@ -11,23 +10,30 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const START1 = byte(0x94)
-const START2 = byte(0xc3)
-const HEADER_LEN = 4
-const MAX_TO_FROM_RADIO_SIZE = 512
+const start1 = byte(0x94)
+const start2 = byte(0xc3)
+const headerLen = 4
+const maxToFromRadioSzie = 512
+const broadcastAddr = "^all"
+const localAddr = "^local"
+const defaultHopLimit = 3
+const broadcastNum = 0xffffffff
 
+// Radio holds the port and serial io.ReadWriteCloser struct to maintain one serial connection
 type Radio struct {
-	port_number string
-	SerialPort  io.ReadWriteCloser
+	portNumber string
+	serialPort io.ReadWriteCloser
 }
 
+// Init initializes the Serial connection for the radio
 func (radio *Radio) Init() {
 	//Configure the serial port
-	// TODO: Come up with a way to detect the end of the stream
-	// The EOF error comes up and that ends the loop, but it'd be better
-	// to not have the for loop break on a error
+	/*
+		TODO: Come up with a way to detect the end of the stream
+		* The EOF error comes up and that ends the loop, but it'd be better
+		* to not have the for loop break on a error */
 	options := serial.OpenOptions{
-		PortName:              radio.port_number,
+		PortName:              radio.portNumber,
 		BaudRate:              921600,
 		DataBits:              8,
 		StopBits:              1,
@@ -42,29 +48,30 @@ func (radio *Radio) Init() {
 		log.Fatalf("serial.Open: %v", err)
 	}
 
-	radio.SerialPort = port
+	radio.serialPort = port
 }
 
-func (radio *Radio) SendPacket(protobuf_packet []byte) {
+// sendPacket takes a protbuf packet, construct the appropriate header and sends it to the radio
+func (radio *Radio) sendPacket(protobufPacket []byte) (err error) {
 
-	package_length := len(string(protobuf_packet))
+	packageLength := len(string(protobufPacket))
 
-	header := []byte{START1, START2, byte(package_length>>8) & 0xff, byte(package_length) & 0xff}
+	header := []byte{start1, start2, byte(packageLength>>8) & 0xff, byte(packageLength) & 0xff}
 
-	fmt.Printf("Header: %q\n", header)
-	fmt.Printf("proto packet: %q\n", protobuf_packet)
-
-	radio_packet := append(header, protobuf_packet...)
-	_, err := radio.SerialPort.Write(radio_packet)
+	radioPacket := append(header, protobufPacket...)
+	_, err = radio.serialPort.Write(radioPacket)
 	if err != nil {
-		log.Fatalf("port.Write: %v", err)
+		return err
 	}
 
 	time.Sleep(100 * time.Millisecond)
 
+	return
+
 }
 
-func (radio *Radio) ReadResponse() (FromRadioPackets []*pb.FromRadio) {
+// readResponse reads any responses in the serial port, convert them to a FromRadio protobuf and return
+func (radio *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error) {
 
 	b := make([]byte, 1)
 
@@ -81,7 +88,7 @@ func (radio *Radio) ReadResponse() (FromRadioPackets []*pb.FromRadio) {
 	 */
 	for {
 
-		_, err := radio.SerialPort.Read(b)
+		_, err := radio.serialPort.Read(b)
 		if err != nil {
 			break
 		}
@@ -93,27 +100,26 @@ func (radio *Radio) ReadResponse() (FromRadioPackets []*pb.FromRadio) {
 			processedBytes = append(processedBytes, b...)
 
 			if pointer == 0 {
-				if b[0] != START1 {
+				if b[0] != start1 {
 					processedBytes = emptyByte
 				}
 			} else if pointer == 1 {
-				if b[0] != START2 {
+				if b[0] != start2 {
 					processedBytes = emptyByte
 				}
-			} else if pointer >= HEADER_LEN {
-				packet_length := int((processedBytes[2] << 8) + processedBytes[3])
+			} else if pointer >= headerLen {
+				packetLength := int((processedBytes[2] << 8) + processedBytes[3])
 
-				if pointer == HEADER_LEN {
-					if packet_length > MAX_TO_FROM_RADIO_SIZE {
+				if pointer == headerLen {
+					if packetLength > maxToFromRadioSzie {
 						processedBytes = emptyByte
-						fmt.Println("Start over")
 					}
 				}
 
-				if len(processedBytes) != 0 && pointer+1 == packet_length+HEADER_LEN {
+				if len(processedBytes) != 0 && pointer+1 == packetLength+headerLen {
 					fromRadio := pb.FromRadio{}
-					if err := proto.Unmarshal(processedBytes[HEADER_LEN:], &fromRadio); err != nil {
-						log.Fatalln("Failed to parse packet:", err)
+					if err := proto.Unmarshal(processedBytes[headerLen:], &fromRadio); err != nil {
+						return nil, err
 					}
 					FromRadioPackets = append(FromRadioPackets, &fromRadio)
 					processedBytes = emptyByte
@@ -126,10 +132,67 @@ func (radio *Radio) ReadResponse() (FromRadioPackets []*pb.FromRadio) {
 
 	}
 
-	return FromRadioPackets
+	return FromRadioPackets, nil
 
 }
 
+// GetRadioInfo retrieves information from the radio including config and adjacent Node information
+func (radio *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
+	// 42 seems to be the config for the CLI client.
+	// TODO: Find if there's more significance or if it's just a hitchhikers refernce
+	nodeInfo := pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
+
+	out, err := proto.Marshal(&nodeInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	radio.sendPacket(out)
+
+	radioResponses, err = radio.readResponse()
+
+	return
+
+}
+
+// SendTextMessage sends a free form text message to other radios
+// TODO: Add limit for string
+func (radio *Radio) SendTextMessage(message string) error {
+	// node_info := &pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
+	radioMessage := pb.ToRadio{
+		PayloadVariant: &pb.ToRadio_Packet{
+			Packet: &pb.MeshPacket{
+				To:      broadcastNum,
+				WantAck: true,
+				Id:      2338592482,
+				PayloadVariant: &pb.MeshPacket_Decoded{
+					Decoded: &pb.SubPacket{
+						PayloadVariant: &pb.SubPacket_Data{
+							Data: &pb.Data{
+								Payload: []byte(message),
+								Portnum: pb.PortNum_TEXT_MESSAGE_APP,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	out, err := proto.Marshal(&radioMessage)
+	if err != nil {
+		return err
+	}
+
+	if err := radio.sendPacket(out); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// Close closes the serial port. Added so users can defer the close after opening
 func (radio *Radio) Close() {
-	radio.SerialPort.Close()
+	radio.serialPort.Close()
 }
