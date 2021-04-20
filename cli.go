@@ -52,7 +52,7 @@ func Init() {
 	}
 
 	if message != "" {
-		radio.SendTextMessage(message, 0)
+		radio.SendTextMessage(message, to)
 	}
 
 	if *recv {

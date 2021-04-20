@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/jacobsa/go-serial/serial"
@@ -165,12 +166,17 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 	} else {
 		address = broadcastNum
 	}
+
+	rand.Seed(time.Now().UnixNano())
+	packetId := rand.Intn(2385286828-1) + 1
+
 	radioMessage := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_Packet{
 			Packet: &pb.MeshPacket{
 				To:      uint32(address),
 				WantAck: true,
-				Id:      2338592483,
+				// Id:      2938592483,
+				Id: uint32(packetId),
 				PayloadVariant: &pb.MeshPacket_Decoded{
 					Decoded: &pb.SubPacket{
 						PayloadVariant: &pb.SubPacket_Data{
