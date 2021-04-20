@@ -67,21 +67,30 @@ func Init() {
 
 func getRecievedMessages(r Radio) {
 
-	responses, err := r.GetRadioInfo()
-	if err != nil {
-		fmt.Println(err)
-	}
+	fmt.Printf("\n")
+	fmt.Printf("Recieved Messages\n")
+	fmt.Printf("From\t\t")
+	fmt.Printf("To\t\t")
+	fmt.Printf("Port Num\t\t")
+	fmt.Printf("Payload\t\n")
+	for {
 
-	recievedMessages := make([]*pb.FromRadio_Packet, 0)
-
-	for _, response := range responses {
-		if packet, ok := response.GetPayloadVariant().(*pb.FromRadio_Packet); ok {
-			recievedMessages = append(recievedMessages, packet)
+		responses, err := r.GetRadioInfo()
+		if err != nil {
+			fmt.Println(err)
 		}
-	}
 
-	if len(recievedMessages) > 0 {
-		printMessages(recievedMessages)
+		recievedMessages := make([]*pb.FromRadio_Packet, 0)
+
+		for _, response := range responses {
+			if packet, ok := response.GetPayloadVariant().(*pb.FromRadio_Packet); ok {
+				recievedMessages = append(recievedMessages, packet)
+			}
+		}
+
+		if len(recievedMessages) > 0 {
+			printMessages(recievedMessages)
+		}
 	}
 
 }
@@ -157,19 +166,19 @@ func getRadioInfo(r Radio) {
 	}
 
 	if len(recievedMessages) > 0 {
+		fmt.Printf("\n")
+		fmt.Printf("Recieved Messages\n")
+		fmt.Printf("From\t\t")
+		fmt.Printf("To\t\t")
+		fmt.Printf("Port Num\t\t")
+		fmt.Printf("Payload\t\n")
 		printMessages(recievedMessages)
 	}
 
 }
 
 func printMessages(messages []*pb.FromRadio_Packet) {
-	fmt.Printf("\n")
-	fmt.Printf("Recieved Messages\n")
 
-	fmt.Printf("From\t\t")
-	fmt.Printf("To\t\t")
-	fmt.Printf("Port Num\t\t")
-	fmt.Printf("Payload\t\n")
 	for _, message := range messages {
 		fmt.Printf("%d\t", message.Packet.From)
 		fmt.Printf("%d\t", message.Packet.To)
