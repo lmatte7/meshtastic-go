@@ -18,7 +18,7 @@ func Init() {
 	flag.StringVar(&port, "port", "", "The serial port for the radio (Required)")
 	flag.StringVar(&message, "text", "", "Send a text message")
 	flag.IntVar(&to, "to", 0, "Node to receive text")
-	recv := flag.Bool("recv", false, "Display received messages")
+	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
 
 	flag.Usage = func() {
