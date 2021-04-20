@@ -26,7 +26,8 @@ type Radio struct {
 }
 
 // Init initializes the Serial connection for the radio
-func (r *Radio) Init() {
+func (r *Radio) Init(serialPort string) {
+	r.portNumber = serialPort
 	//Configure the serial port
 	/*
 		TODO: Come up with a way to detect the end of the stream
@@ -38,7 +39,7 @@ func (r *Radio) Init() {
 		DataBits:              8,
 		StopBits:              1,
 		MinimumReadSize:       0,
-		InterCharacterTimeout: 500,
+		InterCharacterTimeout: 100,
 		ParityMode:            serial.PARITY_NONE,
 	}
 
@@ -157,14 +158,19 @@ func (r *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 
 // SendTextMessage sends a free form text message to other radios
 // TODO: Add limit for string
-func (r *Radio) SendTextMessage(message string) error {
-	// node_info := &pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
+func (r *Radio) SendTextMessage(message string, to int) error {
+	var address int
+	if to != 0 {
+		address = to
+	} else {
+		address = broadcastNum
+	}
 	radioMessage := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_Packet{
 			Packet: &pb.MeshPacket{
-				To:      broadcastNum,
+				To:      uint32(address),
 				WantAck: true,
-				Id:      2338592482,
+				Id:      2338592483,
 				PayloadVariant: &pb.MeshPacket_Decoded{
 					Decoded: &pb.SubPacket{
 						PayloadVariant: &pb.SubPacket_Data{
