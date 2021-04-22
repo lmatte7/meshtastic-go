@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"log"
 	"math/rand"
@@ -30,10 +31,6 @@ type Radio struct {
 func (r *Radio) Init(serialPort string) {
 	r.portNumber = serialPort
 	//Configure the serial port
-	/*
-		TODO: Come up with a way to detect the end of the stream
-		* The EOF error comes up and that ends the loop, but it'd be better
-		* to not have the for loop break on a error */
 	options := serial.OpenOptions{
 		PortName:              r.portNumber,
 		BaudRate:              921600,
@@ -91,8 +88,10 @@ func (r *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error) {
 	for {
 
 		_, err := r.serialPort.Read(b)
-		if err != nil {
+		if err == io.EOF {
 			break
+		} else if err != nil {
+			log.Fatalf("Reading Error: %v", err)
 		}
 
 		if len(b) > 0 {
@@ -158,7 +157,6 @@ func (r *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 }
 
 // SendTextMessage sends a free form text message to other radios
-// TODO: Add limit for string
 func (r *Radio) SendTextMessage(message string, to int) error {
 	var address int
 	if to != 0 {
@@ -167,8 +165,13 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 		address = broadcastNum
 	}
 
+	// This constant is defined in Constants_DATA_PAYLOAD_LEN, but not in a friendly way to use
+	if len(message) > 240 {
+		return errors.New("Message too large")
+	}
+
 	rand.Seed(time.Now().UnixNano())
-	packetId := rand.Intn(2385286828-1) + 1
+	packetID := rand.Intn(2385286828-1) + 1
 
 	radioMessage := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_Packet{
@@ -176,7 +179,7 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 				To:      uint32(address),
 				WantAck: true,
 				// Id:      2938592483,
-				Id: uint32(packetId),
+				Id: uint32(packetID),
 				PayloadVariant: &pb.MeshPacket_Decoded{
 					Decoded: &pb.SubPacket{
 						PayloadVariant: &pb.SubPacket_Data{
@@ -201,6 +204,39 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 	}
 
 	return nil
+
+}
+
+/*
+   def setOwner(self, long_name, short_name=None):
+       """Set device owner name"""
+       nChars = 3
+       minChars = 2
+       if long_name is not None:
+           long_name = long_name.strip()
+           if short_name is None:
+               words = long_name.split()
+               if len(long_name) <= nChars:
+                   short_name = long_name
+               elif len(words) >= minChars:
+                   short_name = ''.join(map(lambda word: word[0], words))
+               else:
+                   trans = str.maketrans(dict.fromkeys('aeiouAEIOU'))
+                   short_name = long_name[0] + long_name[1:].translate(trans)
+                   if len(short_name) < nChars:
+                       short_name = long_name[:nChars]
+       t = mesh_pb2.ToRadio()
+       if long_name is not None:
+           t.set_owner.long_name = long_name
+       if short_name is not None:
+           short_name = short_name.strip()
+           if len(short_name) > nChars:
+               short_name = short_name[:nChars]
+           t.set_owner.short_name = short_name
+       self._sendToRadio(t)
+*/
+// SetRadioOwner sets the owner of the radio visible on the public mesh
+func (r *Radio) SetRadioOwner(name string) {
 
 }
 

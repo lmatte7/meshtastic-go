@@ -52,7 +52,10 @@ func Init() {
 	}
 
 	if message != "" {
-		radio.SendTextMessage(message, to)
+		err := radio.SendTextMessage(message, to)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		}
 	}
 
 	if *recv {
