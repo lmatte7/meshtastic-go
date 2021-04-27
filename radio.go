@@ -178,8 +178,7 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 			Packet: &pb.MeshPacket{
 				To:      uint32(address),
 				WantAck: true,
-				// Id:      2938592483,
-				Id: uint32(packetID),
+				Id:      uint32(packetID),
 				PayloadVariant: &pb.MeshPacket_Decoded{
 					Decoded: &pb.SubPacket{
 						PayloadVariant: &pb.SubPacket_Data{
@@ -207,38 +206,55 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 
 }
 
-/*
-   def setOwner(self, long_name, short_name=None):
-       """Set device owner name"""
-       nChars = 3
-       minChars = 2
-       if long_name is not None:
-           long_name = long_name.strip()
-           if short_name is None:
-               words = long_name.split()
-               if len(long_name) <= nChars:
-                   short_name = long_name
-               elif len(words) >= minChars:
-                   short_name = ''.join(map(lambda word: word[0], words))
-               else:
-                   trans = str.maketrans(dict.fromkeys('aeiouAEIOU'))
-                   short_name = long_name[0] + long_name[1:].translate(trans)
-                   if len(short_name) < nChars:
-                       short_name = long_name[:nChars]
-       t = mesh_pb2.ToRadio()
-       if long_name is not None:
-           t.set_owner.long_name = long_name
-       if short_name is not None:
-           short_name = short_name.strip()
-           if len(short_name) > nChars:
-               short_name = short_name[:nChars]
-           t.set_owner.short_name = short_name
-       self._sendToRadio(t)
-*/
 // SetRadioOwner sets the owner of the radio visible on the public mesh
-func (r *Radio) SetRadioOwner(name string) {
+func (r *Radio) SetRadioOwner(name string) error {
 
+	if len(name) < 2 {
+		return errors.New("Name too short")
+	}
+
+	packet := pb.ToRadio{
+		PayloadVariant: &pb.ToRadio_SetOwner{
+			SetOwner: &pb.User{
+				LongName:  name,
+				ShortName: name[:3],
+			},
+		},
+	}
+
+	out, err := proto.Marshal(&packet)
+	if err != nil {
+		return err
+	}
+
+	if err := r.sendPacket(out); err != nil {
+		return err
+	}
+
+	return nil
 }
+
+/*
+   def channelURL(self):
+       """The sharable URL that describes the current channel
+       """
+       bytes = self.radioConfig.channel_settings.SerializeToString()
+       s = base64.urlsafe_b64encode(bytes).decode('ascii')
+       return f"https://www.meshtastic.org/c/#{s}"
+
+   def setURL(self, url, write=True):
+       """Set mesh network URL"""
+       if self.radioConfig == None:
+           raise Exception("No RadioConfig has been read")
+
+       # URLs are of the form https://www.meshtastic.org/c/#{base64_channel_settings}
+       # Split on '/#' to find the base64 encoded channel settings
+       splitURL = url.split("/#")
+       decodedURL = base64.urlsafe_b64decode(splitURL[-1])
+       self.radioConfig.channel_settings.ParseFromString(decodedURL)
+       if write:
+           self.writeConfig()
+*/
 
 // Close closes the serial port. Added so users can defer the close after opening
 func (r *Radio) Close() {

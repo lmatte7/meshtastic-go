@@ -13,10 +13,12 @@ func Init() {
 
 	var port string
 	var message string
+	var owner string
 	var to int
 
 	flag.StringVar(&port, "port", "", "The serial port for the radio (Required)")
 	flag.StringVar(&message, "text", "", "Send a text message")
+	flag.StringVar(&owner, "setowner", "", "Set the listed owner for the radio")
 	flag.IntVar(&to, "to", 0, "Node to receive text")
 	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
@@ -30,7 +32,7 @@ func Init() {
 		fmt.Printf("\n")
 		fmt.Printf("COMMANDS\n")
 		fmt.Printf("\n")
-		order := []string{"port", "text", "info", "recv"}
+		order := []string{"port", "text", "info", "setowner", "recv"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("-%s\t", flag.Name)
@@ -46,7 +48,7 @@ func Init() {
 	}
 
 	radio := Radio{}
-	if len(message) > 0 || *infoPtr || *recv {
+	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 {
 		radio.Init(port)
 		defer radio.Close()
 	}
@@ -64,6 +66,13 @@ func Init() {
 
 	if *infoPtr {
 		getRadioInfo(radio)
+	}
+
+	if owner != "" {
+		err := radio.SetRadioOwner(owner)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		}
 	}
 
 }
@@ -111,25 +120,38 @@ func getRadioInfo(r Radio) {
 	for _, response := range responses {
 
 		if info, ok := response.GetPayloadVariant().(*pb.FromRadio_MyInfo); ok {
-			fmt.Printf("Node Number: %d\n", info.MyInfo.MyNodeNum)
-			fmt.Printf("GPS: %t\n", info.MyInfo.HasGps)
-			fmt.Printf("Number of Channels: %d\n", info.MyInfo.NumChannels)
-			fmt.Printf("Region: %s\n", info.MyInfo.Region)
-			fmt.Printf("Hardware Model: %s\n", info.MyInfo.HwModel)
-			fmt.Printf("Firmware: %s\n", info.MyInfo.FirmwareVersion)
-			fmt.Printf("Packet ID Bits: %d\n", info.MyInfo.PacketIdBits)
-			fmt.Printf("Current Packet ID: %d\n", info.MyInfo.CurrentPacketId)
-			fmt.Printf("Node Number of Bits: %d\n", info.MyInfo.NodeNumBits)
-			fmt.Printf("Message Timeout (msec): %d\n", info.MyInfo.MessageTimeoutMsec)
-			fmt.Printf("Min App Version: %d\n", info.MyInfo.MinAppVersion)
+			fmt.Printf("%-25s", "Node Number: ")
+			fmt.Printf("%d\n", info.MyInfo.MyNodeNum)
+			fmt.Printf("%-25s", "GPS: ")
+			fmt.Printf("%t\n", info.MyInfo.HasGps)
+			fmt.Printf("%-25s", "Number of Channels: ")
+			fmt.Printf("%d\n", info.MyInfo.NumChannels)
+			fmt.Printf("%-25s", "Region: ")
+			fmt.Printf("%s\n", info.MyInfo.Region)
+			fmt.Printf("%-25s", "Hardware Model: ")
+			fmt.Printf("%s\n", info.MyInfo.HwModel)
+			fmt.Printf("%-25s", "Firmware: ")
+			fmt.Printf("%s\n", info.MyInfo.FirmwareVersion)
+			fmt.Printf("%-25s", "Packet ID Bits: ")
+			fmt.Printf("%d\n", info.MyInfo.PacketIdBits)
+			fmt.Printf("%-25s", "Current Packet ID: ")
+			fmt.Printf("%d\n", info.MyInfo.CurrentPacketId)
+			fmt.Printf("%-25s", "Node Number of Bits: ")
+			fmt.Printf("%d\n", info.MyInfo.NodeNumBits)
+			fmt.Printf("%-25s", "Message Timeout (msec): ")
+			fmt.Printf("%d\n", info.MyInfo.MessageTimeoutMsec)
+			fmt.Printf("%-25s", "Min App Version: ")
+			fmt.Printf("%d\n", info.MyInfo.MinAppVersion)
 
 		}
 
 		if radioInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Radio); ok {
 			fmt.Printf("\n")
-			fmt.Printf("Preferences:\n")
-			fmt.Printf("ls secs: %d\n", radioInfo.Radio.Preferences.LsSecs)
-			fmt.Printf("Region: %d\n", radioInfo.Radio.Preferences.Region)
+			fmt.Printf("Preferences=====\n")
+			fmt.Printf("%-10s", "ls secs: ")
+			fmt.Printf("%d\n", radioInfo.Radio.Preferences.LsSecs)
+			fmt.Printf("%-10s", "Region: ")
+			fmt.Printf("%d\n", radioInfo.Radio.Preferences.Region)
 		}
 
 		if channelInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Channel); ok {
@@ -154,18 +176,21 @@ func getRadioInfo(r Radio) {
 		fmt.Printf("\n")
 		fmt.Printf("Nodes in Mesh:\n")
 
-		fmt.Printf("Num\t\t")
-		fmt.Printf("User\t\t")
-		fmt.Printf("Battery\t\t")
-		fmt.Printf("Latitude\t")
-		fmt.Printf("Longitude\t\n")
+		fmt.Printf("%-80s", "========================================================================================================\n")
+		fmt.Printf("| %-20s| ", "Node Number")
+		fmt.Printf("%-20s| ", "User")
+		fmt.Printf("%-20s| ", "Battery")
+		fmt.Printf("%-20s| ", "Latitude")
+		fmt.Printf("%s", "Longitude    |\n")
+		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------------------------\n")
 		for _, node := range nodes {
-			fmt.Printf("%d\t", node.NodeInfo.Num)
-			fmt.Printf("%s\t", node.NodeInfo.User.Id)
-			fmt.Printf("%d\t\t", node.NodeInfo.Position.BatteryLevel)
-			fmt.Printf("%d\t\t", node.NodeInfo.Position.LatitudeI)
-			fmt.Printf("%d\t\n", node.NodeInfo.Position.LongitudeI)
+			fmt.Printf("| %-20s| ", fmt.Sprint(node.NodeInfo.Num))
+			fmt.Printf("%-20s| ", node.NodeInfo.User.LongName)
+			fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
+			fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
+			fmt.Printf("%s   |\n", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
 		}
+		fmt.Printf("%-80s", "========================================================================================================\n")
 	}
 
 	if len(recievedMessages) > 0 {
@@ -180,6 +205,7 @@ func getRadioInfo(r Radio) {
 
 }
 
+// TODO: Format messages to match column adjustments above
 func printMessages(messages []*pb.FromRadio_Packet) {
 
 	for _, message := range messages {
