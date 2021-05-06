@@ -14,10 +14,12 @@ func Init() {
 	var port string
 	var message string
 	var owner string
+	var url string
 	var to int
 
 	flag.StringVar(&port, "port", "", "The serial port for the radio (Required)")
 	flag.StringVar(&message, "text", "", "Send a text message")
+	flag.StringVar(&url, "url", "", "Set the radio URL")
 	flag.StringVar(&owner, "setowner", "", "Set the listed owner for the radio")
 	flag.IntVar(&to, "to", 0, "Node to receive text")
 	recv := flag.Bool("recv", false, "Wait for new messages")
@@ -32,7 +34,7 @@ func Init() {
 		fmt.Printf("\n")
 		fmt.Printf("COMMANDS\n")
 		fmt.Printf("\n")
-		order := []string{"port", "text", "info", "setowner", "recv"}
+		order := []string{"port", "text", "info", "setowner", "recv", "url"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("-%s\t", flag.Name)
@@ -48,7 +50,7 @@ func Init() {
 	}
 
 	radio := Radio{}
-	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 {
+	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 || len(url) > 0 {
 		radio.Init(port)
 		defer radio.Close()
 	}
@@ -66,6 +68,13 @@ func Init() {
 
 	if *infoPtr {
 		getRadioInfo(radio)
+	}
+
+	if url != "" {
+		err := radio.SetChannelURL(url)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		}
 	}
 
 	if owner != "" {

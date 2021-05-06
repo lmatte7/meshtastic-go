@@ -1,10 +1,13 @@
 package main
 
 import (
+	b64 "encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/jacobsa/go-serial/serial"
@@ -255,6 +258,27 @@ func (r *Radio) SetRadioOwner(name string) error {
        if write:
            self.writeConfig()
 */
+// SetChannelURL sets the channel for the radio. The incoming channel should match the meshtastic URL format
+// of a URL ending with /#{base_64_encoded_radio_params}
+func (r *Radio) SetChannelURL(url string) error {
+
+	split := strings.Split(url, "#")
+	channel := split[len(split)-1]
+	cDec, err := b64.StdEncoding.DecodeString(channel)
+	if err != nil {
+		return errors.New("Incorrect channel settings")
+	}
+
+	protoChannel := pb.RadioConfig{}
+
+	if err := proto.Unmarshal(cDec, &protoChannel); err != nil {
+		return err
+	}
+
+	fmt.Printf("Settings: %#v", &protoChannel)
+
+	return nil
+}
 
 // Close closes the serial port. Added so users can defer the close after opening
 func (r *Radio) Close() {
