@@ -202,7 +202,6 @@ func getRadioInfo(r Radio) {
 
 	}
 
-	// TODO: Catch segmentation violation for unitinitalized radios
 	if len(nodes) > 0 {
 		fmt.Printf("\n")
 		fmt.Printf("Nodes in Mesh:\n")
@@ -215,11 +214,13 @@ func getRadioInfo(r Radio) {
 		fmt.Printf("%s", "Longitude    |\n")
 		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------------------------\n")
 		for _, node := range nodes {
-			fmt.Printf("| %-20s| ", fmt.Sprint(node.NodeInfo.Num))
-			fmt.Printf("%-20s| ", node.NodeInfo.User.LongName)
-			fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
-			fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
-			fmt.Printf("%s   |\n", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+			if node.NodeInfo != nil {
+				fmt.Printf("| %-20s| ", fmt.Sprint(node.NodeInfo.Num))
+				fmt.Printf("%-20s| ", node.NodeInfo.User.LongName)
+				fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
+				fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
+				fmt.Printf("%s   |\n", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+			}
 		}
 		fmt.Printf("%-80s", "========================================================================================================\n")
 	}
@@ -238,6 +239,7 @@ func getRadioInfo(r Radio) {
 
 }
 
+// TODO: Verify formatting
 func printMessages(messages []*pb.FromRadio_Packet) {
 
 	for _, message := range messages {
