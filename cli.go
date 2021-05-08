@@ -1,11 +1,13 @@
 package main
 
 import (
+	b64 "encoding/base64"
 	"flag"
 	"fmt"
 	"os"
 
 	pb "github.com/lmatte7/meshtastic-go/go-meshtastic-protobufs"
+	"google.golang.org/protobuf/proto"
 )
 
 // Init starts the CLI and determines flags
@@ -159,19 +161,35 @@ func getRadioInfo(r Radio) {
 		}
 
 		if radioInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Radio); ok {
-			fmt.Printf("\n")
-			fmt.Printf("Preferences=====\n")
-			fmt.Printf("%-10s", "ls secs: ")
-			fmt.Printf("%d\n", radioInfo.Radio.Preferences.LsSecs)
-			fmt.Printf("%-10s", "Region: ")
-			fmt.Printf("%d\n", radioInfo.Radio.Preferences.Region)
-		}
+			if radioInfo.Radio.Preferences != nil {
+				fmt.Printf("\n")
+				fmt.Printf("Preferences=====\n")
+				fmt.Printf("%-25s", "ls secs: ")
+				fmt.Printf("%d\n", radioInfo.Radio.Preferences.LsSecs)
+				fmt.Printf("%-25s", "Region: ")
+				fmt.Printf("%d\n", radioInfo.Radio.Preferences.Region)
+			}
 
-		if channelInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Channel); ok {
-			fmt.Printf("\n")
-			fmt.Printf("Channel Settings:\n")
-			fmt.Printf("Modem Config: %s\n", channelInfo.Channel.ModemConfig)
-			fmt.Printf("PSK: %s\n", channelInfo.Channel.Psk)
+			if radioInfo.Radio.ChannelSettings != nil {
+				fmt.Printf("\n")
+				fmt.Printf("Channel Settings:\n")
+				fmt.Printf("%-25s", "Modem Config: ")
+				fmt.Printf("%s\n", radioInfo.Radio.ChannelSettings.ModemConfig)
+				fmt.Printf("%-25s", "PSK: ")
+				fmt.Printf("%q\n", radioInfo.Radio.ChannelSettings.Psk)
+
+				protoChannel := radioInfo.Radio.ChannelSettings
+
+				out, err := proto.Marshal(protoChannel)
+				if err != nil {
+					fmt.Printf("ERROR: Error parsing channel URL")
+				}
+
+				url := b64.StdEncoding.EncodeToString(out)
+
+				fmt.Printf("%-25s", "Channel URL: ")
+				fmt.Printf("https://www.meshtastic.org/c/#%s\n", url)
+			}
 		}
 
 		if nodeInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_NodeInfo); ok {

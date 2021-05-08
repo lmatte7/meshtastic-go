@@ -236,27 +236,6 @@ func (r *Radio) SetRadioOwner(name string) error {
 	return nil
 }
 
-/*
-   def channelURL(self):
-       """The sharable URL that describes the current channel
-       """
-       bytes = self.radioConfig.channel_settings.SerializeToString()
-       s = base64.urlsafe_b64encode(bytes).decode('ascii')
-       return f"https://www.meshtastic.org/c/#{s}"
-
-   def setURL(self, url, write=True):
-       """Set mesh network URL"""
-       if self.radioConfig == None:
-           raise Exception("No RadioConfig has been read")
-
-       # URLs are of the form https://www.meshtastic.org/c/#{base64_channel_settings}
-       # Split on '/#' to find the base64 encoded channel settings
-       splitURL = url.split("/#")
-       decodedURL = base64.urlsafe_b64decode(splitURL[-1])
-       self.radioConfig.channel_settings.ParseFromString(decodedURL)
-       if write:
-           self.writeConfig()
-*/
 // SetChannelURL sets the channel for the radio. The incoming channel should match the meshtastic URL format
 // of a URL ending with /#{base_64_encoded_radio_params}
 func (r *Radio) SetChannelURL(url string) error {
