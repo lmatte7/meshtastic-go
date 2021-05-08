@@ -3,7 +3,6 @@ package main
 import (
 	b64 "encoding/base64"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -262,20 +261,36 @@ func (r *Radio) SetRadioOwner(name string) error {
 // of a URL ending with /#{base_64_encoded_radio_params}
 func (r *Radio) SetChannelURL(url string) error {
 
+	// Split and unmarshel incoming base64 encoded protobuf packet
 	split := strings.Split(url, "#")
 	channel := split[len(split)-1]
 	cDec, err := b64.StdEncoding.DecodeString(channel)
 	if err != nil {
 		return errors.New("Incorrect channel settings")
 	}
-
-	protoChannel := pb.RadioConfig{}
+	protoChannel := pb.ChannelSettings{}
 
 	if err := proto.Unmarshal(cDec, &protoChannel); err != nil {
 		return err
 	}
 
-	fmt.Printf("Settings: %#v", &protoChannel)
+	// Send settings to Radio
+	toRadio := pb.ToRadio{
+		PayloadVariant: &pb.ToRadio_SetRadio{
+			SetRadio: &pb.RadioConfig{
+				ChannelSettings: &protoChannel,
+			},
+		},
+	}
+
+	out, err := proto.Marshal(&toRadio)
+	if err != nil {
+		return err
+	}
+
+	if err := r.sendPacket(out); err != nil {
+		return err
+	}
 
 	return nil
 }

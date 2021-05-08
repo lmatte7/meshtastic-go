@@ -74,6 +74,8 @@ func Init() {
 		err := radio.SetChannelURL(url)
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err)
+		} else {
+			fmt.Printf("Set URL successful\n")
 		}
 	}
 
@@ -81,6 +83,8 @@ func Init() {
 		err := radio.SetRadioOwner(owner)
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err)
+		} else {
+			fmt.Printf("Set owner successful\n")
 		}
 	}
 
