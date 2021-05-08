@@ -226,24 +226,25 @@ func getRadioInfo(r Radio) {
 
 	if len(recievedMessages) > 0 {
 		fmt.Printf("\n")
-		fmt.Printf("Recieved Messages\n")
-		fmt.Printf("From\t\t")
-		fmt.Printf("To\t\t")
-		fmt.Printf("Port Num\t\t")
-		fmt.Printf("Payload\t\n")
+		fmt.Printf("Recieved Messages:\n")
+		fmt.Printf("%-80s", "========================================================================================================\n")
+		fmt.Printf("| %-20s| ", "From")
+		fmt.Printf("%-20s| ", "To")
+		fmt.Printf("%-20s| ", "Port Num")
+		fmt.Printf("%-20s| ", "Payload")
 		printMessages(recievedMessages)
+		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------------------------\n")
 	}
 
 }
 
-// TODO: Format messages to match column adjustments above
 func printMessages(messages []*pb.FromRadio_Packet) {
 
 	for _, message := range messages {
-		fmt.Printf("%d\t", message.Packet.From)
-		fmt.Printf("%d\t", message.Packet.To)
-		fmt.Printf("%s\t", message.Packet.GetDecoded().GetData().GetPortnum())
-		fmt.Printf("%s\t\n", message.Packet.GetDecoded().GetData().Payload)
+		fmt.Printf("| %-20s| ", fmt.Sprint(message.Packet.From))
+		fmt.Printf("%-20s| ", fmt.Sprint(message.Packet.To))
+		fmt.Printf("%-20s| ", message.Packet.GetDecoded().GetData().GetPortnum())
+		fmt.Printf("%s   |\n", message.Packet.GetDecoded().GetData().Payload)
 	}
 }
 
