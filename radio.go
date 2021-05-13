@@ -3,6 +3,7 @@ package main
 import (
 	b64 "encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -142,7 +143,6 @@ func (r *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error) {
 // GetRadioInfo retrieves information from the radio including config and adjacent Node information
 func (r *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 	// 42 seems to be the config for the CLI client.
-	// TODO: Find if there's more significance or if it's just a hitchhikers refernce
 	nodeInfo := pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
 
 	out, err := proto.Marshal(&nodeInfo)
@@ -272,6 +272,41 @@ func (r *Radio) SetChannelURL(url string) error {
 	}
 
 	return nil
+}
+
+// SetChannel sets one of two channels for the radio
+func (r *Radio) SetChannel(channel int) error {
+
+	var modemSetting int
+
+	if channel == 0 {
+		modemSetting = int(pb.ChannelSettings_Bw125Cr48Sf4096)
+	} else {
+		modemSetting = int(pb.ChannelSettings_Bw500Cr45Sf128)
+	}
+
+	chSet := pb.ToRadio{
+		PayloadVariant: &pb.ToRadio_SetChannel{
+			SetChannel: &pb.ChannelSettings{
+				Psk:         make([]byte, 1),
+				ModemConfig: pb.ChannelSettings_ModemConfig(modemSetting),
+			},
+		},
+	}
+
+	fmt.Println(chSet)
+
+	// out, err := proto.Marshal(&chSet)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if err := r.sendPacket(out); err != nil {
+	// 	return err
+	// }
+
+	return nil
+
 }
 
 // Close closes the serial port. Added so users can defer the close after opening

@@ -26,6 +26,8 @@ func Init() {
 	flag.IntVar(&to, "to", 0, "Node to receive text")
 	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
+	longslowPtr := flag.Bool("longSlow", false, "Set long-range but slow channel")
+	shortFast := flag.Bool("shortFast", false, "Set short-range but fast channel")
 
 	flag.Usage = func() {
 		flagSet := flag.CommandLine
@@ -36,7 +38,7 @@ func Init() {
 		fmt.Printf("\n")
 		fmt.Printf("COMMANDS\n")
 		fmt.Printf("\n")
-		order := []string{"port", "text", "info", "setowner", "recv", "url"}
+		order := []string{"port", "text", "info", "setowner", "recv", "url", "longSlow", "shortFast"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("-%s\t", flag.Name)
@@ -52,7 +54,7 @@ func Init() {
 	}
 
 	radio := Radio{}
-	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 || len(url) > 0 {
+	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 || len(url) > 0 || *longslowPtr || *shortFast {
 		radio.Init(port)
 		defer radio.Close()
 	}
@@ -64,12 +66,24 @@ func Init() {
 		}
 	}
 
+	//TODO: Add error handling
 	if *recv {
 		getRecievedMessages(radio)
 	}
 
+	//TODO: Add error handling
 	if *infoPtr {
 		getRadioInfo(radio)
+	}
+
+	//TODO: Add error handling
+	if *longslowPtr {
+		radio.SetChannel(0)
+	}
+
+	//TODO: Add error handling
+	if *shortFast {
+		radio.SetChannel(1)
 	}
 
 	if url != "" {
