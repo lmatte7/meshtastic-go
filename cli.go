@@ -250,12 +250,12 @@ func getRadioInfo(r Radio) {
 func printMessageHeader() {
 	fmt.Printf("\n")
 	fmt.Printf("Recieved Messages:\n")
-	fmt.Printf("%-80s", "======================================================================================\n")
+	fmt.Printf("%-80s", "==============================================================================================================\n")
 	fmt.Printf("| %-15s| ", "From")
 	fmt.Printf("%-15s| ", "To")
 	fmt.Printf("%-18s| ", "Port Num")
-	fmt.Printf("%-15s ", "Payload                      |\n")
-	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------\n")
+	fmt.Printf("%-15s ", "Payload                                              |\n")
+	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------------------------------\n")
 }
 
 func printMessages(messages []*pb.FromRadio_Packet) {
@@ -264,24 +264,7 @@ func printMessages(messages []*pb.FromRadio_Packet) {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
 		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetData().GetPortnum())
-		fmt.Printf("%-29s", message.Packet.GetDecoded().GetData().Payload)
+		fmt.Printf("%-53s", message.Packet.GetDecoded().GetData().Payload)
 		fmt.Printf("%s", "|\n")
 	}
 }
-
-/****************
-my_info:{my_node_num:862621917  has_gps:true  num_channels:13  region:"1.0-US"  hw_model:"tbeam"  firmware_version:"1.1.50"  packet_id_bits:32  current_packet_id:1055931951  node_num_bits:32  message_timeout_msec:300000  min_app_version:20120}
-
-radio:{preferences:{ls_secs:300  region:US}  channel_settings:{modem_config:Bw125Cr48Sf4096  psk:"\x01"}}
-
-node_info:{num:862621917  user:{id:"!336a90dd"  long_name:"Unknown 90dd"  short_name:"?DD"  macaddr:"\xc4O3j\x90\xdd"}  position:{battery_level:100  time:1618855568}}
-
-config_complete_id:42
-
-packet:{from:862621917  to:4294967295  decoded:{data:{portnum:NODEINFO_APP  payload:"\n\t!336a90dd\x12\x0cUnknown 90dd\x1a\x03?DD\"\x06\xc4O3j\x90\xdd"}  want_response:true}  id:1055931946  rx_time:1618855478  hop_limit:3  priority:BACKGROUND}
-packet:{from:862621917  to:862621917  decoded:{data:{portnum:NODEINFO_APP  payload:"\n\t!336a90dd\x12\x0cUnknown 90dd\x1a\x03?DD\"\x06\xc4O3j\x90\xdd"}}  id:1055931947  rx_time:1618855478  hop_limit:3}
-packet:{from:862621917  to:862621917  decoded:{data:{portnum:NODEINFO_APP  payload:"\n\t!336a90dd\x12\x0cUnknown 90dd\x1a\x03?DD\"\x06\xc4O3j\x90\xdd"}}  id:1055931948  rx_time:1618855478  hop_limit:3}
-packet:{from:862621917  to:4294967295  decoded:{data:{portnum:POSITION_APP  payload:" dMT\xc6}`"}  want_response:true}  id:1055931949  rx_time:1618855508  hop_limit:3  priority:BACKGROUND}
-packet:{from:862621917  to:862621917  decoded:{data:{portnum:POSITION_APP  payload:" dMT\xc6}`"}}  id:1055931950  rx_time:1618855508  hop_limit:3}
-packet:{from:862621917  to:862621917  decoded:{data:{portnum:POSITION_APP  payload:" dMT\xc6}`"}}  id:1055931951  rx_time:1618855508  hop_limit:3}
-*******/
