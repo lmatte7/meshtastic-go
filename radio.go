@@ -44,6 +44,7 @@ func (r *Radio) Init(serialPort string) {
 		ParityMode:            serial.PARITY_NONE,
 	}
 
+	fmt.Println("Opening serial port")
 	// Open the port.
 	port, err := serial.Open(options)
 	if err != nil {
@@ -60,6 +61,7 @@ func (r *Radio) sendPacket(protobufPacket []byte) (err error) {
 
 	header := []byte{start1, start2, byte(packageLength>>8) & 0xff, byte(packageLength) & 0xff}
 
+	fmt.Println("Sending Packet")
 	radioPacket := append(header, protobufPacket...)
 	_, err = r.serialPort.Write(radioPacket)
 	if err != nil {
@@ -89,7 +91,7 @@ func (r *Radio) readResponse() (FromRadioPackets []*pb.FromRadio, err error) {
 	* bytes is equal to the packet length plus the header
 	 */
 	for {
-
+		fmt.Println("Reading results")
 		_, err := r.serialPort.Read(b)
 		if err == io.EOF {
 			break
