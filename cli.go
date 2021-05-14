@@ -257,6 +257,7 @@ func getRadioInfo(r Radio) error {
 		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------\n")
 	}
 
+	return nil
 }
 
 func printMessageHeader() {
