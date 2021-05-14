@@ -66,24 +66,36 @@ func Init() {
 		}
 	}
 
-	//TODO: Add error handling
 	if *recv {
-		getRecievedMessages(radio)
+		err := getRecievedMessages(radio)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		}
 	}
 
-	//TODO: Add error handling
 	if *infoPtr {
-		getRadioInfo(radio)
+		err := getRadioInfo(radio)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		}
 	}
 
-	//TODO: Add error handling
 	if *longslowPtr {
-		radio.SetChannel(0)
+		err := radio.SetChannel(0)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		} else {
+			fmt.Printf("Set channel\n")
+		}
 	}
 
-	//TODO: Add error handling
 	if *shortFast {
-		radio.SetChannel(1)
+		err := radio.SetChannel(1)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		} else {
+			fmt.Printf("Set channel\n")
+		}
 	}
 
 	if url != "" {
@@ -106,14 +118,14 @@ func Init() {
 
 }
 
-func getRecievedMessages(r Radio) {
+func getRecievedMessages(r Radio) error {
 
 	printMessageHeader()
 	for {
 
 		responses, err := r.GetRadioInfo()
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 
 		recievedMessages := make([]*pb.FromRadio_Packet, 0)
@@ -131,11 +143,11 @@ func getRecievedMessages(r Radio) {
 
 }
 
-func getRadioInfo(r Radio) {
+func getRadioInfo(r Radio) error {
 
 	responses, err := r.GetRadioInfo()
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	nodes := make([]*pb.FromRadio_NodeInfo, 0)
@@ -264,7 +276,7 @@ func printMessages(messages []*pb.FromRadio_Packet) {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
 		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetData().GetPortnum())
-		fmt.Printf("%-53s", message.Packet.GetDecoded().GetData().Payload)
+		fmt.Printf("%-53s", fmt.Sprint(message.Packet.GetDecoded().GetData().Payload))
 		fmt.Printf("%s", "|\n")
 	}
 }
