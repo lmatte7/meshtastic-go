@@ -162,8 +162,8 @@ func (r *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
 }
 
 // SendTextMessage sends a free form text message to other radios
-func (r *Radio) SendTextMessage(message string, to int) error {
-	var address int
+func (r *Radio) SendTextMessage(message string, to int64) error {
+	var address int64
 	if to != 0 {
 		address = to
 	} else {
@@ -176,7 +176,7 @@ func (r *Radio) SendTextMessage(message string, to int) error {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	packetID := rand.Intn(2385286828-1) + 1
+	packetID := rand.Intn(2386828-1) + 1
 
 	radioMessage := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_Packet{

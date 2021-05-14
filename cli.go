@@ -17,13 +17,13 @@ func Init() {
 	var message string
 	var owner string
 	var url string
-	var to int
+	var to int64
 
 	flag.StringVar(&port, "port", "", "The serial port for the radio (Required)")
 	flag.StringVar(&message, "text", "", "Send a text message")
 	flag.StringVar(&url, "url", "", "Set the radio URL")
 	flag.StringVar(&owner, "setowner", "", "Set the listed owner for the radio")
-	flag.IntVar(&to, "to", 0, "Node to receive text")
+	flag.Int64Var(&to, "to", 0, "Node to receive text")
 	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
 	longslowPtr := flag.Bool("longSlow", false, "Set long-range but slow channel")
@@ -277,7 +277,7 @@ func printMessages(messages []*pb.FromRadio_Packet) {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
 		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetData().GetPortnum())
-		fmt.Printf("%-53s", fmt.Sprint(message.Packet.GetDecoded().GetData().Payload))
+		fmt.Printf("%-53s", message.Packet.GetDecoded().GetData().Payload)
 		fmt.Printf("%s", "|\n")
 	}
 }
