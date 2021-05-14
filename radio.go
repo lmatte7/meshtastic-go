@@ -253,11 +253,30 @@ func (r *Radio) SetChannelURL(url string) error {
 		return err
 	}
 
+	responses, err := r.GetRadioInfo()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var currentRadioInfo *pb.FromRadio_Radio
+
+	for _, response := range responses {
+
+		if radioInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Radio); ok {
+
+			currentRadioInfo = radioInfo
+
+		}
+
+	}
+
 	// Send settings to Radio
 	toRadio := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_SetRadio{
 			SetRadio: &pb.RadioConfig{
 				ChannelSettings: &protoChannel,
+				Preferences:     currentRadioInfo.Radio.Preferences,
 			},
 		},
 	}
@@ -285,25 +304,41 @@ func (r *Radio) SetChannel(channel int) error {
 		modemSetting = int(pb.ChannelSettings_Bw500Cr45Sf128)
 	}
 
+	responses, err := r.GetRadioInfo()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var currentRadioInfo *pb.FromRadio_Radio
+
+	for _, response := range responses {
+
+		if radioInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Radio); ok {
+
+			currentRadioInfo = radioInfo
+
+		}
+
+	}
+
 	chSet := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_SetChannel{
 			SetChannel: &pb.ChannelSettings{
-				Psk:         make([]byte, 1),
+				Psk:         currentRadioInfo.Radio.ChannelSettings.Psk,
 				ModemConfig: pb.ChannelSettings_ModemConfig(modemSetting),
 			},
 		},
 	}
 
-	fmt.Println(chSet)
+	out, err := proto.Marshal(&chSet)
+	if err != nil {
+		return err
+	}
 
-	// out, err := proto.Marshal(&chSet)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if err := r.sendPacket(out); err != nil {
-	// 	return err
-	// }
+	if err := r.sendPacket(out); err != nil {
+		return err
+	}
 
 	return nil
 

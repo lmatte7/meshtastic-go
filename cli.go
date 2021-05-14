@@ -41,8 +41,8 @@ func Init() {
 		order := []string{"port", "text", "info", "setowner", "recv", "url", "longSlow", "shortFast"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
-			fmt.Printf("-%s\t", flag.Name)
-			fmt.Printf("  %s\n", flag.Usage)
+			fmt.Printf("--%-15s", flag.Name)
+			fmt.Printf("%-10s\n", flag.Usage)
 		}
 	}
 
@@ -108,12 +108,7 @@ func Init() {
 
 func getRecievedMessages(r Radio) {
 
-	fmt.Printf("\n")
-	fmt.Printf("Recieved Messages\n")
-	fmt.Printf("From\t\t")
-	fmt.Printf("To\t\t")
-	fmt.Printf("Port Num\t\t")
-	fmt.Printf("Payload\t\n")
+	printMessageHeader()
 	for {
 
 		responses, err := r.GetRadioInfo()
@@ -177,7 +172,7 @@ func getRadioInfo(r Radio) {
 		if radioInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Radio); ok {
 			if radioInfo.Radio.Preferences != nil {
 				fmt.Printf("\n")
-				fmt.Printf("Preferences=====\n")
+				fmt.Printf("Preferences:\n")
 				fmt.Printf("%-25s", "ls secs: ")
 				fmt.Printf("%d\n", radioInfo.Radio.Preferences.LsSecs)
 				fmt.Printf("%-25s", "Region: ")
@@ -220,47 +215,57 @@ func getRadioInfo(r Radio) {
 		fmt.Printf("\n")
 		fmt.Printf("Nodes in Mesh:\n")
 
-		fmt.Printf("%-80s", "========================================================================================================\n")
-		fmt.Printf("| %-20s| ", "Node Number")
-		fmt.Printf("%-20s| ", "User")
-		fmt.Printf("%-20s| ", "Battery")
-		fmt.Printf("%-20s| ", "Latitude")
-		fmt.Printf("%s", "Longitude    |\n")
-		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------------------------\n")
+		fmt.Printf("%-80s", "======================================================================================\n")
+		fmt.Printf("| %-15s| ", "Node Number")
+		fmt.Printf("%-15s| ", "User")
+		fmt.Printf("%-15s| ", "Battery")
+		fmt.Printf("%-15s| ", "Latitude")
+		fmt.Printf("%-15s", "Longitude      |\n")
+		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------\n")
 		for _, node := range nodes {
 			if node.NodeInfo != nil {
-				fmt.Printf("| %-20s| ", fmt.Sprint(node.NodeInfo.Num))
-				fmt.Printf("%-20s| ", node.NodeInfo.User.LongName)
-				fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
-				fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
-				fmt.Printf("%s   |\n", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+				fmt.Printf("| %-15s| ", fmt.Sprint(node.NodeInfo.Num))
+				if node.NodeInfo.User != nil {
+					fmt.Printf("%-15s| ", node.NodeInfo.User.LongName)
+				} else {
+					fmt.Printf("%-15s| ", "N/A")
+				}
+				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
+				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
+				fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+				fmt.Printf("%s", "|\n")
 			}
 		}
-		fmt.Printf("%-80s", "========================================================================================================\n")
+		fmt.Printf("%-80s", "======================================================================================\n")
 	}
 
 	if len(recievedMessages) > 0 {
-		fmt.Printf("\n")
-		fmt.Printf("Recieved Messages:\n")
-		fmt.Printf("%-80s", "========================================================================================================\n")
-		fmt.Printf("| %-20s| ", "From")
-		fmt.Printf("%-20s| ", "To")
-		fmt.Printf("%-20s| ", "Port Num")
-		fmt.Printf("%-20s| ", "Payload")
+		printMessageHeader()
 		printMessages(recievedMessages)
-		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------------------------\n")
+		fmt.Printf("%-80s", "--------------------------------------------------------------------------------------\n")
 	}
 
 }
 
-// TODO: Verify formatting
+func printMessageHeader() {
+	fmt.Printf("\n")
+	fmt.Printf("Recieved Messages:\n")
+	fmt.Printf("%-80s", "======================================================================================\n")
+	fmt.Printf("| %-15s| ", "From")
+	fmt.Printf("%-15s| ", "To")
+	fmt.Printf("%-18s| ", "Port Num")
+	fmt.Printf("%-15s ", "Payload                      |\n")
+	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------\n")
+}
+
 func printMessages(messages []*pb.FromRadio_Packet) {
 
 	for _, message := range messages {
-		fmt.Printf("| %-20s| ", fmt.Sprint(message.Packet.From))
-		fmt.Printf("%-20s| ", fmt.Sprint(message.Packet.To))
-		fmt.Printf("%-20s| ", message.Packet.GetDecoded().GetData().GetPortnum())
-		fmt.Printf("%s   |\n", message.Packet.GetDecoded().GetData().Payload)
+		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
+		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
+		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetData().GetPortnum())
+		fmt.Printf("%-29s", message.Packet.GetDecoded().GetData().Payload)
+		fmt.Printf("%s", "|\n")
 	}
 }
 
