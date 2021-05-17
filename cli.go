@@ -16,13 +16,17 @@ func Init() {
 	var port string
 	var message string
 	var owner string
+	var setKey string
+	var setValue string
 	var url string
 	var to int64
 
 	flag.StringVar(&port, "port", "", "--port=port The serial port for the radio (Required)")
 	flag.StringVar(&message, "text", "", "--text=message Send a text message")
 	flag.StringVar(&url, "url", "", "--url=channel_curl Set the radio URL")
-	flag.StringVar(&owner, "setowner", "", "--setowner=owner Set the listed owner for the radio")
+	flag.StringVar(&setKey, "setKey", "", "--setKey=key The key to set for a custom user preference option. Used with setValue")
+	flag.StringVar(&setValue, "setValue", "", "--setValue=value The value to set for a custom user preference option. Used with setKey")
+	flag.StringVar(&owner, "setOwner", "", "--setowner=owner Set the listed owner for the radio")
 	flag.Int64Var(&to, "to", 0, "--to=destination Node to receive text (Used with sendtext)")
 	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
@@ -38,7 +42,7 @@ func Init() {
 		fmt.Printf("\n")
 		fmt.Printf("COMMANDS\n")
 		fmt.Printf("\n")
-		order := []string{"port", "info", "recv", "longSlow", "shortFast", "text", "setowner"}
+		order := []string{"port", "info", "recv", "longSlow", "shortFast", "text", "setowner", "setKey", "setValue"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("--%-15s", flag.Name)
@@ -54,7 +58,7 @@ func Init() {
 	}
 
 	radio := Radio{}
-	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 || len(url) > 0 || *longslowPtr || *shortFast {
+	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 || len(url) > 0 || *longslowPtr || *shortFast || len(setKey) > 0 || len(setValue) > 0 {
 		radio.Init(port)
 		defer radio.Close()
 	}
@@ -113,6 +117,15 @@ func Init() {
 			fmt.Printf("ERROR: %s\n", err)
 		} else {
 			fmt.Printf("Set owner successful\n")
+		}
+	}
+
+	if setValue != "" && setKey != "" {
+		err := radio.SetUserPreferences(setKey, setValue)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err)
+		} else {
+			fmt.Printf("Set user preferences successful\n")
 		}
 	}
 
