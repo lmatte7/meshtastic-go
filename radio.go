@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -345,6 +347,65 @@ func (r *Radio) SetChannel(channel int) error {
 
 	return nil
 
+}
+
+// SetUserPreferences allows an freeform setting of values in the RadioConfig_UserPreferences struct
+func (r *Radio) SetUserPreferences(key string, value string) error {
+
+	responses, err := r.GetRadioInfo()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var currentRadioInfo *pb.FromRadio_Radio
+
+	for _, response := range responses {
+
+		if radioInfo, ok := response.GetPayloadVariant().(*pb.FromRadio_Radio); ok {
+
+			currentRadioInfo = radioInfo
+
+		}
+
+	}
+
+	rPref := reflect.ValueOf(currentRadioInfo.Radio.Preferences)
+
+	rPref = rPref.Elem()
+
+	fv := rPref.FieldByName(key)
+	if !fv.IsValid() {
+		return errors.New("Unknown Field")
+	}
+
+	// Field must be exported
+	if !fv.CanSet() {
+		return errors.New("Unknown Field")
+	}
+
+	boolValue, err := strconv.ParseBool(value)
+	fv.SetBool(boolValue)
+
+	prefSet := pb.ToRadio{
+		PayloadVariant: &pb.ToRadio_SetRadio{
+			SetRadio: &pb.RadioConfig{
+				Preferences:     currentRadioInfo.Radio.Preferences,
+				ChannelSettings: currentRadioInfo.Radio.ChannelSettings,
+			},
+		},
+	}
+
+	out, err := proto.Marshal(&prefSet)
+	if err != nil {
+		return err
+	}
+
+	if err := r.sendPacket(out); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Close closes the serial port. Added so users can defer the close after opening
