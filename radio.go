@@ -379,13 +379,28 @@ func (r *Radio) SetUserPreferences(key string, value string) error {
 		return errors.New("Unknown Field")
 	}
 
-	// Field must be exported
 	if !fv.CanSet() {
 		return errors.New("Unknown Field")
 	}
 
-	boolValue, err := strconv.ParseBool(value)
-	fv.SetBool(boolValue)
+	vType := fv.Type()
+
+	// The acceptable values that can be set from the command line are uint32 and bool, so only check for those
+	switch vType.Kind() {
+	case reflect.Bool:
+		boolValue, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
+		}
+		fv.SetBool(boolValue)
+		break
+	case reflect.Uint32:
+		uintValue, err := strconv.ParseUint(value, 10, 32)
+		if err != nil {
+			return err
+		}
+		fv.SetUint(uintValue)
+	}
 
 	prefSet := pb.ToRadio{
 		PayloadVariant: &pb.ToRadio_SetRadio{

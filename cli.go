@@ -26,7 +26,7 @@ func Init() {
 	flag.StringVar(&url, "url", "", "--url=channel_curl Set the radio URL")
 	flag.StringVar(&setKey, "setKey", "", "--setKey=key The key to set for a custom user preference option. Used with setValue")
 	flag.StringVar(&setValue, "setValue", "", "--setValue=value The value to set for a custom user preference option. Used with setKey")
-	flag.StringVar(&owner, "setowner", "", "--setowner=owner Set the listed owner for the radio")
+	flag.StringVar(&owner, "setOwner", "", "--setowner=owner Set the listed owner for the radio")
 	flag.Int64Var(&to, "to", 0, "--to=destination Node to receive text (Used with sendtext)")
 	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
