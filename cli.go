@@ -19,11 +19,11 @@ func Init() {
 	var url string
 	var to int64
 
-	flag.StringVar(&port, "port", "", "The serial port for the radio (Required)")
-	flag.StringVar(&message, "text", "", "Send a text message")
-	flag.StringVar(&url, "url", "", "Set the radio URL")
-	flag.StringVar(&owner, "setowner", "", "Set the listed owner for the radio")
-	flag.Int64Var(&to, "to", 0, "Node to receive text")
+	flag.StringVar(&port, "port", "", "--port=port The serial port for the radio (Required)")
+	flag.StringVar(&message, "text", "", "--text=message Send a text message")
+	flag.StringVar(&url, "url", "", "--url=channel_curl Set the radio URL")
+	flag.StringVar(&owner, "setowner", "", "--setowner=owner Set the listed owner for the radio")
+	flag.Int64Var(&to, "to", 0, "--to=destination Node to receive text (Used with sendtext)")
 	recv := flag.Bool("recv", false, "Wait for new messages")
 	infoPtr := flag.Bool("info", false, "Display radio information")
 	longslowPtr := flag.Bool("longSlow", false, "Set long-range but slow channel")
@@ -38,7 +38,7 @@ func Init() {
 		fmt.Printf("\n")
 		fmt.Printf("COMMANDS\n")
 		fmt.Printf("\n")
-		order := []string{"port", "text", "info", "setowner", "recv", "url", "longSlow", "shortFast"}
+		order := []string{"port", "info", "recv", "longSlow", "shortFast", "text", "setowner"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("--%-15s", flag.Name)
