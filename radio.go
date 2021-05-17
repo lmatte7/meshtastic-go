@@ -214,7 +214,7 @@ func (r *Radio) SendTextMessage(message string, to int64) error {
 // SetRadioOwner sets the owner of the radio visible on the public mesh
 func (r *Radio) SetRadioOwner(name string) error {
 
-	if len(name) < 2 {
+	if len(name) <= 2 {
 		return errors.New("Name too short")
 	}
 
