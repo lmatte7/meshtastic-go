@@ -42,7 +42,7 @@ func Init() {
 		fmt.Printf("\n")
 		fmt.Printf("COMMANDS\n")
 		fmt.Printf("\n")
-		order := []string{"port", "info", "recv", "longSlow", "shortFast", "text", "setowner", "setKey", "setValue"}
+		order := []string{"port", "info", "recv", "longSlow", "shortFast", "text", "setOwner", "setKey", "setValue"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("--%-15s", flag.Name)
