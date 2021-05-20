@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	gomesh "github.com/lmatte7/goMesh"
 	pb "github.com/lmatte7/meshtastic-go/go-meshtastic-protobufs"
 	"google.golang.org/protobuf/proto"
 )
@@ -57,7 +58,7 @@ func Init() {
 		os.Exit(1)
 	}
 
-	radio := Radio{}
+	radio := gomesh.Radio{}
 	if len(message) > 0 || *infoPtr || *recv || len(owner) > 0 || len(url) > 0 || *longslowPtr || *shortFast || len(setKey) > 0 || len(setValue) > 0 {
 		radio.Init(port)
 		defer radio.Close()
@@ -131,7 +132,7 @@ func Init() {
 
 }
 
-func getRecievedMessages(r Radio) error {
+func getRecievedMessages(r gomesh.Radio) error {
 
 	printMessageHeader()
 	for {
@@ -156,7 +157,7 @@ func getRecievedMessages(r Radio) error {
 
 }
 
-func getRadioInfo(r Radio) error {
+func getRadioInfo(r gomesh.Radio) error {
 
 	responses, err := r.GetRadioInfo()
 	if err != nil {
