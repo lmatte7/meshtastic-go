@@ -5,7 +5,6 @@ Meshtastic Go is a CLI for meshtastic devices built in Go. This tool provides an
 ## Command syntax
 A full list of commands can be viewed by running `--help`
 ```
-meshtastic-go --help
 A command line tool for interacting with meshtastic radios
 
 USAGE
@@ -19,7 +18,9 @@ COMMANDS
 --longSlow       Set long-range but slow channel
 --shortFast      Set short-range but fast channel
 --text           --text=message Send a text message
---setowner       --setowner=owner Set the listed owner for the radio
+--setOwner       --setowner=owner Set the listed owner for the radio
+--setKey         --setKey=key The key to set for a custom user preference option. Used with setValue
+--setValue       --setValue=value The value to set for a custom user preference option. Used with setKey
 ```
 
 ## Feedback
