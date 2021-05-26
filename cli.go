@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 
 	pb "github.com/lmatte7/meshtastic-go/go-meshtastic-protobufs"
 	"google.golang.org/protobuf/proto"
@@ -255,9 +256,15 @@ func getRadioInfo(r Radio) error {
 				} else {
 					fmt.Printf("%-15s| ", "N/A")
 				}
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
-				fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+				if node.NodeInfo.Position != nil {
+					fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
+					fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
+					fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+				} else {
+					fmt.Printf("%-15s| ", "N/A")
+					fmt.Printf("%-15s| ", "N/A")
+					fmt.Printf("%-15s| ", "N/A")
+				}
 				fmt.Printf("%s", "|\n")
 			}
 		}
@@ -290,7 +297,9 @@ func printMessages(messages []*pb.FromRadio_Packet) {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
 		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetData().GetPortnum())
-		fmt.Printf("%-53s", message.Packet.GetDecoded().GetData().Payload)
+		re := regexp.MustCompile(`\r?\n`)
+		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().GetData().Payload), "")
+		fmt.Printf("%-53s", escMesg)
 		fmt.Printf("%s", "|\n")
 	}
 }
