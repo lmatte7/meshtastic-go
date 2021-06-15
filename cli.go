@@ -1,52 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"regexp"
 
-	"github.com/lmatte7/gomesh"
-	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
 	"github.com/urfave/cli/v2"
 )
-
-//TODO: Adjust command structure to match the below
-
-/*
-
-Commands
-port
-recv
-sendText
-
-Subcommands
-
-Info
-info - show all info
-info:channels
-info:nodes - show nodes
-
-
-messages - display any stored messages
-messages:wait - wait for new messages
-
-Position
-position - show position
-position:set:lat LAT
-position:set:long LONG
-position:set:alt ALT
-
-Channel
-channel - show channel information
-channel:add NAME INDEX
-channel:delete INDEX
-channel:set INDEX KEY VALUE
-
-Preference
-preference - show preferences
-preference:set KEY VALUE
-preferences:setowner OWNER
-*/
 
 // Init starts the CLI and determines flags
 func Init() {
@@ -98,11 +56,10 @@ func Init() {
 			},
 			{
 				Name:        "message",
-				Usage:       "Show radio information",
-				UsageText:   "info [command] - Show radio information",
-				Description: "Show node, preference and channel information for radio",
+				Usage:       "Interact with radio messaging functionality",
+				UsageText:   "message [command]",
+				Description: "Send messages to other radios or wait for new messages",
 				ArgsUsage:   "",
-				Action:      showAllRadioInfo,
 				Subcommands: []*cli.Command{
 					{
 						Name:        "send",
@@ -133,6 +90,158 @@ func Init() {
 					},
 				},
 			},
+			{
+				Name:        "channel",
+				Usage:       "Update channel information",
+				UsageText:   "channel [command] - Update channel parameters",
+				Description: "Add, delete and update channel settings",
+				ArgsUsage:   "",
+				Action:      showChannelInfo,
+				Subcommands: []*cli.Command{
+					{
+						Name:        "add",
+						Usage:       "Adds a channel",
+						UsageText:   "add - Add a channel to the radio",
+						Description: "Add a channel to the radio with a random PSK",
+						Action:      addChannel,
+						Flags: []cli.Flag{
+							&cli.Int64Flag{
+								Name:        "index",
+								Aliases:     []string{"i"},
+								Usage:       "Index for the channel to be added. If a channel is added at 0 it will become the Primary channel",
+								Value:       1,
+								DefaultText: "1",
+								Required:    true,
+							},
+							&cli.StringFlag{
+								Name:     "name",
+								Aliases:  []string{"n"},
+								Usage:    "Name of the chanel",
+								Required: true,
+							},
+						},
+					},
+					{
+						Name:        "delete",
+						Usage:       "Deletes a channel",
+						UsageText:   "delete - Delete a channel to the radio",
+						Description: "Delete a channel from the radio. Cannot delete a PRIMARY channel",
+						Action:      deleteChannel,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "index",
+								Aliases:  []string{"i"},
+								Usage:    "Index for the channel to be added. If a channel is added at 0 it will become the Primary channel",
+								Required: true,
+							},
+						},
+					},
+					{
+						Name:        "set",
+						Usage:       "Set a channel parameter",
+						Description: "Sets channel parameters for the specified channel index",
+						Action:      setChannel,
+						Flags: []cli.Flag{
+							&cli.Int64Flag{
+								Name:        "index",
+								Aliases:     []string{"i"},
+								Usage:       "Index for the channel to be added. If a channel is added at 0 it will become the Primary channel",
+								Required:    true,
+								Value:       1,
+								DefaultText: "1",
+							},
+							&cli.StringFlag{
+								Name:     "key",
+								Aliases:  []string{"k"},
+								Usage:    "Key of the channel parameter to be changed",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "value",
+								Aliases:  []string{"v"},
+								Usage:    "Value of the parameter",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:        "prefs",
+				Usage:       "Update user preferences",
+				UsageText:   "prefs [command] - Update user preferences",
+				Description: "Update user preferences",
+				ArgsUsage:   "",
+				Action:      showRadioPreferences,
+				Subcommands: []*cli.Command{
+					{
+						Name:        "set",
+						Usage:       "Set a user preference",
+						Description: "Sets a user preference using the provided key/value combination",
+						Action:      setPref,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "key",
+								Aliases:  []string{"k"},
+								Usage:    "Key of the user preferences to be changed",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "value",
+								Aliases:  []string{"v"},
+								Usage:    "Value of the parameter",
+								Required: true,
+							},
+						},
+					},
+					{
+						Name:        "owner",
+						Usage:       "Set the radio owner",
+						Description: "Sets the owner of the radio that is sent out over the network",
+						Action:      setOwner,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "owner",
+								Aliases:  []string{"o"},
+								Usage:    "The owner name",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:        "location",
+				Usage:       "Set location",
+				UsageText:   "location [command] - Set location",
+				Description: "Manually set the GPS coordinates for the radio",
+				ArgsUsage:   "",
+				Subcommands: []*cli.Command{
+					{
+						Name:        "set",
+						Usage:       "Set a location",
+						Description: "Manually set the GPS coordinates for the radio",
+						Action:      setLocation,
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:     "lat",
+								Usage:    "Latitude",
+								Required: true,
+							},
+							&cli.Float64Flag{
+								Name:     "long",
+								Usage:    "Longitude",
+								Required: true,
+							},
+							&cli.IntFlag{
+								Name:     "alt",
+								Usage:    "Altitude",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -147,105 +256,4 @@ func Init() {
 
 	app.Run(os.Args)
 
-}
-
-func showAllRadioInfo(c *cli.Context) error {
-
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
-	defer radio.Close()
-
-	err = getRadioInfo(radio)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func showNodeInfo(c *cli.Context) error {
-
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
-	defer radio.Close()
-
-	err = displayNodes(radio)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func showRadioInfo(c *cli.Context) error {
-
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
-	defer radio.Close()
-
-	responses, err := radio.GetRadioInfo()
-	if err != nil {
-		return err
-	}
-
-	for _, response := range responses {
-
-		if info, ok := response.GetPayloadVariant().(*gomeshproto.FromRadio_MyInfo); ok {
-			printRadioInfo(info)
-		}
-	}
-
-	return nil
-
-}
-
-func showRadioPreferences(c *cli.Context) error {
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
-	defer radio.Close()
-
-	err = printRadioPreferences(radio)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func printMessageHeader() {
-	fmt.Printf("\n")
-	fmt.Printf("Recieved Messages:\n")
-	fmt.Printf("%-80s", "==============================================================================================================\n")
-	fmt.Printf("| %-15s| ", "From")
-	fmt.Printf("%-15s| ", "To")
-	fmt.Printf("%-18s| ", "Port Num")
-	fmt.Printf("%-15s ", "Payload                                              |\n")
-	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------------------------------\n")
-}
-
-func printMessages(messages []*gomeshproto.FromRadio_Packet) {
-
-	for _, message := range messages {
-		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
-		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
-		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetPortnum().String())
-		re := regexp.MustCompile(`\r?\n`)
-		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
-		fmt.Printf("%-53q", escMesg)
-		fmt.Printf("%s", "|\n")
-	}
 }

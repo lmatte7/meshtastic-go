@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/lmatte7/gomesh"
 	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
 	"github.com/urfave/cli/v2"
@@ -55,4 +58,28 @@ func sendText(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func printMessageHeader() {
+	fmt.Printf("\n")
+	fmt.Printf("Recieved Messages:\n")
+	fmt.Printf("%-80s", "==============================================================================================================\n")
+	fmt.Printf("| %-15s| ", "From")
+	fmt.Printf("%-15s| ", "To")
+	fmt.Printf("%-18s| ", "Port Num")
+	fmt.Printf("%-15s ", "Payload                                              |\n")
+	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------------------------------\n")
+}
+
+func printMessages(messages []*gomeshproto.FromRadio_Packet) {
+
+	for _, message := range messages {
+		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
+		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
+		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetPortnum().String())
+		re := regexp.MustCompile(`\r?\n`)
+		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
+		fmt.Printf("%-53q", escMesg)
+		fmt.Printf("%s", "|\n")
+	}
 }

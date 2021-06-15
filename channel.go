@@ -125,3 +125,55 @@ func printChannelSettings(r gomesh.Radio) error {
 
 	return nil
 }
+
+func addChannel(c *cli.Context) error {
+
+	radio := gomesh.Radio{}
+	err := radio.Init(c.String("port"))
+	if err != nil {
+		return err
+	}
+	defer radio.Close()
+
+	err = radio.AddChannel(c.String("name"), c.Int("index"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteChannel(c *cli.Context) error {
+
+	radio := gomesh.Radio{}
+	err := radio.Init(c.String("port"))
+	if err != nil {
+		return err
+	}
+	defer radio.Close()
+
+	err = radio.DeleteChannel(c.Int("index"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setChannel(c *cli.Context) error {
+
+	radio := gomesh.Radio{}
+	err := radio.Init(c.String("port"))
+	if err != nil {
+		return err
+	}
+	defer radio.Close()
+
+	err = radio.SetChannel(c.Int("index"), c.String("key"), c.String("value"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
