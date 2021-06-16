@@ -31,7 +31,7 @@ func setOwner(c *cli.Context) error {
 	}
 	defer radio.Close()
 
-	err = radio.SetRadioOwner(c.String("owner"))
+	err = radio.SetRadioOwner(c.String("name"))
 	if err != nil {
 		return err
 	}

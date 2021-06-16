@@ -201,8 +201,8 @@ func Init() {
 						Action:      setOwner,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
-								Name:     "owner",
-								Aliases:  []string{"o"},
+								Name:     "name",
+								Aliases:  []string{"n"},
 								Usage:    "The owner name",
 								Required: true,
 							},
