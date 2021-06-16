@@ -142,13 +142,14 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 	fmt.Printf("\n")
 	fmt.Printf("Nodes in Mesh:\n")
 
-	fmt.Printf("%-80s", "======================================================================================\n")
+	fmt.Printf("%-80s", "=======================================================================================================\n")
 	fmt.Printf("| %-15s| ", "Node Number")
 	fmt.Printf("%-15s| ", "User")
 	fmt.Printf("%-15s| ", "Battery")
+	fmt.Printf("%-15s| ", "Altitude")
 	fmt.Printf("%-15s| ", "Latitude")
 	fmt.Printf("%-15s", "Longitude      |\n")
-	fmt.Printf("%-80s", "--------------------------------------------------------------------------------------\n")
+	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------------------------\n")
 	for _, node := range nodes {
 		if node.NodeInfo != nil {
 			fmt.Printf("| %-15s| ", fmt.Sprint(node.NodeInfo.Num))
@@ -159,6 +160,7 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 			}
 			if node.NodeInfo.Position != nil {
 				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.BatteryLevel))
+				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.Altitude))
 				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
 				fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
 			} else {
@@ -169,7 +171,7 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 			fmt.Printf("%s", "|\n")
 		}
 	}
-	fmt.Printf("%-80s", "======================================================================================\n")
+	fmt.Printf("%-80s", "=======================================================================================================\n")
 }
 
 func printRadioInfo(info *gomeshproto.FromRadio_MyInfo) {

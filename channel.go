@@ -41,7 +41,7 @@ func printChannelSettings(r gomesh.Radio) error {
 		if err != nil {
 			return err
 		}
-		if info.GetGetChannelResponse().Role == gomeshproto.Channel_DISABLED {
+		if info.GetGetChannelResponse() == nil || info.GetGetChannelResponse().Role == gomeshproto.Channel_DISABLED {
 			break
 		}
 
@@ -53,15 +53,37 @@ func printChannelSettings(r gomesh.Radio) error {
 		}
 	}
 
+	// Try again if no settings were found
+	if len(channels) == 0 {
+		for {
+
+			info, err := r.GetChannelInfo(channelCount)
+			if err != nil {
+				return err
+			}
+			if info.GetGetChannelResponse() == nil || info.GetGetChannelResponse().Role == gomeshproto.Channel_DISABLED {
+				break
+			}
+
+			channels = append(channels, info)
+			// Add a guarenteed exit for the loop since there can't be more than 20 channels
+			channelCount++
+			if channelCount > 20 {
+				break
+			}
+		}
+	}
+
 	fmt.Printf("%s", "\n")
 	fmt.Printf("Channel Settings:\n")
-	fmt.Printf("%-80s", "================================================================================================================================================\n")
+	fmt.Printf("%-80s", "=================================================================================================================================================================\n")
 	fmt.Printf("| %-15s| ", "Name")
+	fmt.Printf("%-15s| ", "Index")
 	fmt.Printf("%-15s| ", "Role")
 	fmt.Printf("%-15s| ", "Modem")
 	fmt.Printf("%-90s", "PSK")
 	fmt.Printf("%s", "|\n")
-	fmt.Printf("%-80s", "------------------------------------------------------------------------------------------------------------------------------------------------\n")
+	fmt.Printf("%-80s", "-----------------------------------------------------------------------------------------------------------------------------------------------------------------\n")
 	for _, channelInfo := range channels {
 
 		if channelInfo.GetGetChannelResponse().Role == gomeshproto.Channel_DISABLED {
@@ -77,6 +99,13 @@ func printChannelSettings(r gomesh.Radio) error {
 			fmt.Printf("| %-15s| ", channelInfo.GetGetChannelResponse().GetSettings().Name)
 		} else {
 			fmt.Printf("| %-15s| ", "N/A")
+		}
+		if channelInfo.GetGetChannelResponse().GetIndex() > 0 {
+			fmt.Printf("%-15d| ", channelInfo.GetGetChannelResponse().GetIndex())
+		} else if channelInfo.GetGetChannelResponse().Role.String() == "PRIMARY" {
+			fmt.Printf("%-15s| ", "0")
+		} else {
+			fmt.Printf("%-15s| ", "N/A")
 		}
 		if len(channelInfo.GetGetChannelResponse().Role.String()) > 0 {
 			fmt.Printf("%-15s| ", channelInfo.GetGetChannelResponse().Role.String())
@@ -98,7 +127,7 @@ func printChannelSettings(r gomesh.Radio) error {
 		fmt.Printf("%s", "|\n")
 
 	}
-	fmt.Printf("%-80s", "================================================================================================================================================\n")
+	fmt.Printf("%-80s", "=================================================================================================================================================================\n")
 
 	channelSet.Settings = channelSettings
 	primaryChannelSet.Settings = primaryChannelSettings
