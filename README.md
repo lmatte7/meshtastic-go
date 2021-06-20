@@ -135,13 +135,13 @@ OPTIONS:
 Add a channel
 
 ```
-meshtastic-go channel add -i 2 -name test2
+meshtastic-go channel add --port=/dev/cu.SLAB_USBtoUART -i 2 -name test2
 ```
 
 Update the Region
 
 ```
-meshtastic-go prefs set -k Region -v 1
+meshtastic-go prefs set -p /dev/cu.SLAB_USBtoUART -k Region -v 1
 ```
 
 Set the radio location
