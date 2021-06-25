@@ -206,3 +206,21 @@ func setChannel(c *cli.Context) error {
 	return nil
 
 }
+
+func setUrl(c *cli.Context) error {
+
+	radio := gomesh.Radio{}
+	err := radio.Init(c.String("port"))
+	if err != nil {
+		return err
+	}
+	defer radio.Close()
+
+	err = radio.SetChannelURL(c.String("url"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

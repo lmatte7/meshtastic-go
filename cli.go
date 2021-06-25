@@ -99,6 +99,21 @@ func Init() {
 				Action:      showChannelInfo,
 				Subcommands: []*cli.Command{
 					{
+						Name:        "url",
+						Usage:       "Change settings with a url",
+						UsageText:   "url - change settings with url",
+						Description: "Set channel settings on radio using a meshtastic URL",
+						Action:      setUrl,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "url",
+								Aliases:  []string{"u"},
+								Usage:    "Meshtastic channel URL to use",
+								Required: true,
+							},
+						},
+					},
+					{
 						Name:        "add",
 						Usage:       "Adds a channel",
 						UsageText:   "add - Add a channel to the radio",
