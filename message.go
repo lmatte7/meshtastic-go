@@ -38,6 +38,9 @@ func getRecievedMessages(c *cli.Context) error {
 
 		if len(recievedMessages) > 0 {
 			printMessages(recievedMessages)
+			if c.Bool("exit") {
+				return nil
+			}
 		}
 	}
 
