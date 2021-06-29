@@ -4,7 +4,9 @@ Meshtastic Go is a CLI for meshtastic devices built in Go. This tool provides an
 
 ## Command syntax
 
-A full list of commands can be viewed by running `--help`. Each command also has its own `--help` flag that provides more information on its subcommands and flags. Every command requires the `--port` flag to be set with the current serial port the radio is attached to. This defaults to `/dev/cu.SLAB_USBtoUART`.
+A full list of commands can be viewed by running `--help`. Each command also has its own `--help` flag that provides more information on its subcommands and flags.
+
+Every command requires the `--port` flag to be set to the port the radio is attached to. This can be set to a serial port (like `/dev/cu.SLAB_USBtoUART`) or an IP address depending on which communication method should be used to communicate with the radio. The CLI will automatically determine if TCP or serial communications should be used depending on what value is provided to `--port`.
 
 ```
 NAME:
@@ -12,6 +14,12 @@ NAME:
 
 USAGE:
    meshtastic-go [global options] command [command options] [arguments...]
+
+VERSION:
+   v0.2
+
+AUTHOR:
+   Lucas Matte <lmatte7@gmail.com>
 
 COMMANDS:
    info      Show radio information
@@ -22,7 +30,7 @@ COMMANDS:
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --port value, -p value  specify a port (default: /dev/cu.SLAB_USBtoUART)
+   --port value, -p value  specify a port
    --help, -h              show help (default: false)
    --version, -v           print the version (default: false)
 ```
@@ -147,13 +155,13 @@ meshtastic-go prefs set -p /dev/cu.SLAB_USBtoUART -k Region -v 1
 Set the radio location
 
 ```
-meshtastic-go location set --lat 310481775 --long -815817755 --alt 20
+meshtastic-go -p "192.168.0.42" location set --lat 310481775 --long -815817755 --alt 20
 ```
 
 Send a message to all radios on the mesh
 
 ```
-meshtastic-go message send -m "test"
+meshtastic-go --port "192.168.42.1" message send -m "test"
 ```
 
 ## Feedback

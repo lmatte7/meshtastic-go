@@ -268,11 +268,9 @@ func Init() {
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "port",
-				Aliases:     []string{"p"},
-				Usage:       "specify a port",
-				Value:       "/dev/cu.SLAB_USBtoUART",
-				DefaultText: "/dev/cu.SLAB_USBtoUART",
+				Name:    "port",
+				Aliases: []string{"p"},
+				Usage:   "specify a port",
 			},
 		},
 	}
