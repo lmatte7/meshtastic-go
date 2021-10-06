@@ -4,18 +4,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/lmatte7/gomesh"
 	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
 	"github.com/urfave/cli/v2"
 )
 
 func getRecievedMessages(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
 	printMessageHeader()
@@ -48,14 +43,10 @@ func getRecievedMessages(c *cli.Context) error {
 
 func sendText(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SendTextMessage(c.String("message"), c.Int64("to"))
+	err := radio.SendTextMessage(c.String("message"), c.Int64("to"))
 	if err != nil {
 		return err
 	}

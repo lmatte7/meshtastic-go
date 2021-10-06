@@ -8,14 +8,10 @@ import (
 )
 
 func setPref(c *cli.Context) error {
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SetUserPreferences(c.String("key"), c.String("value"))
+	err := radio.SetUserPreferences(c.String("key"), c.String("value"))
 	if err != nil {
 		return err
 	}
@@ -24,14 +20,10 @@ func setPref(c *cli.Context) error {
 }
 
 func setOwner(c *cli.Context) error {
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SetRadioOwner(c.String("name"))
+	err := radio.SetRadioOwner(c.String("name"))
 	if err != nil {
 		return err
 	}
@@ -149,14 +141,10 @@ func printRadioPreferences(r gomesh.Radio) error {
 }
 
 func showRadioPreferences(c *cli.Context) error {
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = printRadioPreferences(radio)
+	err := printRadioPreferences(radio)
 	if err != nil {
 		return err
 	}

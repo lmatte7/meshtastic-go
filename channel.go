@@ -12,14 +12,10 @@ import (
 )
 
 func showChannelInfo(c *cli.Context) error {
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = printChannelSettings(radio)
+	err := printChannelSettings(radio)
 	if err != nil {
 		return err
 	}
@@ -157,14 +153,10 @@ func printChannelSettings(r gomesh.Radio) error {
 
 func addChannel(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.AddChannel(c.String("name"), c.Int("index"))
+	err := radio.AddChannel(c.String("name"), c.Int("index"))
 	if err != nil {
 		return err
 	}
@@ -174,14 +166,10 @@ func addChannel(c *cli.Context) error {
 
 func deleteChannel(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.DeleteChannel(c.Int("index"))
+	err := radio.DeleteChannel(c.Int("index"))
 	if err != nil {
 		return err
 	}
@@ -191,14 +179,10 @@ func deleteChannel(c *cli.Context) error {
 
 func setChannel(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SetChannel(c.Int("index"), c.String("key"), c.String("value"))
+	err := radio.SetChannel(c.Int("index"), c.String("key"), c.String("value"))
 	if err != nil {
 		return err
 	}
@@ -209,14 +193,10 @@ func setChannel(c *cli.Context) error {
 
 func setUrl(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SetChannelURL(c.String("url"))
+	err := radio.SetChannelURL(c.String("url"))
 	if err != nil {
 		return err
 	}

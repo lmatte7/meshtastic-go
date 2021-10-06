@@ -10,11 +10,7 @@ import (
 
 func showRadioInfo(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
 	responses, err := radio.GetRadioInfo()
@@ -35,14 +31,10 @@ func showRadioInfo(c *cli.Context) error {
 
 func showAllRadioInfo(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = getRadioInfo(radio)
+	err := getRadioInfo(radio)
 	if err != nil {
 		return err
 	}
@@ -53,14 +45,10 @@ func showAllRadioInfo(c *cli.Context) error {
 
 func showNodeInfo(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = displayNodes(radio)
+	err := displayNodes(radio)
 	if err != nil {
 		return err
 	}
