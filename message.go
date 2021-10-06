@@ -21,7 +21,7 @@ func getRecievedMessages(c *cli.Context) error {
 			return err
 		}
 
-		recievedMessages := make([]*gomeshproto.FromRadio_Packet, 0)
+		recievedMessages := []*gomeshproto.FromRadio_Packet{}
 
 		for _, response := range responses {
 			if packet, ok := response.GetPayloadVariant().(*gomeshproto.FromRadio_Packet); ok {

@@ -13,5 +13,6 @@ func getRadio(c *cli.Context) gomesh.Radio {
 	if err != nil {
 		log.Fatalf("Error setting radio port: %w", err)
 	}
+
 	return radio
 }

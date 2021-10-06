@@ -19,10 +19,9 @@ func showChannelInfo(c *cli.Context) error {
 }
 
 func printChannelSettings(r gomesh.Radio) error {
-
-	channels := make([]gomeshproto.AdminMessage, 0)
-	channelSettings := make([]*gomeshproto.ChannelSettings, 0)
-	primaryChannelSettings := make([]*gomeshproto.ChannelSettings, 0)
+	channels := []gomeshproto.AdminMessage{}
+	channelSettings := []*gomeshproto.ChannelSettings{}
+	primaryChannelSettings := []*gomeshproto.ChannelSettings{}
 	channelSet := gomeshproto.ChannelSet{}
 	primaryChannelSet := gomeshproto.ChannelSet{}
 	channelCount := 0
