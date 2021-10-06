@@ -34,13 +34,7 @@ func showAllRadioInfo(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	err := getRadioInfo(radio)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
+	return getRadioInfo(radio)
 }
 
 func showNodeInfo(c *cli.Context) error {
@@ -48,13 +42,7 @@ func showNodeInfo(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	err := displayNodes(radio)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
+	return displayNodes(radio)
 }
 
 func displayNodes(r gomesh.Radio) error {

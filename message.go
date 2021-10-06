@@ -46,12 +46,7 @@ func sendText(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	err := radio.SendTextMessage(c.String("message"), c.Int64("to"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return radio.SendTextMessage(c.String("message"), c.Int64("to"))
 }
 
 func printMessageHeader() {
