@@ -8,7 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func getRecievedMessages(c *cli.Context) error {
+func getReceivedMessages(c *cli.Context) error {
 
 	radio := getRadio(c)
 	defer radio.Close()
@@ -51,7 +51,7 @@ func sendText(c *cli.Context) error {
 
 func printMessageHeader() {
 	fmt.Printf("\n")
-	fmt.Printf("Recieved Messages:\n")
+	fmt.Printf("Received Messages:\n")
 	fmt.Printf("%-80s", "==============================================================================================================\n")
 	fmt.Printf("| %-15s| ", "From")
 	fmt.Printf("%-15s| ", "To")
