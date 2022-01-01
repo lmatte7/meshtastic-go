@@ -21,7 +21,7 @@ func getRecievedMessages(c *cli.Context) error {
 	printMessageHeader()
 	for {
 
-		responses, err := radio.ReadResponse()
+		responses, err := radio.ReadResponse(false)
 		if err != nil {
 			return err
 		}

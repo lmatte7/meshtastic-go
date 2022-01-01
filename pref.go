@@ -122,8 +122,17 @@ func printRadioPreferences(r gomesh.Radio) error {
 		fmt.Printf("%s\n", "N/A")
 	}
 
-	fmt.Printf("%-25s", "GpsOperation:")
-	fmt.Printf("%d\n", prefs.GetGetRadioResponse().GetPreferences().GpsOperation)
+	fmt.Printf("%-25s", "GpsAccept_2D:")
+	fmt.Printf("%t\n", prefs.GetGetRadioResponse().GetPreferences().GpsAccept_2D)
+
+	fmt.Printf("%-25s", "IsAlwaysPowered:")
+	fmt.Printf("%t\n", prefs.GetGetRadioResponse().GetPreferences().IsAlwaysPowered)
+
+	fmt.Printf("%-25s", "GpsMaxDop:")
+	fmt.Printf("%d\n", prefs.GetGetRadioResponse().GetPreferences().GpsMaxDop)
+
+	fmt.Printf("%-25s", "IsRouter:")
+	fmt.Printf("%t\n", prefs.GetGetRadioResponse().GetPreferences().IsRouter)
 
 	fmt.Printf("%-25s", "GpsUpdateInterval:")
 	fmt.Printf("%d\n", prefs.GetGetRadioResponse().GetPreferences().GpsUpdateInterval)
