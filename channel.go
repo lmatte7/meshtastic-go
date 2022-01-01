@@ -12,26 +12,16 @@ import (
 )
 
 func showChannelInfo(c *cli.Context) error {
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = printChannelSettings(radio)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return printChannelSettings(radio)
 }
 
 func printChannelSettings(r gomesh.Radio) error {
-
-	channels := make([]gomeshproto.AdminMessage, 0)
-	channelSettings := make([]*gomeshproto.ChannelSettings, 0)
-	primaryChannelSettings := make([]*gomeshproto.ChannelSettings, 0)
+	channels := []gomeshproto.AdminMessage{}
+	channelSettings := []*gomeshproto.ChannelSettings{}
+	primaryChannelSettings := []*gomeshproto.ChannelSettings{}
 	channelSet := gomeshproto.ChannelSet{}
 	primaryChannelSet := gomeshproto.ChannelSet{}
 	channelCount := 0
@@ -157,70 +147,32 @@ func printChannelSettings(r gomesh.Radio) error {
 
 func addChannel(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.AddChannel(c.String("name"), c.Int("index"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return radio.AddChannel(c.String("name"), c.Int("index"))
 }
 
 func deleteChannel(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.DeleteChannel(c.Int("index"))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return radio.DeleteChannel(c.Int("index"))
 }
 
 func setChannel(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SetChannel(c.Int("index"), c.String("key"), c.String("value"))
-	if err != nil {
-		return err
-	}
-
-	return nil
-
+	return radio.SetChannel(c.Int("index"), c.String("key"), c.String("value"))
 }
 
 func setUrl(c *cli.Context) error {
 
-	radio := gomesh.Radio{}
-	err := radio.Init(c.String("port"))
-	if err != nil {
-		return err
-	}
+	radio := getRadio(c)
 	defer radio.Close()
 
-	err = radio.SetChannelURL(c.String("url"))
-	if err != nil {
-		return err
-	}
-
-	return nil
-
+	return radio.SetChannelURL(c.String("url"))
 }
