@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/lmatte7/gomesh"
 	"github.com/urfave/cli/v2"
@@ -21,6 +22,34 @@ func setOwner(c *cli.Context) error {
 	return radio.SetRadioOwner(c.String("name"))
 }
 
+func printPreferences(r gomesh.Radio) error {
+
+	prefs, _ := r.GetRadioPreferences()
+	prefs, err := r.GetRadioPreferences()
+	if err != nil {
+		return err
+	}
+
+	v := reflect.ValueOf(*prefs.GetGetRadioResponse().GetPreferences())
+	fmt.Printf("%s", "\n")
+	fmt.Printf("Radio Preferences:\n")
+	fmt.Printf("%-40s", "==============================================================================\n")
+	fmt.Printf("%-55s| ", "Field Name")
+	fmt.Printf("%-20s|\n", "Current Value")
+	fmt.Printf("%-40s", "------------------------------------------------------------------------------\n")
+
+	for i := 0; i < v.NumField(); i++ {
+		if v.Field(i).CanInterface() {
+			fmt.Printf("%-55s| ", v.Type().Field(i).Name)
+			fmt.Printf("%-20v|\n", v.Field(i))
+			// fmt.Printf("%s - %s - %v\n", v.Type().Field(i).Name, v.Type().Field(i).Type.Kind(), v.Field(i))
+		}
+	}
+	fmt.Printf("%-40s", "==============================================================================\n")
+
+	return nil
+}
+
 func printRadioPreferences(r gomesh.Radio) error {
 
 	prefs, _ := r.GetRadioPreferences()
@@ -29,11 +58,6 @@ func printRadioPreferences(r gomesh.Radio) error {
 		return err
 	}
 
-	fmt.Printf("%s", "\n")
-	fmt.Printf("Radio Preferences:\n")
-
-	fmt.Printf("%-25s", "PositionBroadcastSecs:")
-	fmt.Printf("%d\n", prefs.GetGetRadioResponse().GetPreferences().PositionBroadcastSecs)
 	fmt.Printf("%-25s", "SendOwnerInterval:")
 	fmt.Printf("%d\n", prefs.GetGetRadioResponse().GetPreferences().SendOwnerInterval)
 	fmt.Printf("%-25s", "WaitBluetoothSecs:")
@@ -143,5 +167,5 @@ func showRadioPreferences(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	return printRadioPreferences(radio)
+	return printPreferences(radio)
 }
