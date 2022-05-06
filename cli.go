@@ -71,7 +71,7 @@ func Init() {
 							&cli.StringFlag{
 								Name:     "message",
 								Aliases:  []string{"m"},
-								Usage:    "Message to send, must be under 240 characters",
+								Usage:    "Message to send, must be under 237 characters",
 								Required: true,
 							},
 							&cli.Int64Flag{

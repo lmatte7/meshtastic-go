@@ -91,7 +91,7 @@ func getRadioInfo(r gomesh.Radio) error {
 
 	}
 
-	err = printRadioPreferences(r)
+	err = printPreferences(r)
 	if err != nil {
 		return err
 	}

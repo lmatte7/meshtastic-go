@@ -18,7 +18,7 @@ func getReceivedMessages(c *cli.Context) error {
 
 		responses, err := radio.ReadResponse(false)
 		if err != nil {
-			return err
+			return cli.Exit(err.Error(), 0)
 		}
 
 		recievedMessages := []*gomeshproto.FromRadio_Packet{}
