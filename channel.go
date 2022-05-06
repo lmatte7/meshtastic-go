@@ -124,7 +124,7 @@ func printChannelSettings(r gomesh.Radio) error {
 
 	out, err := proto.Marshal(&primaryChannelSet)
 	if err != nil {
-		fmt.Printf("ERROR: Error parsing channel URL")
+		return cli.Exit("Error parsing channel URL", 0)
 	}
 
 	url := base64.RawURLEncoding.EncodeToString(out)
@@ -134,7 +134,7 @@ func printChannelSettings(r gomesh.Radio) error {
 
 	out, err = proto.Marshal(&channelSet)
 	if err != nil {
-		fmt.Printf("ERROR: Error parsing channel URL")
+		return cli.Exit("Error parsing channel URL", 0)
 	}
 
 	url = base64.RawURLEncoding.EncodeToString(out)
