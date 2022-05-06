@@ -164,6 +164,18 @@ Send a message to all radios on the mesh
 meshtastic-go --port "192.168.42.1" message send -m "test"
 ```
 
+## Run smoke tests
+
+To run the smoke tests, plug in a device, and run the following:
+
+```
+go build
+cd smoke
+go build
+./smoke
+```
+
+
 ## Feedback
 
 This tool is still under development. Any issues or feedback can be submitted to the [issues](https://github.com/lmatte7/meshtastic-go/issues) page.
