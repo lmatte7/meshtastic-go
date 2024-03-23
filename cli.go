@@ -14,8 +14,7 @@ func Init() {
 		Version: "v0.2",
 		Authors: []*cli.Author{
 			{
-				Name:  "Lucas Matte",
-				Email: "lmatte7@gmail.com",
+				Name: "Lucas Matte",
 			},
 		},
 		Usage: "Interface with meshtastic radios",
@@ -47,10 +46,10 @@ func Init() {
 						Action:  showNodeInfo,
 					},
 					{
-						Name:    "preferences",
+						Name:    "position",
 						Aliases: []string{"p"},
-						Usage:   "Show radio user preferences",
-						Action:  showRadioPreferences,
+						Usage:   "Show position settings",
+						Action:  showPositionInfo,
 					},
 				},
 			},
@@ -188,6 +187,12 @@ func Init() {
 							},
 						},
 					},
+					{
+						Name:        "options",
+						Usage:       "Show channel options",
+						Description: "Show all avaible channel options that can be set",
+						Action:      showChannelOptions,
+					},
 				},
 			},
 			{
@@ -196,13 +201,13 @@ func Init() {
 				UsageText:   "prefs [command] - Update user preferences",
 				Description: "Update user preferences",
 				ArgsUsage:   "",
-				Action:      showRadioPreferences,
+				Action:      showNodeInfo,
 				Subcommands: []*cli.Command{
 					{
 						Name:        "set",
 						Usage:       "Set a user preference",
 						Description: "Sets a user preference using the provided key/value combination",
-						Action:      setPref,
+						Action:      setChannel,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "key",
