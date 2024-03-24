@@ -149,7 +149,18 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 			if gpsConfig := config.GetPosition(); gpsConfig != nil {
 				positionPacket = packet
 			}
+			if deviceInfo := config.GetDevice(); deviceInfo != nil {
+				fmt.Printf("%s", "\nDevice Settings\n")
+				v := reflect.ValueOf(*deviceInfo)
+				for i := 0; i < v.NumField(); i++ {
+					if v.Field(i).CanInterface() {
+						fmt.Printf("%-25s", v.Type().Field(i).Name)
+						fmt.Printf("%v\n", v.Field(i))
+					}
+				}
+			}
 		}
+
 		if metaInfo := packet.GetMetadata(); metaInfo != nil {
 			fmt.Printf("%s", "Radio Metadata\n")
 			v := reflect.ValueOf(*metaInfo)

@@ -196,18 +196,18 @@ func Init() {
 				},
 			},
 			{
-				Name:        "prefs",
-				Usage:       "Update user preferences",
-				UsageText:   "prefs [command] - Update user preferences",
-				Description: "Update user preferences",
+				Name:        "config",
+				Usage:       "Update radio config",
+				UsageText:   "config [command] - Update radio config",
+				Description: "Update radio config",
 				ArgsUsage:   "",
-				Action:      showNodeInfo,
+				Action:      showRadioConfig,
 				Subcommands: []*cli.Command{
 					{
 						Name:        "set",
 						Usage:       "Set a user preference",
 						Description: "Sets a user preference using the provided key/value combination",
-						Action:      setChannel,
+						Action:      setConfig,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "key",
