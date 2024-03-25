@@ -59,7 +59,7 @@ func printConfig(r gomesh.Radio) error {
 	for _, module := range moduleSettings {
 
 		if moduleConfig := module.ModuleConfig.GetMqtt(); moduleConfig != nil {
-			printSection("Bluetooth Module Options", *moduleConfig)
+			printSection("Mqtt Module Options", *moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetSerial(); moduleConfig != nil {
 			printSection("Serial Module Options", *moduleConfig)

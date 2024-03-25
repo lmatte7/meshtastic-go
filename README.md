@@ -42,26 +42,30 @@ GLOBAL OPTIONS:
 The `info` command displays information about the radio. By default all informaiton is shown, but information can be restricted by using subcommands. It is also possible to chain together subcommands, for example `meshtastic-go info rc` to only display radio and channel information
 
 ```
-meshtastic-go info --help
-
 NAME:
-   meshtastic-go info - Show radio information
+   meshtastic-go - Interface with meshtastic radios
 
 USAGE:
-   meshtastic-go info command [command options] [arguments...]
+   meshtastic-go [global options] command [command options] [arguments...]
 
-DESCRIPTION:
-   Show node, preference and channel information for radio
+VERSION:
+   v0.2
+
+AUTHOR:
+   Lucas Matte
 
 COMMANDS:
-   radio, r        Show radio information
-   channels, c     Show all channel information
-   nodes, n        Show all nodes on the mesh
-   preferences, p  Show radio user preferences
-   help, h         Shows a list of commands or help for one command
+   info      Show radio information
+   message   Interact with radio messaging functionality
+   channel   Update channel information
+   config    Update radio config
+   location  Set location
+   help, h   Shows a list of commands or help for one command
 
-OPTIONS:
-   --help, -h  show help (default: false)
+GLOBAL OPTIONS:
+   --port value, -p value  specify a port
+   --help, -h              show help (default: false)
+   --version, -v           print the version (default: false)
 ```
 
 ### `message`
@@ -89,21 +93,19 @@ OPTIONS:
    --help, -h  show help (default: false)
 ```
 
-### `prefs`
+### `config`
 
 The `prefs` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.
 
 ```
-meshtastic-go prefs --help
-
 NAME:
-   meshtastic-go prefs - Update user preferences
+   meshtastic-go config - Update radio config
 
 USAGE:
-   meshtastic-go prefs command [command options] [arguments...]
+   meshtastic-go config command [command options] [arguments...]
 
 DESCRIPTION:
-   Update user preferences
+   Update radio config
 
 COMMANDS:
    set      Set a user preference
@@ -138,6 +140,29 @@ OPTIONS:
    --help, -h  show help (default: false)
 ```
 
+### `channel`  
+```
+NAME:
+   meshtastic-go channel - Update channel information
+
+USAGE:
+   meshtastic-go channel command [command options] [arguments...]
+
+DESCRIPTION:
+   Add, delete and update channel settings
+
+COMMANDS:
+   url      Change settings with a url
+   add      Adds a channel
+   delete   Deletes a channel
+   set      Set a channel parameter
+   options  Show channel options
+   help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help (default: false)
+   ```
+
 ## Examples
 
 Add a channel
@@ -149,7 +174,7 @@ meshtastic-go channel add --port=/dev/cu.SLAB_USBtoUART -i 2 -name test2
 Update the Region
 
 ```
-meshtastic-go prefs set -p /dev/cu.SLAB_USBtoUART -k Region -v 1
+meshtastic-go config set -p /dev/cu.SLAB_USBtoUART -k Region -v 1
 ```
 
 Set the radio location
