@@ -14,8 +14,7 @@ func Init() {
 		Version: "v0.2",
 		Authors: []*cli.Author{
 			{
-				Name:  "Lucas Matte",
-				Email: "lmatte7@gmail.com",
+				Name: "Lucas Matte",
 			},
 		},
 		Usage: "Interface with meshtastic radios",
@@ -47,10 +46,10 @@ func Init() {
 						Action:  showNodeInfo,
 					},
 					{
-						Name:    "preferences",
+						Name:    "position",
 						Aliases: []string{"p"},
-						Usage:   "Show radio user preferences",
-						Action:  showRadioPreferences,
+						Usage:   "Show position settings",
+						Action:  showPositionInfo,
 					},
 				},
 			},
@@ -188,21 +187,27 @@ func Init() {
 							},
 						},
 					},
+					{
+						Name:        "options",
+						Usage:       "Show channel options",
+						Description: "Show all avaible channel options that can be set",
+						Action:      showChannelOptions,
+					},
 				},
 			},
 			{
-				Name:        "prefs",
-				Usage:       "Update user preferences",
-				UsageText:   "prefs [command] - Update user preferences",
-				Description: "Update user preferences",
+				Name:        "config",
+				Usage:       "Update radio config",
+				UsageText:   "config [command] - Update radio config",
+				Description: "Update radio config",
 				ArgsUsage:   "",
-				Action:      showRadioPreferences,
+				Action:      showRadioConfig,
 				Subcommands: []*cli.Command{
 					{
 						Name:        "set",
 						Usage:       "Set a user preference",
 						Description: "Sets a user preference using the provided key/value combination",
-						Action:      setPref,
+						Action:      setConfig,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "key",
@@ -260,6 +265,44 @@ func Init() {
 							&cli.IntFlag{
 								Name:     "alt",
 								Usage:    "Altitude",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:        "reset",
+				Usage:       "Factory reset the radio",
+				UsageText:   "reset - Factory reset the radio",
+				Description: "Reset the radio to default settings",
+				ArgsUsage:   "",
+				Action:      factoryResetRadio,
+			},
+			{
+				Name:        "modem",
+				Usage:       "Set the modem mode",
+				UsageText:   "modem [command] - set modem mode",
+				Description: "Set the modem mode for the radio",
+				ArgsUsage:   "",
+				Action:      factoryResetRadio,
+				Subcommands: []*cli.Command{
+					{
+						Name:        "options",
+						Usage:       "show modem options",
+						Description: "Show available modem options",
+						Action:      showModemOptions,
+					},
+					{
+						Name:        "set",
+						Usage:       "set a modem option",
+						Description: "Set the modem",
+						Action:      setModemOption,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "option",
+								Aliases:  []string{"o"},
+								Usage:    "The modem option",
 								Required: true,
 							},
 						},

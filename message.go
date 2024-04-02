@@ -46,18 +46,23 @@ func sendText(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	return radio.SendTextMessage(c.String("message"), c.Int64("to"))
+	err := radio.SendTextMessage(c.String("message"), c.Int64("to"))
+	if err != nil {
+		return cli.Exit(err, 0)
+	}
+
+	return nil
 }
 
 func printMessageHeader() {
 	fmt.Printf("\n")
 	fmt.Printf("Received Messages:\n")
-	fmt.Printf("%-80s", "==============================================================================================================\n")
+	printDoubleDivider()
 	fmt.Printf("| %-15s| ", "From")
 	fmt.Printf("%-15s| ", "To")
 	fmt.Printf("%-18s| ", "Port Num")
 	fmt.Printf("%-15s ", "Payload                                              |\n")
-	fmt.Printf("%-80s", "-------------------------------------------------------------------------------------------------------------\n")
+	printSingleDivider()
 }
 
 func printMessages(messages []*gomeshproto.FromRadio_Packet) {
