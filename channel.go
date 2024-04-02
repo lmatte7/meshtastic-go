@@ -15,17 +15,9 @@ func showChannelInfo(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	info, err := radio.GetRadioInfo()
+	channels, err := radio.GetChannels()
 	if err != nil {
-		return cli.Exit("Failed parsing channels", 0)
-	}
-
-	channels := make([]*gomeshproto.FromRadio_Channel, 0)
-
-	for _, packet := range info {
-		if channelInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_Channel); ok {
-			channels = append(channels, channelInfo)
-		}
+		return cli.Exit(err, 0)
 	}
 
 	err = printChannels(channels)
@@ -36,7 +28,7 @@ func showChannelInfo(c *cli.Context) error {
 	return nil
 }
 
-func printChannels(channels []*gomeshproto.FromRadio_Channel) error {
+func printChannels(channels []*gomeshproto.Channel) error {
 
 	primaryChannelSettings := gomeshproto.ChannelSettings{}
 	allChannelSettings := []*gomeshproto.ChannelSettings{}
@@ -57,53 +49,53 @@ func printChannels(channels []*gomeshproto.FromRadio_Channel) error {
 	for _, channelInfo := range channels {
 
 		// fmt.Printf("Channel Info: %v\n\n", channelInfo.Channel.Settings)
-		if channelInfo.Channel.GetRole() == gomeshproto.Channel_DISABLED {
+		if channelInfo.GetRole() == gomeshproto.Channel_DISABLED {
 			break
 		}
 
-		if channelInfo.Channel.GetRole() == gomeshproto.Channel_PRIMARY {
-			primaryChannelSettings = *channelInfo.Channel.Settings
+		if channelInfo.GetRole() == gomeshproto.Channel_PRIMARY {
+			primaryChannelSettings = *channelInfo.Settings
 		}
 
-		allChannelSettings = append(allChannelSettings, channelInfo.Channel.Settings)
+		allChannelSettings = append(allChannelSettings, channelInfo.Settings)
 
-		if len(channelInfo.Channel.Settings.Name) > 0 {
-			fmt.Printf("| %-15s| ", channelInfo.Channel.Settings.Name)
+		if len(channelInfo.Settings.Name) > 0 {
+			fmt.Printf("| %-15s| ", channelInfo.Settings.Name)
 		} else {
 			fmt.Printf("| %-15s| ", "Default")
 		}
-		if channelInfo.Channel.Index > 0 {
-			fmt.Printf("%-15d| ", channelInfo.Channel.Index)
-		} else if channelInfo.Channel.GetRole() == gomeshproto.Channel_PRIMARY {
+		if channelInfo.Index > 0 {
+			fmt.Printf("%-15d| ", channelInfo.Index)
+		} else if channelInfo.GetRole() == gomeshproto.Channel_PRIMARY {
 			fmt.Printf("%-15s| ", "0")
 		} else {
 			fmt.Printf("%-15s| ", "N/A")
 		}
-		if channelInfo.Channel.Settings.UplinkEnabled {
+		if channelInfo.Settings.UplinkEnabled {
 			fmt.Printf("%-10s| ", "True")
 		} else {
 			fmt.Printf("%-10s| ", "False")
 		}
 
-		if channelInfo.Channel.Settings.DownlinkEnabled {
+		if channelInfo.Settings.DownlinkEnabled {
 			fmt.Printf("%-10s| ", "True")
 		} else {
 			fmt.Printf("%-10s| ", "False")
 		}
 
-		if len(channelInfo.Channel.Role.String()) > 0 {
-			fmt.Printf("%-15s| ", channelInfo.Channel.Role.String())
+		if len(channelInfo.Role.String()) > 0 {
+			fmt.Printf("%-15s| ", channelInfo.Role.String())
 		} else {
 			fmt.Printf("%-15s| ", "N/A")
 		}
-		if channelInfo.Channel.Settings.ModuleSettings.GetPositionPrecision() > 0 {
-			fmt.Printf("%-15d| ", channelInfo.Channel.Settings.ModuleSettings.PositionPrecision)
+		if channelInfo.Settings.ModuleSettings.GetPositionPrecision() > 0 {
+			fmt.Printf("%-15d| ", channelInfo.Settings.ModuleSettings.PositionPrecision)
 		} else {
 			fmt.Printf("%-15s| ", "N/A")
 		}
-		if len(channelInfo.Channel.Settings.Psk) > 0 {
+		if len(channelInfo.Settings.Psk) > 0 {
 			re := regexp.MustCompile(`\r?\n`)
-			escMesg := re.ReplaceAllString(string(channelInfo.Channel.Settings.Psk), "")
+			escMesg := re.ReplaceAllString(string(channelInfo.Settings.Psk), "")
 			fmt.Printf("%-90q", escMesg)
 		} else {
 			fmt.Printf("%-53s| ", "N/A")

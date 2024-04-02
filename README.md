@@ -60,6 +60,8 @@ COMMANDS:
    channel   Update channel information
    config    Update radio config
    location  Set location
+   reset     Factory reset the radio
+   modem     Set the modem mode
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -95,7 +97,7 @@ OPTIONS:
 
 ### `config`
 
-The `prefs` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.
+The `config` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.
 
 ```
 NAME:
@@ -158,6 +160,22 @@ COMMANDS:
    set      Set a channel parameter
    options  Show channel options
    help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help (default: false)
+   ```
+
+
+### `reset`
+```
+NAME:
+   meshtastic-go reset - Factory reset the radio
+
+USAGE:
+   reset - Factory reset the radio
+
+DESCRIPTION:
+   Reset the radio to default settings
 
 OPTIONS:
    --help, -h  show help (default: false)

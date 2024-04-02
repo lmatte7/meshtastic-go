@@ -41,6 +41,18 @@ func showNodeInfo(c *cli.Context) error {
 	return displayNodes(radio)
 }
 
+func factoryResetRadio(c *cli.Context) error {
+	radio := getRadio(c)
+	defer radio.Close()
+
+	err := radio.FactoryRest()
+	if err != nil {
+		return cli.Exit(err, 0)
+	}
+
+	return nil
+}
+
 func showPositionInfo(c *cli.Context) error {
 
 	positionPacket := &gomeshproto.FromRadio{}
@@ -96,6 +108,32 @@ func getRadioInfo(r gomesh.Radio) error {
 	return nil
 }
 
+func showModemOptions(c *cli.Context) error {
+	fmt.Println("Modem Options")
+	printDoubleDivider()
+	fmt.Printf("'lf' for %s\n", gomeshproto.Config_LoRaConfig_LONG_FAST.String())
+	fmt.Printf("'vls' for %s\n", gomeshproto.Config_LoRaConfig_VERY_LONG_SLOW.String())
+	fmt.Printf("'ms' for %s\n", gomeshproto.Config_LoRaConfig_MEDIUM_SLOW.String())
+	fmt.Printf("'mf' for %s\n", gomeshproto.Config_LoRaConfig_MEDIUM_FAST.String())
+	fmt.Printf("'sl' for %s\n", gomeshproto.Config_LoRaConfig_SHORT_SLOW.String())
+	fmt.Printf("'sf' for %s\n", gomeshproto.Config_LoRaConfig_SHORT_FAST.String())
+	fmt.Printf("'lm' for %s\n", gomeshproto.Config_LoRaConfig_LONG_MODERATE.String())
+
+	return nil
+}
+
+func setModemOption(c *cli.Context) error {
+	radio := getRadio(c)
+	defer radio.Close()
+
+	err := radio.SetModemMode(c.String("option"))
+	if err != nil {
+		return cli.Exit(err, 0)
+	}
+
+	return nil
+}
+
 func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 	fmt.Printf("\n")
 	fmt.Printf("Nodes in Mesh:\n")
@@ -135,7 +173,7 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 func printRadioInfo(info []*gomeshproto.FromRadio) {
 	fmt.Printf("%s", "\nRadio Settings: \n")
 	nodes := make([]*gomeshproto.FromRadio_NodeInfo, 0)
-	channels := make([]*gomeshproto.FromRadio_Channel, 0)
+	channels := make([]*gomeshproto.Channel, 0)
 	positionPacket := &gomeshproto.FromRadio{}
 
 	for _, packet := range info {
@@ -143,7 +181,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 			nodes = append(nodes, nodeInfo)
 		}
 		if channelInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_Channel); ok {
-			channels = append(channels, channelInfo)
+			channels = append(channels, channelInfo.Channel)
 		}
 		if config := packet.GetConfig(); config != nil {
 			if gpsConfig := config.GetPosition(); gpsConfig != nil {

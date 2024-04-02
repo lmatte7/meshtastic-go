@@ -271,6 +271,44 @@ func Init() {
 					},
 				},
 			},
+			{
+				Name:        "reset",
+				Usage:       "Factory reset the radio",
+				UsageText:   "reset - Factory reset the radio",
+				Description: "Reset the radio to default settings",
+				ArgsUsage:   "",
+				Action:      factoryResetRadio,
+			},
+			{
+				Name:        "modem",
+				Usage:       "Set the modem mode",
+				UsageText:   "modem [command] - set modem mode",
+				Description: "Set the modem mode for the radio",
+				ArgsUsage:   "",
+				Action:      factoryResetRadio,
+				Subcommands: []*cli.Command{
+					{
+						Name:        "options",
+						Usage:       "show modem options",
+						Description: "Show available modem options",
+						Action:      showModemOptions,
+					},
+					{
+						Name:        "set",
+						Usage:       "set a modem option",
+						Description: "Set the modem",
+						Action:      setModemOption,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "option",
+								Aliases:  []string{"o"},
+								Usage:    "The modem option",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
