@@ -154,8 +154,12 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 			} else {
 				fmt.Printf("%-15s| ", "N/A")
 			}
-			if node.NodeInfo.Position != nil {
+			if node.NodeInfo.DeviceMetrics != nil {
 				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel))
+			} else {
+				fmt.Printf("%-15s| ", "N/A")
+			}
+			if node.NodeInfo.Position != nil {
 				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.Altitude))
 				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
 				fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
