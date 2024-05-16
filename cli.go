@@ -84,13 +84,13 @@ func Init() {
 					{
 						Name:        "recv",
 						Usage:       "Wait for new messages",
-						Description: "Waits for new messages and displays them as recieved until cancelled. Only shows messages on TEXT_MESSAGE port. Doesn't work over TCP",
+						Description: "Waits for new messages and displays them as received until cancelled. Only shows messages on TEXT_MESSAGE port. Doesn't work over TCP",
 						Action:      getReceivedMessages,
 						Flags: []cli.Flag{
 							&cli.BoolFlag{
 								Name:     "exit",
 								Aliases:  []string{"e"},
-								Usage:    "Exit after recieving a message from the mesh",
+								Usage:    "Exit after receiving a message from the mesh",
 								Required: false,
 								Value:    false,
 							},

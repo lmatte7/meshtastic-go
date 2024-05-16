@@ -72,7 +72,7 @@ GLOBAL OPTIONS:
 
 ### `message`
 
-The `message` subcommand provides the ability to send messages and listen for new messages on the mesh. The `recv` subcommand won't show any previously recieved messages from the radio, but will wait and display new messages as they are recieved.
+The `message` subcommand provides the ability to send messages and listen for new messages on the mesh. The `recv` subcommand won't show any previously received messages from the radio, but will wait and display new messages as they are received.
 
 ```
 meshtastic-go message --help
