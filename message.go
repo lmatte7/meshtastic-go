@@ -21,18 +21,18 @@ func getReceivedMessages(c *cli.Context) error {
 			return cli.Exit(err.Error(), 0)
 		}
 
-		recievedMessages := []*gomeshproto.FromRadio_Packet{}
+		receivedMessages := []*gomeshproto.FromRadio_Packet{}
 
 		for _, response := range responses {
 			if packet, ok := response.GetPayloadVariant().(*gomeshproto.FromRadio_Packet); ok {
 				if packet.Packet.GetDecoded().GetPortnum() == gomeshproto.PortNum_TEXT_MESSAGE_APP {
-					recievedMessages = append(recievedMessages, packet)
+					receivedMessages = append(receivedMessages, packet)
 				}
 			}
 		}
 
-		if len(recievedMessages) > 0 {
-			printMessages(recievedMessages)
+		if len(receivedMessages) > 0 {
+			printMessages(receivedMessages)
 			if c.Bool("exit") {
 				return nil
 			}
