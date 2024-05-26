@@ -43,31 +43,25 @@ The `info` command displays information about the radio. By default all informai
 
 ```
 NAME:
-   meshtastic-go - Interface with meshtastic radios
+   meshtastic-go info - Show radio information
 
 USAGE:
-   meshtastic-go [global options] command [command options] [arguments...]
+   meshtastic-go info command [command options] [arguments...]
 
-VERSION:
-   v0.2
-
-AUTHOR:
-   Lucas Matte
+DESCRIPTION:
+   Show node, preference and channel information for radio
 
 COMMANDS:
-   info      Show radio information
-   message   Interact with radio messaging functionality
-   channel   Update channel information
-   config    Update radio config
-   location  Set location
-   reset     Factory reset the radio
-   modem     Set the modem mode
-   help, h   Shows a list of commands or help for one command
+   radio, r     Show radio information
+   channels, c  Show all channel information
+   nodes, n     Show all nodes on the mesh
+   position, p  Show position settings
+   metrics, m   Display node metrics
+   help, h      Shows a list of commands or help for one command
 
-GLOBAL OPTIONS:
-   --port value, -p value  specify a port
-   --help, -h              show help (default: false)
-   --version, -v           print the version (default: false)
+OPTIONS:
+   --json      Output data in JSON (default: false)
+   --help, -h  show help (default: false)
 ```
 
 ### `message`
@@ -75,8 +69,6 @@ GLOBAL OPTIONS:
 The `message` subcommand provides the ability to send messages and listen for new messages on the mesh. The `recv` subcommand won't show any previously recieved messages from the radio, but will wait and display new messages as they are recieved.
 
 ```
-meshtastic-go message --help
-
 NAME:
    meshtastic-go message - Interact with radio messaging functionality
 
