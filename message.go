@@ -46,7 +46,7 @@ func sendText(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	err := radio.SendTextMessage(c.String("message"), c.Int64("to"))
+	err := radio.SendTextMessage(c.String("message"), c.Int64("to"), c.Int64("channel"))
 	if err != nil {
 		return cli.Exit(err, 0)
 	}
@@ -61,6 +61,7 @@ func printMessageHeader() {
 	fmt.Printf("| %-15s| ", "From")
 	fmt.Printf("%-15s| ", "To")
 	fmt.Printf("%-18s| ", "Port Num")
+	fmt.Printf("%-10s| ", "Channel")
 	fmt.Printf("%-15s ", "Payload                                              |\n")
 	printSingleDivider()
 }
@@ -71,6 +72,7 @@ func printMessages(messages []*gomeshproto.FromRadio_Packet) {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
 		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetPortnum().String())
+		fmt.Printf("%-10s| ", fmt.Sprint(message.Packet.Channel))
 		re := regexp.MustCompile(`\r?\n`)
 		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
 		fmt.Printf("%-53q", escMesg)

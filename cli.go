@@ -26,6 +26,13 @@ func Init() {
 				Description: "Show node, preference and channel information for radio",
 				ArgsUsage:   "",
 				Action:      showAllRadioInfo,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:     "json",
+						Usage:    "Output data in JSON",
+						Required: false,
+					},
+				},
 				Subcommands: []*cli.Command{
 					{
 						Name:    "radio",
@@ -50,6 +57,12 @@ func Init() {
 						Aliases: []string{"p"},
 						Usage:   "Show position settings",
 						Action:  showPositionInfo,
+					},
+					{
+						Name:    "metrics",
+						Aliases: []string{"m"},
+						Usage:   "Display node metrics",
+						Action:  showMetricInfo,
 					},
 				},
 			},
@@ -79,6 +92,12 @@ func Init() {
 								Usage:   "Address to send to. Leave blank for broadcast",
 								Value:   0,
 							},
+							&cli.Int64Flag{
+								Name:    "channel",
+								Aliases: []string{"c"},
+								Usage:   "Channel to send the message on",
+								Value:   0,
+							},
 						},
 					},
 					{
@@ -87,6 +106,12 @@ func Init() {
 						Description: "Waits for new messages and displays them as recieved until cancelled. Only shows messages on TEXT_MESSAGE port. Doesn't work over TCP",
 						Action:      getReceivedMessages,
 						Flags: []cli.Flag{
+							&cli.Int64Flag{
+								Name:    "channel",
+								Aliases: []string{"c"},
+								Usage:   "Channel to listen for messages on",
+								Value:   0,
+							},
 							&cli.BoolFlag{
 								Name:     "exit",
 								Aliases:  []string{"e"},

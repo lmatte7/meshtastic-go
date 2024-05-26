@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/lmatte7/gomesh"
 	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
 	"github.com/urfave/cli/v2"
@@ -30,7 +31,7 @@ func showAllRadioInfo(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	return getRadioInfo(radio)
+	return getRadioInfo(radio, c.Bool("json"))
 }
 
 func showNodeInfo(c *cli.Context) error {
@@ -96,14 +97,18 @@ func displayNodes(r gomesh.Radio) error {
 	return nil
 }
 
-func getRadioInfo(r gomesh.Radio) error {
+func getRadioInfo(r gomesh.Radio, json bool) error {
 
 	responses, err := r.GetRadioInfo()
 	if err != nil {
 		return err
 	}
 
-	printRadioInfo(responses)
+	if json {
+		printJsonRadioInfo(responses)
+	} else {
+		printRadioInfo(responses)
+	}
 
 	return nil
 }
@@ -172,6 +177,59 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 		}
 	}
 	printDoubleDivider()
+}
+
+func printJsonRadioInfo(info []*gomeshproto.FromRadio) {
+	nodes := make([]*gomeshproto.FromRadio_NodeInfo, 0)
+	channels := make([]*gomeshproto.Channel, 0)
+
+	fmt.Print("{ \"packets\": [")
+	for i, packet := range info {
+		if nodeInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_NodeInfo); ok {
+			nodes = append(nodes, nodeInfo)
+			continue
+		}
+		if channelInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_Channel); ok {
+			channels = append(channels, channelInfo.Channel)
+			continue
+		}
+		marshaler := jsonpb.Marshaler{}
+		json, err := marshaler.MarshalToString(packet)
+		if err != nil {
+			fmt.Println("N/A")
+		}
+
+		fmt.Println(json)
+		if i < (len(info) - 1) {
+			fmt.Print(",")
+		} else {
+			fmt.Print("],")
+		}
+	}
+
+	fmt.Print("\"channels\":[")
+	for i, channel := range channels {
+		marshaler := jsonpb.Marshaler{}
+		json, _ := marshaler.MarshalToString(channel)
+		fmt.Println(json)
+		if i < (len(channels) - 1) {
+			fmt.Print(",")
+		} else {
+			fmt.Print("],")
+		}
+	}
+
+	fmt.Print("\"nodes\":[")
+	for i, node := range nodes {
+		marshaler := jsonpb.Marshaler{}
+		json, _ := marshaler.MarshalToString(node.NodeInfo)
+		fmt.Println(json)
+		if i < (len(nodes) - 1) {
+			fmt.Print(",")
+		} else {
+			fmt.Print("]}\n")
+		}
+	}
 }
 
 func printRadioInfo(info []*gomeshproto.FromRadio) {
