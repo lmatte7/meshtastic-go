@@ -48,9 +48,9 @@ func printChannels(channels []*gomeshproto.Channel) error {
 	printSingleDivider()
 	for _, channelInfo := range channels {
 
-		// fmt.Printf("Channel Info: %v\n\n", channelInfo.Channel.Settings)
+		// fmt.Printf("Channel Info: %v\n\n", channelInfo)
 		if channelInfo.GetRole() == gomeshproto.Channel_DISABLED {
-			break
+			continue
 		}
 
 		if channelInfo.GetRole() == gomeshproto.Channel_PRIMARY {

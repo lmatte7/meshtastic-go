@@ -268,21 +268,21 @@ func Init() {
 				Name:        "location",
 				Usage:       "Set location",
 				UsageText:   "location [command] - Set location",
-				Description: "Manually set the GPS coordinates for the radio",
+				Description: "Manually set GPS coordinates using int values for lat, long, and alt",
 				ArgsUsage:   "",
 				Subcommands: []*cli.Command{
 					{
 						Name:        "set",
 						Usage:       "Set a location",
-						Description: "Manually set the GPS coordinates for the radio",
+						Description: "Manually set GPS coordinates using int values for lat, long, and alt",
 						Action:      setLocation,
 						Flags: []cli.Flag{
-							&cli.Float64Flag{
+							&cli.Int64Flag{
 								Name:     "lat",
 								Usage:    "Latitude",
 								Required: true,
 							},
-							&cli.Float64Flag{
+							&cli.Int64Flag{
 								Name:     "long",
 								Usage:    "Longitude",
 								Required: true,
