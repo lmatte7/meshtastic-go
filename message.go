@@ -13,7 +13,9 @@ func getReceivedMessages(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	printMessageHeader()
+	if !c.Bool("json") {
+		printMessageHeader()
+	}
 	for {
 
 		responses, err := radio.ReadResponse(false)
@@ -32,7 +34,11 @@ func getReceivedMessages(c *cli.Context) error {
 		}
 
 		if len(receivedMessages) > 0 {
-			printMessages(receivedMessages)
+			if c.Bool("json") {
+				printJsonMessages(receivedMessages)
+			} else {
+				printMessages(receivedMessages)
+			}
 			if c.Bool("exit") {
 				return nil
 			}
@@ -67,7 +73,6 @@ func printMessageHeader() {
 }
 
 func printMessages(messages []*gomeshproto.FromRadio_Packet) {
-
 	for _, message := range messages {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
@@ -77,5 +82,18 @@ func printMessages(messages []*gomeshproto.FromRadio_Packet) {
 		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
 		fmt.Printf("%-53q", escMesg)
 		fmt.Printf("%s", "|\n")
+	}
+}
+
+func printJsonMessages(messages []*gomeshproto.FromRadio_Packet) {
+	for _, message := range messages {
+		fmt.Printf("{\"from\":%s,", fmt.Sprint(message.Packet.From))
+		fmt.Printf("\"to\":%s,", fmt.Sprint(message.Packet.To))
+		fmt.Printf("\"portnum\": \"%s\",", message.Packet.GetDecoded().GetPortnum().String())
+		fmt.Printf("\"channel\":%s,", fmt.Sprint(message.Packet.Channel))
+		re := regexp.MustCompile(`\r?\n`)
+		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
+		fmt.Printf("\"Payload\": \"%s\"", escMesg)
+		fmt.Printf("%s", "}\n")
 	}
 }
