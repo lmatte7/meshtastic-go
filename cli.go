@@ -113,6 +113,11 @@ func Init() {
 								Value:   0,
 							},
 							&cli.BoolFlag{
+								Name:     "json",
+								Usage:    "Output messages in JSON with a newline between each message",
+								Required: false,
+							},
+							&cli.BoolFlag{
 								Name:     "exit",
 								Aliases:  []string{"e"},
 								Usage:    "Exit after receiving a message from the mesh",
