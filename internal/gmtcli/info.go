@@ -1,4 +1,4 @@
-package main
+package gmtcli
 
 import (
 	"fmt"
@@ -116,13 +116,34 @@ func getRadioInfo(r gomesh.Radio, json bool) error {
 func showModemOptions(c *cli.Context) error {
 	fmt.Println("Modem Options")
 	printDoubleDivider()
-	fmt.Printf("'lf' for %s\n", gomeshproto.Config_LoRaConfig_LONG_FAST.String())
-	fmt.Printf("'vls' for %s\n", gomeshproto.Config_LoRaConfig_VERY_LONG_SLOW.String())
-	fmt.Printf("'ms' for %s\n", gomeshproto.Config_LoRaConfig_MEDIUM_SLOW.String())
-	fmt.Printf("'mf' for %s\n", gomeshproto.Config_LoRaConfig_MEDIUM_FAST.String())
-	fmt.Printf("'sl' for %s\n", gomeshproto.Config_LoRaConfig_SHORT_SLOW.String())
-	fmt.Printf("'sf' for %s\n", gomeshproto.Config_LoRaConfig_SHORT_FAST.String())
-	fmt.Printf("'lm' for %s\n", gomeshproto.Config_LoRaConfig_LONG_MODERATE.String())
+	fmt.Printf(
+		"'lf' for %s\n",
+		gomeshproto.Config_LoRaConfig_LONG_FAST.String(),
+	)
+	fmt.Printf(
+		"'vls' for %s\n",
+		gomeshproto.Config_LoRaConfig_VERY_LONG_SLOW.String(),
+	)
+	fmt.Printf(
+		"'ms' for %s\n",
+		gomeshproto.Config_LoRaConfig_MEDIUM_SLOW.String(),
+	)
+	fmt.Printf(
+		"'mf' for %s\n",
+		gomeshproto.Config_LoRaConfig_MEDIUM_FAST.String(),
+	)
+	fmt.Printf(
+		"'sl' for %s\n",
+		gomeshproto.Config_LoRaConfig_SHORT_SLOW.String(),
+	)
+	fmt.Printf(
+		"'sf' for %s\n",
+		gomeshproto.Config_LoRaConfig_SHORT_FAST.String(),
+	)
+	fmt.Printf(
+		"'lm' for %s\n",
+		gomeshproto.Config_LoRaConfig_LONG_MODERATE.String(),
+	)
 
 	return nil
 }
@@ -160,14 +181,26 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 				fmt.Printf("%-15s| ", "N/A")
 			}
 			if node.NodeInfo.DeviceMetrics != nil {
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel))
+				fmt.Printf(
+					"%-15s| ",
+					fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel),
+				)
 			} else {
 				fmt.Printf("%-15s| ", "N/A")
 			}
 			if node.NodeInfo.Position != nil {
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.Altitude))
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
-				fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
+				fmt.Printf(
+					"%-15s| ",
+					fmt.Sprint(node.NodeInfo.Position.Altitude),
+				)
+				fmt.Printf(
+					"%-15s| ",
+					fmt.Sprint(node.NodeInfo.Position.LatitudeI),
+				)
+				fmt.Printf(
+					"%-15s",
+					fmt.Sprint(node.NodeInfo.Position.LongitudeI),
+				)
 			} else {
 				fmt.Printf("%-15s| ", "N/A")
 				fmt.Printf("%-15s| ", "N/A")

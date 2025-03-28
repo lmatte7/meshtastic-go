@@ -1,4 +1,4 @@
-package main
+package gmtcli
 
 import (
 	"fmt"
@@ -48,10 +48,22 @@ func printMetrics(nodes []*gomeshproto.FromRadio_NodeInfo) {
 	for _, node := range nodes {
 		if node.NodeInfo.DeviceMetrics != nil {
 			fmt.Printf("| %-15s| ", fmt.Sprint(node.NodeInfo.Num))
-			fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel))
-			fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.Voltage))
-			fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.ChannelUtilization))
-			fmt.Printf("%-15s| \n", fmt.Sprint(node.NodeInfo.DeviceMetrics.AirUtilTx))
+			fmt.Printf(
+				"%-15s| ",
+				fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel),
+			)
+			fmt.Printf(
+				"%-15s| ",
+				fmt.Sprint(node.NodeInfo.DeviceMetrics.Voltage),
+			)
+			fmt.Printf(
+				"%-20s| ",
+				fmt.Sprint(node.NodeInfo.DeviceMetrics.ChannelUtilization),
+			)
+			fmt.Printf(
+				"%-15s| \n",
+				fmt.Sprint(node.NodeInfo.DeviceMetrics.AirUtilTx),
+			)
 		}
 	}
 	printDoubleDivider()
