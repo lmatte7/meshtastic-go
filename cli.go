@@ -101,7 +101,7 @@ func Init() {
 						},
 					},
 					{
-						Name:        "recv",
+						Name:        "receive",
 						Usage:       "Wait for new messages",
 						Description: "Waits for new messages and displays them as received until cancelled. Only shows messages on TEXT_MESSAGE port. Doesn't work over TCP",
 						Action:      getReceivedMessages,
