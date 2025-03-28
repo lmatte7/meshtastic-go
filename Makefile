@@ -1,7 +1,15 @@
+.PHONY: default build test lint clean
+
 default: build
 
 build: test
-	go build -o bin/ ./...
+	./build.sh
 
-test: lint
+test:
 	go test -v ./...
+
+lint:
+	golangci-lint run
+
+clean:
+	rm -rf builds
