@@ -2,11 +2,11 @@
 set -euo pipefail
 set -x
 
-VERSION="$(git describe --tags --abbrev=0)"
-COMMIT="$(git rev-parse HEAD)"
-BUILDTIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+VERSION="$(git describe --tags --dirty --always --abbrev=7)"
+COMMIT="$(git describe --always --dirty --abbrev=7)"
+BUILDDATE="$(date -u +%Y-%m-%d)"
 
-LDARGS="-X main.VERSION=$VERSION -X main.COMMIT=$COMMIT -X main.BUILDTIME=$BUILDTIME"
+LDARGS="-X main.VERSION=$VERSION -X main.COMMIT=$COMMIT -X main.BUILDDATE=$BUILDDATE"
 
 SRC="./cmd/meshtastic-go"
 NAME="meshtastic-go"
