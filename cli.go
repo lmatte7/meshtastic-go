@@ -6,15 +6,15 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Init starts the CLI and determines flags
-func Init() {
+// CLIEntry starts the CLI and determines flags
+func CLIEntry(version, commit, builddate string) {
 
 	app := &cli.App{
 		Name:    "meshtastic-go",
-		Version: "v0.2",
+		Version: version + " (" + commit + ") on " + builddate,
 		Authors: []*cli.Author{
 			{
-				Name: "Lucas Matte",
+				Name: "Lucas Matte and contributors",
 			},
 		},
 		Usage: "Interface with meshtastic radios",
