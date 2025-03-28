@@ -1,8 +1,11 @@
 package gmtcli
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/lmatte7/gomesh"
@@ -39,7 +42,7 @@ func showNodeInfo(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	return displayNodes(radio)
+	return displayNodes(radio, c.Bool("json"))
 }
 
 func factoryResetRadio(c *cli.Context) error {
@@ -79,7 +82,7 @@ func showPositionInfo(c *cli.Context) error {
 	return nil
 }
 
-func displayNodes(r gomesh.Radio) error {
+func displayNodes(r gomesh.Radio, jsonFormat bool) error {
 	responses, err := r.GetRadioInfo()
 	if err != nil {
 		return err
@@ -92,9 +95,11 @@ func displayNodes(r gomesh.Radio) error {
 		}
 	}
 
-	printNodes(nodes)
-
-	return nil
+	if jsonFormat {
+		return printNodesJSON(nodes)
+	} else {
+		return printNodes(nodes)
+	}
 }
 
 func getRadioInfo(r gomesh.Radio, json bool) error {
@@ -160,7 +165,169 @@ func setModemOption(c *cli.Context) error {
 	return nil
 }
 
-func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
+type MeshNode struct {
+	ID                  string  `json:"node_id,omitempty"`
+	NodeNumber          int     `json:"node_number,omitempty"`
+	LongName            string  `json:"longname,omitempty"`
+	ShortName           string  `json:"shortname,omitempty"`
+	AltitudeMeters      int     `json:"altitude_meters,omitempty"`
+	LatitudeDegrees     float64 `json:"latitude_degrees,omitempty"`
+	LongitudeDegrees    float64 `json:"longitude_degrees,omitempty"`
+	MACAddress          string  `json:"mac_address,omitempty"`
+	IsLicensed          bool    `json:"is_licensed"`
+	Role                string  `json:"role,omitempty"`
+	HardwareModel       string  `json:"hardware_model,omitempty"`
+	BatteryLevel        int     `json:"battery_level_percent,omitempty"`
+	Voltage             float64 `json:"battery_volts,omitempty"`
+	ChannelUtilization  float64 `json:"channel_utilization_percentage,omitempty"`
+	AirUtilTx           float64 `json:"air_utilization_transmit_percentage,omitempty"`
+	LastHeard           string  `json:"last_heard,omitempty"`
+	LastHeardSecondsAgo int     `json:"last_heard_seconds_ago,omitempty"`
+	LastHeardHuman      string  `json:"last_heard_human,omitempty"`
+}
+
+func ProtoNodeToMeshNode(node *gomeshproto.FromRadio_NodeInfo) MeshNode {
+	meshNode := MeshNode{}
+
+	if node.NodeInfo != nil {
+		meshNode.NodeNumber = int(node.NodeInfo.Num)
+	}
+
+	if node.NodeInfo.LastHeard != 0 {
+		lastSeen := time.Unix(int64(node.NodeInfo.LastHeard), 0).UTC()
+		meshNode.LastHeard = lastSeen.Format(time.RFC3339)
+
+		//calculate seconds ago
+		secondsAgo := time.Now().UTC().Sub(lastSeen).Seconds()
+		meshNode.LastHeardSecondsAgo = int(secondsAgo)
+		meshNode.LastHeardHuman = fmt.Sprintf(
+			"%s",
+			time.Since(lastSeen).Round(time.Second).String(),
+		)
+	}
+
+	if node.NodeInfo.User == nil {
+		return meshNode
+	}
+	if node.NodeInfo.User.LongName != "" {
+		meshNode.LongName = fmt.Sprintf(
+			"%s",
+			node.NodeInfo.User.LongName,
+		)
+	}
+
+	if node.NodeInfo.User.Id != "" {
+		meshNode.ID = fmt.Sprintf(
+			"%s",
+			node.NodeInfo.User.Id,
+		)
+	}
+
+	if node.NodeInfo.User.ShortName != "" {
+		meshNode.ShortName = fmt.Sprintf(
+			"%s",
+			node.NodeInfo.User.ShortName,
+		)
+	}
+
+	if node.NodeInfo.User.Macaddr != nil {
+		meshNode.MACAddress = fmt.Sprintf(
+			//format as 48 bit mac address in hex
+			"%02x:%02x:%02x:%02x:%02x:%02x",
+			node.NodeInfo.User.Macaddr[0],
+			node.NodeInfo.User.Macaddr[1],
+			node.NodeInfo.User.Macaddr[2],
+			node.NodeInfo.User.Macaddr[3],
+			node.NodeInfo.User.Macaddr[4],
+			node.NodeInfo.User.Macaddr[5],
+		)
+	}
+
+	if node.NodeInfo.User.IsLicensed {
+		meshNode.IsLicensed = true
+	}
+
+	//lookup HardwareModel in the protobuf
+	if node.NodeInfo.User.HwModel != 0 {
+		meshNode.HardwareModel = fmt.Sprintf(
+			"%s",
+			gomeshproto.HardwareModel_name[int32(node.NodeInfo.User.HwModel)],
+		)
+	}
+
+	//lookup role in the protobuf
+	meshNode.Role = fmt.Sprintf(
+		"%s",
+		gomeshproto.Config_DeviceConfig_Role_name[int32(node.NodeInfo.User.Role)],
+	)
+
+	if node.NodeInfo.DeviceMetrics == nil {
+		return meshNode
+	}
+
+	if node.NodeInfo.DeviceMetrics.BatteryLevel != 0 {
+		meshNode.BatteryLevel = int(node.NodeInfo.DeviceMetrics.BatteryLevel)
+	}
+
+	if node.NodeInfo.DeviceMetrics.Voltage != 0 {
+		meshNode.Voltage = float64(node.NodeInfo.DeviceMetrics.Voltage)
+	}
+
+	if node.NodeInfo.DeviceMetrics.ChannelUtilization != 0 {
+		meshNode.ChannelUtilization = float64(
+			node.NodeInfo.DeviceMetrics.ChannelUtilization,
+		)
+	}
+
+	if node.NodeInfo.DeviceMetrics.AirUtilTx != 0 {
+		meshNode.AirUtilTx = float64(node.NodeInfo.DeviceMetrics.AirUtilTx)
+	}
+
+	if node.NodeInfo.Position == nil {
+		return meshNode
+	}
+
+	if node.NodeInfo.Position.Altitude != 0 {
+		meshNode.AltitudeMeters = int(node.NodeInfo.Position.Altitude)
+	}
+
+	if node.NodeInfo.Position.LatitudeI != 0 {
+		latds := fmt.Sprintf(
+			"%.8f",
+			float64(node.NodeInfo.Position.LatitudeI)/1e7,
+		)
+		//convert string to float
+		latd, _ := strconv.ParseFloat(latds, 64)
+		meshNode.LatitudeDegrees = latd
+	}
+
+	if node.NodeInfo.Position.LongitudeI != 0 {
+		lods := fmt.Sprintf(
+			"%.7f",
+			float64(node.NodeInfo.Position.LongitudeI)/1e7,
+		)
+		lod, _ := strconv.ParseFloat(lods, 64)
+		meshNode.LongitudeDegrees = lod
+	}
+
+	return meshNode
+}
+
+func printNodesJSON(nodes []*gomeshproto.FromRadio_NodeInfo) error {
+	meshNodes := make([]MeshNode, 0)
+	for _, node := range nodes {
+		mn := ProtoNodeToMeshNode(node)
+		meshNodes = append(meshNodes, mn)
+	}
+	json, err := json.Marshal(meshNodes)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(json))
+	return nil
+}
+
+func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) error {
 	fmt.Printf("\n")
 	fmt.Printf("Nodes in Mesh:\n")
 
@@ -210,6 +377,7 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
 		}
 	}
 	printDoubleDivider()
+	return nil
 }
 
 func printJsonRadioInfo(info []*gomeshproto.FromRadio) {
