@@ -1,6 +1,7 @@
-package main
+package gmtcli
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -27,7 +28,9 @@ func getReceivedMessages(c *cli.Context) error {
 
 		for _, response := range responses {
 			if packet, ok := response.GetPayloadVariant().(*gomeshproto.FromRadio_Packet); ok {
-				if packet.Packet.GetDecoded().GetPortnum() == gomeshproto.PortNum_TEXT_MESSAGE_APP {
+				if packet.Packet.GetDecoded().
+					GetPortnum() ==
+					gomeshproto.PortNum_TEXT_MESSAGE_APP {
 					receivedMessages = append(receivedMessages, packet)
 				}
 			}
@@ -52,7 +55,11 @@ func sendText(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	err := radio.SendTextMessage(c.String("message"), c.Int64("to"), c.Int64("channel"))
+	err := radio.SendTextMessage(
+		c.String("message"),
+		c.Int64("to"),
+		c.Int64("channel"),
+	)
 	if err != nil {
 		return cli.Exit(err, 0)
 	}
@@ -68,7 +75,10 @@ func printMessageHeader() {
 	fmt.Printf("%-15s| ", "To")
 	fmt.Printf("%-18s| ", "Port Num")
 	fmt.Printf("%-10s| ", "Channel")
-	fmt.Printf("%-15s ", "Payload                                              |\n")
+	fmt.Printf(
+		"%-15s ",
+		"Payload                                              |\n",
+	)
 	printSingleDivider()
 }
 
@@ -76,24 +86,49 @@ func printMessages(messages []*gomeshproto.FromRadio_Packet) {
 	for _, message := range messages {
 		fmt.Printf("| %-15s| ", fmt.Sprint(message.Packet.From))
 		fmt.Printf("%-15s| ", fmt.Sprint(message.Packet.To))
-		fmt.Printf("%-18s| ", message.Packet.GetDecoded().GetPortnum().String())
+		fmt.Printf(
+			"%-18s| ",
+			message.Packet.GetDecoded().GetPortnum().String(),
+		)
 		fmt.Printf("%-10s| ", fmt.Sprint(message.Packet.Channel))
 		re := regexp.MustCompile(`\r?\n`)
-		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
+		escMesg := re.ReplaceAllString(
+			string(message.Packet.GetDecoded().Payload),
+			"",
+		)
 		fmt.Printf("%-53q", escMesg)
 		fmt.Printf("%s", "|\n")
 	}
 }
 
-func printJsonMessages(messages []*gomeshproto.FromRadio_Packet) {
-	for _, message := range messages {
-		fmt.Printf("{\"from\":%s,", fmt.Sprint(message.Packet.From))
-		fmt.Printf("\"to\":%s,", fmt.Sprint(message.Packet.To))
-		fmt.Printf("\"portnum\": \"%s\",", message.Packet.GetDecoded().GetPortnum().String())
-		fmt.Printf("\"channel\":%s,", fmt.Sprint(message.Packet.Channel))
-		re := regexp.MustCompile(`\r?\n`)
-		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
-		fmt.Printf("\"Payload\": \"%s\"", escMesg)
-		fmt.Printf("%s", "}\n")
+func printJsonMessages(messages []*gomeshproto.FromRadio_Packet) error {
+
+	type MeshTextMessage struct {
+		From         string           `json:"from,omitempty"`
+		To           string           `json:"to,omitempty"`
+		Portnum      string           `json:"portnum,omitempty"`
+		ChannelIndex string           `json:"channel,omitempty"`
+		Payload      string           `json:"Payload,omitempty"`
+		NodeInfo     *json.RawMessage `json:"node,omitempty"`
+		ChannelInfo  *json.RawMessage `json:"channelInfo,omitempty"`
 	}
+
+	for _, message := range messages {
+
+		meshTextMessage := MeshTextMessage{
+			From:         fmt.Sprint(message.Packet.From),
+			To:           fmt.Sprint(message.Packet.To),
+			Portnum:      message.Packet.GetDecoded().GetPortnum().String(),
+			ChannelIndex: fmt.Sprint(message.Packet.Channel),
+			Payload:      string(message.Packet.GetDecoded().Payload),
+		}
+
+		output, err := json.Marshal(meshTextMessage)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(output))
+	}
+
+	return nil
 }

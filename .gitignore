@@ -3,3 +3,5 @@ example.py
 builds
 meshtastic-go
 smoke/smoke
+.aider*
+.env

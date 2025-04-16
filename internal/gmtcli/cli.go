@@ -1,4 +1,4 @@
-package main
+package gmtcli
 
 import (
 	"os"
@@ -6,15 +6,15 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Init starts the CLI and determines flags
-func Init() {
+// CLIEntry starts the CLI and determines flags
+func CLIEntry(version, commit, builddate string) {
 
 	app := &cli.App{
 		Name:    "meshtastic-go",
-		Version: "v0.2",
+		Version: version + " (" + commit + ") on " + builddate,
 		Authors: []*cli.Author{
 			{
-				Name: "Lucas Matte",
+				Name: "Lucas Matte and contributors",
 			},
 		},
 		Usage: "Interface with meshtastic radios",
@@ -101,7 +101,7 @@ func Init() {
 						},
 					},
 					{
-						Name:        "recv",
+						Name:        "receive",
 						Usage:       "Wait for new messages",
 						Description: "Waits for new messages and displays them as received until cancelled. Only shows messages on TEXT_MESSAGE port. Doesn't work over TCP",
 						Action:      getReceivedMessages,

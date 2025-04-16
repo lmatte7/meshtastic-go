@@ -1,4 +1,4 @@
-package main
+package gmtcli
 
 import (
 	"encoding/base64"
@@ -89,13 +89,19 @@ func printChannels(channels []*gomeshproto.Channel) error {
 			fmt.Printf("%-15s| ", "N/A")
 		}
 		if channelInfo.Settings.ModuleSettings.GetPositionPrecision() > 0 {
-			fmt.Printf("%-15d| ", channelInfo.Settings.ModuleSettings.PositionPrecision)
+			fmt.Printf(
+				"%-15d| ",
+				channelInfo.Settings.ModuleSettings.PositionPrecision,
+			)
 		} else {
 			fmt.Printf("%-15s| ", "N/A")
 		}
 		if len(channelInfo.Settings.Psk) > 0 {
 			re := regexp.MustCompile(`\r?\n`)
-			escMesg := re.ReplaceAllString(string(channelInfo.Settings.Psk), "")
+			escMesg := re.ReplaceAllString(
+				string(channelInfo.Settings.Psk),
+				"",
+			)
 			fmt.Printf("%-90q", escMesg)
 		} else {
 			fmt.Printf("%-53s| ", "N/A")
@@ -152,13 +158,20 @@ func showChannelOptions(c *cli.Context) error {
 						cv := reflect.ValueOf(*channelInfo.Channel.Settings)
 						for j := 0; j < cv.NumField(); j++ {
 							if cv.Type().Field(j).IsExported() {
-								if cv.Type().Field(j).Name == "ModuleSettings" {
+								if cv.Type().
+									Field(j).
+									Name == "ModuleSettings" {
 									fmt.Println("\nModule Setting Options")
 									printDoubleDivider()
-									mv := reflect.ValueOf(*channelInfo.Channel.Settings.ModuleSettings)
+									mv := reflect.ValueOf(
+										*channelInfo.Channel.Settings.ModuleSettings,
+									)
 									for k := 0; k < mv.NumField(); k++ {
 										if mv.Type().Field(k).IsExported() {
-											fmt.Printf("%v\n", mv.Type().Field(k).Name)
+											fmt.Printf(
+												"%v\n",
+												mv.Type().Field(k).Name,
+											)
 										}
 									}
 								} else {
@@ -208,7 +221,11 @@ func setChannel(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	err := radio.SetChannel(c.Int("index"), c.String("key"), c.String("value"))
+	err := radio.SetChannel(
+		c.Int("index"),
+		c.String("key"),
+		c.String("value"),
+	)
 
 	if err != nil {
 		return cli.Exit(err, 0)

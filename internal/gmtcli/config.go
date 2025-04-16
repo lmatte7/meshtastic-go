@@ -1,4 +1,4 @@
-package main
+package gmtcli
 
 import (
 	"fmt"
@@ -36,8 +36,51 @@ func printConfig(r gomesh.Radio) error {
 		return err
 	}
 
+	for _, config := range configSettings {
+		if deviceConfig := config.Config.GetDevice(); deviceConfig != nil {
+			fmt.Printf("deviceConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+		if deviceConfig := config.Config.GetPosition(); deviceConfig != nil {
+			fmt.Printf("positionConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+		if deviceConfig := config.Config.GetPower(); deviceConfig != nil {
+			fmt.Printf("powerConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+		if deviceConfig := config.Config.GetNetwork(); deviceConfig != nil {
+			fmt.Printf("networkConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+		if deviceConfig := config.Config.GetDisplay(); deviceConfig != nil {
+			fmt.Printf("displayConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+		if deviceConfig := config.Config.GetLora(); deviceConfig != nil {
+			fmt.Printf("loraConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+		if deviceConfig := config.Config.GetBluetooth(); deviceConfig != nil {
+			fmt.Printf("bluetoothConfig: %+v\n", *deviceConfig)
+			continue
+		}
+
+	}
+
+	return nil
+
 	fmt.Printf("Radio Config:\n")
-	fmt.Printf("%-40s", "==============================================================================\n")
+	fmt.Printf(
+		"%-40s",
+		"==============================================================================\n",
+	)
 	for _, config := range configSettings {
 		if deviceConfig := config.Config.GetDevice(); deviceConfig != nil {
 			printSection("Device Config Options", *deviceConfig)
@@ -65,7 +108,10 @@ func printConfig(r gomesh.Radio) error {
 			printSection("Serial Module Options", *moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetExternalNotification(); moduleConfig != nil {
-			printSection("External Notification Module Options", *moduleConfig)
+			printSection(
+				"External Notification Module Options",
+				*moduleConfig,
+			)
 		}
 		if moduleConfig := module.ModuleConfig.GetStoreForward(); moduleConfig != nil {
 			printSection("Store Forward Module Options", *moduleConfig)
@@ -111,9 +157,15 @@ func showRadioConfig(c *cli.Context) error {
 
 func printSection(title string, t interface{}) {
 	v := reflect.ValueOf(t)
-	fmt.Printf("\n%-40s", "-------------------------------------------------\n")
+	fmt.Printf(
+		"\n%-40s",
+		"-------------------------------------------------\n",
+	)
 	fmt.Printf("%-48s|\n", title)
-	fmt.Printf("%-40s", "-------------------------------------------------\n")
+	fmt.Printf(
+		"%-40s",
+		"-------------------------------------------------\n",
+	)
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).CanInterface() {
 			fmt.Printf("%-40s", v.Type().Field(i).Name)
