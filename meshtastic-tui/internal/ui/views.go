@@ -73,7 +73,7 @@ func (m Model) renderHeader() string {
 		))
 
 	// View tabs
-	views := []string{"Connect", "Messages (F1)", "Nodes (F2)", "Channels (F3)", "Config (F4)", "Help (F5)"}
+	views := []string{"Connect", "Messages (F1)", "Nodes (F2)", "Channels (F3)", "Config (F4)", "Help (F5)", "Logs (L)"}
 	var tabs []string
 	for i, v := range views {
 		if View(i) == m.currentView {
@@ -108,9 +108,11 @@ func (m Model) renderFooter() string {
 			help = "Tab: Next field | Esc: Back to panes | Enter: Send | F1-F5: Switch view | R: Refresh | Q: Quit"
 		}
 	case ViewNodes, ViewChannels, ViewConfig:
-		help = "↑↓: Scroll | F1-F5: Switch view | R: Refresh | Q: Quit"
+		help = "↑↓: Scroll | F1-F5: Switch view | L: Logs | R: Refresh | Q: Quit"
 	case ViewHelp:
-		help = "F1-F5: Switch view | Q: Quit"
+		help = "F1-F5: Switch view | L: Logs | Q: Quit"
+	case ViewLogs:
+		help = "↑↓: Scroll logs | F1-F5: Switch view | R: Refresh logs | Q: Quit"
 	}
 
 	statusLine := ""
@@ -147,7 +149,11 @@ func (m Model) renderConnect() string {
 	s.WriteString("\n\n")
 
 	if m.connecting {
-		s.WriteString(lipgloss.NewStyle().Foreground(accentColor).Render("Connecting..."))
+		if m.syncProgress != "" {
+			s.WriteString(lipgloss.NewStyle().Foreground(accentColor).Render(m.syncProgress))
+		} else {
+			s.WriteString(lipgloss.NewStyle().Foreground(accentColor).Render("Connecting..."))
+		}
 	}
 
 	return s.String()
@@ -436,6 +442,10 @@ func (m Model) renderHelp() string {
 	s.WriteString("\n")
 
 	return s.String()
+}
+
+func (m Model) renderLogs() string {
+	return m.logViewport.View()
 }
 
 func max(a, b int) int {

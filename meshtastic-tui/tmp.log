@@ -1,0 +1,623 @@
+[RADIO] 2025/10/12 11:23:39 client.go:51: Starting connection to port: /dev/tty.usbserial-0001
+[RADIO] 2025/10/12 11:23:39 client.go:54: Calling radio.Init(/dev/tty.usbserial-0001)
+[RADIO] 2025/10/12 11:23:40 client.go:61: radio.Init succeeded
+[RADIO] 2025/10/12 11:23:40 client.go:65: Starting radio identification
+[RADIO] 2025/10/12 11:23:40 client.go:99: identifyRadio: Starting radio identification
+[RADIO] 2025/10/12 11:23:40 client.go:107: identifyRadio: Attempt 1/3 to get radio info
+[RADIO] 2025/10/12 11:23:40 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:23:40 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:23:41 client.go:107: identifyRadio: Attempt 2/3 to get radio info
+[RADIO] 2025/10/12 11:23:41 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:23:41 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:23:42 client.go:107: identifyRadio: Attempt 3/3 to get radio info
+[RADIO] 2025/10/12 11:23:44 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:23:44 client.go:122: identifyRadio: All attempts failed, creating placeholder radio. Error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:23:44 client.go:132: identifyRadio: Created placeholder radio with ID 12345
+[RADIO] 2025/10/12 11:23:44 client.go:70: Radio identification completed
+[RADIO] 2025/10/12 11:23:44 client.go:73: Starting initial data sync
+[RADIO] 2025/10/12 11:23:44 client.go:199: syncFromRadio: Starting data sync
+[RADIO] 2025/10/12 11:23:44 client.go:206: syncFromRadio: Syncing nodes
+[RADIO] 2025/10/12 11:23:44 client.go:427: syncNodes: Getting radio info for nodes
+[RADIO] 2025/10/12 11:23:46 client.go:433: syncNodes: Got 69 responses
+[RADIO] 2025/10/12 11:23:46 client.go:436: syncNodes: Extracting nodes from responses
+[RADIO] 2025/10/12 11:23:46 client.go:357: ExtractNodes: Processing 69 responses
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 0
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 0 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 0
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1254345576
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1254345576 names - Long: 'Zizzac EDC', Short: 'Zizz'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 1254345576 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1254345576 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1254345576 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 1
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 1 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 1
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3099453653
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 3099453653 names - Long: 'Dripping Springs Solar 1', Short: 'DSS1'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 3099453653 metrics - Battery: 93%, Voltage: 4.09V
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 3099453653 position - Alt: 384, Lat: 302055424, Lon: -980877312
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3099453653 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 2
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 2 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 2
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3214642564
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 3214642564 names - Long: 'Sean 8d84', Short: '8d84'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 3214642564 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 3214642564 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3214642564 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 3
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 3 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 3
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3076906016
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 3076906016 names - Long: 'packetnerd', Short: 'nCL1'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 3076906016 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 3076906016 position - Alt: 220, Lat: 302514176, Lon: -978845696
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3076906016 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 4
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 4 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 4
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1825573726
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1825573726 names - Long: 'Meshtastic 0b5e', Short: '0b5e'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1825573726 metrics - Battery: 82%, Voltage: 4.01V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1825573726 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1825573726 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 5
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 5 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 5
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 4185720328
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 4185720328 names - Long: 'Solder Blob 0', Short: 'SDB0'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 4185720328 metrics - Battery: 101%, Voltage: 4.28V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 4185720328 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 4185720328 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 6
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 6 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 6
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1799774190
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1799774190 names - Long: 'DryJimmy', Short: '5fee'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 1799774190 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 1799774190 position - Alt: 126, Lat: 302776320, Lon: -977534976
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1799774190 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 7
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 7 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 7
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1128159904
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1128159904 names - Long: 'Kaltastic', Short: 'PKAL'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 1128159904 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1128159904 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1128159904 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 8
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 8 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 8
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 340534565
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 340534565 names - Long: 'Kilo Sierra Solar Base', Short: 'KSHQ'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 340534565 metrics - Battery: 100%, Voltage: 4.24V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 340534565 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 340534565 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 9
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 9 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 9
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 313400608
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 313400608 names - Long: 'WVARC Solar Node', Short: 'Wimb'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 313400608 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 313400608 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 313400608 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 10
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 10 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 10
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1129953584
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1129953584 names - Long: 'Meshtastic b930', Short: 'b930'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1129953584 metrics - Battery: 101%, Voltage: 4.22V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1129953584 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1129953584 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 11
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 11 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 11
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 862572096
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 862572096 names - Long: 'Driftwood-ce40', Short: 'ce40'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 862572096 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 862572096 position - Alt: 325, Lat: 301606003, Lon: -980851354
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 862572096 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 12
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 12 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 12
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 911807147
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 911807147 names - Long: 'MRB Solar - austinmesh.org', Short: 'MRBs'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 911807147 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 911807147 position - Alt: 266, Lat: 304906240, Lon: -977436672
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 911807147 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 13
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 13 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 13
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 2431462550
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 2431462550 names - Long: 'Kaiser Solar Base', Short: 'KSR1'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 2431462550 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 2431462550 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 2431462550 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 14
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 14 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 14
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1397309373
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 1397309373 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1397309373 metrics - Battery: 94%, Voltage: 4.12V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1397309373 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1397309373 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 15
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 15 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 15
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3929280448
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 3929280448 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 3929280448 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 3929280448 position - Alt: 282, Lat: 302252032, Lon: -979107840
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3929280448 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 16
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 16 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 16
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1127916776
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1127916776 names - Long: 'Springdale & Airport Relay', Short: 'SAR'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 1127916776 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1127916776 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1127916776 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 17
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 17 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 17
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3383089797
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 3383089797 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 3383089797 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 3383089797 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3383089797 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 18
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 18 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 18
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 2896498652
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 2896498652 names - Long: 'Meshtastic Treepeater', Short: 'Tree'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 2896498652 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 2896498652 position - Alt: 183, Lat: 303300608, Lon: -977010688
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 2896498652 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 19
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 19 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 19
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 23470020
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 23470020 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 23470020 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 23470020 position - Alt: 289, Lat: 300154880, Lon: -980680704
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 23470020 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 20
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 20 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 20
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1127977388
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1127977388 names - Long: 'So Much For Subtlety', Short: 'SMFS'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1127977388 metrics - Battery: 61%, Voltage: 3.82V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1127977388 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1127977388 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 21
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 21 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 21
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3700380306
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 3700380306 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 3700380306 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 3700380306 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3700380306 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 22
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 22 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 22
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1136042084
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1136042084 names - Long: 'Pedicab Mike Heltec V3', Short: 'M1K1'
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 1136042084 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1136042084 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1136042084 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 23
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 23 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 23
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1641075118
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 1641075118 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1641075118 metrics - Battery: 101%, Voltage: 3.98V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1641075118 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1641075118 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 24
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 24 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 24
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1455390114
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 1455390114 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 1455390114 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 1455390114 position - Alt: 110, Lat: 303431680, Lon: -977403904
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1455390114 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 25
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 25 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 25
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 2718570324
+[RADIO] 2025/10/12 11:23:46 client.go:389: ExtractNodes: Node 2718570324 has no User info
+[RADIO] 2025/10/12 11:23:46 client.go:400: ExtractNodes: Node 2718570324 has no DeviceMetrics
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 2718570324 position - Alt: 166, Lat: 301727744, Lon: -978059264
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 2718570324 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 26
+[RADIO] 2025/10/12 11:23:46 client.go:369: ExtractNodes: Response 26 has nil payload variant, skipping
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 27
+[RADIO] 2025/10/12 11:23:46 client.go:369: ExtractNodes: Response 27 has nil payload variant, skipping
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 28
+[RADIO] 2025/10/12 11:23:46 client.go:369: ExtractNodes: Response 28 has nil payload variant, skipping
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 29
+[RADIO] 2025/10/12 11:23:46 client.go:369: ExtractNodes: Response 29 has nil payload variant, skipping
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 30
+[RADIO] 2025/10/12 11:23:46 client.go:369: ExtractNodes: Response 30 has nil payload variant, skipping
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 31
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 31 payload variant type: *gomeshproto.FromRadio_ConfigCompleteId
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 32
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 32 payload variant type: *gomeshproto.FromRadio_MyInfo
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 33
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 33 payload variant type: *gomeshproto.FromRadio_Metadata
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 34
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 34 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 35
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 35 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 36
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 36 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 37
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 37 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 38
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 38 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 39
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 39 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 40
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 40 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 41
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 41 payload variant type: *gomeshproto.FromRadio_Channel
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 42
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 42 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 43
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 43 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 44
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 44 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 45
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 45 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 46
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 46 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 47
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 47 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 48
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 48 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 49
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 49 payload variant type: *gomeshproto.FromRadio_Config
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 50
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 50 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 51
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 51 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 52
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 52 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 53
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 53 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 54
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 54 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 55
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 55 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 56
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 56 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 57
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 57 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 58
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 58 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 59
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 59 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 60
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 60 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 61
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 61 payload variant type: *gomeshproto.FromRadio_ModuleConfig
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 62
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 62 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 62
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 2023301167
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 2023301167 names - Long: 'Convict Hill', Short: 'CVHL'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 2023301167 metrics - Battery: 100%, Voltage: 4.20V
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 2023301167 position - Alt: 290, Lat: 302252032, Lon: -978583552
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 2023301167 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 63
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 63 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 63
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1202389295
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1202389295 names - Long: 'ATLAVOX BCN1 012f', Short: 'BCN1'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1202389295 metrics - Battery: 94%, Voltage: 4.11V
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 1202389295 position - Alt: 260, Lat: 302252032, Lon: -978583552
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1202389295 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 64
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 64 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 64
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3956399131
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 3956399131 names - Long: 'MeshyBot 🦾 cmd for menu or just chat', Short: '🤖'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 3956399131 metrics - Battery: 101%, Voltage: 0.00V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 3956399131 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3956399131 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 65
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 65 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 65
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 1308964049
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 1308964049 names - Long: 'ATX 7th/Lavaca', Short: 'ATX1'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 1308964049 metrics - Battery: 101%, Voltage: 4.23V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 1308964049 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 1308964049 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 66
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 66 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 66
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3411681181
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 3411681181 names - Long: 'Meshtastic 1f9d', Short: '1f9d'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 3411681181 metrics - Battery: 101%, Voltage: 4.76V
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 3411681181 position - Alt: 209, Lat: 303300608, Lon: -977010688
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3411681181 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 67
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 67 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 67
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 2887569815
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 2887569815 names - Long: 'K Cyber 2', Short: 'KCy2'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 2887569815 metrics - Battery: 96%, Voltage: 4.13V
+[RADIO] 2025/10/12 11:23:46 client.go:407: ExtractNodes: Node 2887569815 position - Alt: 222, Lat: 302776320, Lon: -977534976
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 2887569815 to list
+[RADIO] 2025/10/12 11:23:46 client.go:361: ExtractNodes: Processing response 68
+[RADIO] 2025/10/12 11:23:46 client.go:373: ExtractNodes: Response 68 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:23:46 client.go:376: ExtractNodes: Found NodeInfo in response 68
+[RADIO] 2025/10/12 11:23:46 client.go:381: ExtractNodes: Creating node with ID 3723841170
+[RADIO] 2025/10/12 11:23:46 client.go:386: ExtractNodes: Node 3723841170 names - Long: 'Meshtastic 4e92', Short: '4e92'
+[RADIO] 2025/10/12 11:23:46 client.go:397: ExtractNodes: Node 3723841170 metrics - Battery: 49%, Voltage: 3.72V
+[RADIO] 2025/10/12 11:23:46 client.go:410: ExtractNodes: Node 3723841170 has no Position info
+[RADIO] 2025/10/12 11:23:46 client.go:414: ExtractNodes: Added node 3723841170 to list
+[RADIO] 2025/10/12 11:23:46 client.go:421: ExtractNodes: Extracted 33 nodes total
+[RADIO] 2025/10/12 11:23:46 client.go:438: syncNodes: Extracted 33 nodes
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 0: ID=1254345576, LongName='Zizzac EDC', ShortName='Zizz'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1254345576
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 1: ID=3099453653, LongName='Dripping Springs Solar 1', ShortName='DSS1'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3099453653
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 2: ID=3214642564, LongName='Sean 8d84', ShortName='8d84'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3214642564
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 3: ID=3076906016, LongName='packetnerd', ShortName='nCL1'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3076906016
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 4: ID=1825573726, LongName='Meshtastic 0b5e', ShortName='0b5e'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1825573726
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 5: ID=4185720328, LongName='Solder Blob 0', ShortName='SDB0'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 4185720328
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 6: ID=1799774190, LongName='DryJimmy', ShortName='5fee'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1799774190
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 7: ID=1128159904, LongName='Kaltastic', ShortName='PKAL'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1128159904
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 8: ID=340534565, LongName='Kilo Sierra Solar Base', ShortName='KSHQ'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 340534565
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 9: ID=313400608, LongName='WVARC Solar Node', ShortName='Wimb'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 313400608
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 10: ID=1129953584, LongName='Meshtastic b930', ShortName='b930'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1129953584
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 11: ID=862572096, LongName='Driftwood-ce40', ShortName='ce40'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 862572096
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 12: ID=911807147, LongName='MRB Solar - austinmesh.org', ShortName='MRBs'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 911807147
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 13: ID=2431462550, LongName='Kaiser Solar Base', ShortName='KSR1'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 2431462550
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 14: ID=1397309373, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1397309373
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 15: ID=3929280448, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3929280448
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 16: ID=1127916776, LongName='Springdale & Airport Relay', ShortName='SAR'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1127916776
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 17: ID=3383089797, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3383089797
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 18: ID=2896498652, LongName='Meshtastic Treepeater', ShortName='Tree'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 2896498652
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 19: ID=23470020, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 23470020
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 20: ID=1127977388, LongName='So Much For Subtlety', ShortName='SMFS'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1127977388
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 21: ID=3700380306, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3700380306
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 22: ID=1136042084, LongName='Pedicab Mike Heltec V3', ShortName='M1K1'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1136042084
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 23: ID=1641075118, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1641075118
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 24: ID=1455390114, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1455390114
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 25: ID=2718570324, LongName='', ShortName=''
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 2718570324
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 26: ID=2023301167, LongName='Convict Hill', ShortName='CVHL'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 2023301167
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 27: ID=1202389295, LongName='ATLAVOX BCN1 012f', ShortName='BCN1'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1202389295
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 28: ID=3956399131, LongName='MeshyBot 🦾 cmd for menu or just chat', ShortName='🤖'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3956399131
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 29: ID=1308964049, LongName='ATX 7th/Lavaca', ShortName='ATX1'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 1308964049
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 30: ID=3411681181, LongName='Meshtastic 1f9d', ShortName='1f9d'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3411681181
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 31: ID=2887569815, LongName='K Cyber 2', ShortName='KCy2'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 2887569815
+[RADIO] 2025/10/12 11:23:46 client.go:446: syncNodes: Processing node 32: ID=3723841170, LongName='Meshtastic 4e92', ShortName='4e92'
+[RADIO] 2025/10/12 11:23:46 client.go:468: syncNodes: Successfully upserted node 3723841170
+[RADIO] 2025/10/12 11:23:46 client.go:471: syncNodes: Completed processing 33 nodes
+[RADIO] 2025/10/12 11:23:46 client.go:211: syncFromRadio: Nodes synced successfully
+[RADIO] 2025/10/12 11:23:46 client.go:215: syncFromRadio: Syncing channels
+[RADIO] 2025/10/12 11:23:46 client.go:217: syncFromRadio: Failed to sync channels: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:23:46 client.go:224: syncFromRadio: Syncing config
+[RADIO] 2025/10/12 11:23:48 client.go:226: syncFromRadio: Failed to sync config: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:23:48 client.go:232: syncFromRadio: Data sync completed
+[RADIO] 2025/10/12 11:23:48 client.go:78: Initial data sync completed
+[RADIO] 2025/10/12 11:23:48 client.go:80: Connection fully established
+[RADIO] 2025/10/12 11:24:23 client.go:51: Starting connection to port: /dev/tty.usbserial-0001
+[RADIO] 2025/10/12 11:24:23 client.go:54: Calling radio.Init(/dev/tty.usbserial-0001)
+[RADIO] 2025/10/12 11:24:24 client.go:61: radio.Init succeeded
+[RADIO] 2025/10/12 11:24:24 client.go:65: Starting radio identification
+[RADIO] 2025/10/12 11:24:24 client.go:99: identifyRadio: Starting radio identification
+[RADIO] 2025/10/12 11:24:24 client.go:107: identifyRadio: Attempt 1/3 to get radio info
+[RADIO] 2025/10/12 11:24:25 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:25 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:24:26 client.go:107: identifyRadio: Attempt 2/3 to get radio info
+[RADIO] 2025/10/12 11:24:27 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:27 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:24:27 client.go:107: identifyRadio: Attempt 3/3 to get radio info
+[RADIO] 2025/10/12 11:24:28 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:28 client.go:122: identifyRadio: All attempts failed, creating placeholder radio. Error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:28 client.go:132: identifyRadio: Created placeholder radio with ID 12345
+[RADIO] 2025/10/12 11:24:28 client.go:70: Radio identification completed
+[RADIO] 2025/10/12 11:24:28 client.go:73: Starting initial data sync
+[RADIO] 2025/10/12 11:24:28 client.go:199: syncFromRadio: Starting data sync
+[RADIO] 2025/10/12 11:24:28 client.go:206: syncFromRadio: Syncing nodes
+[RADIO] 2025/10/12 11:24:28 client.go:427: syncNodes: Getting radio info for nodes
+[RADIO] 2025/10/12 11:24:28 client.go:430: syncNodes: GetRadioInfo failed: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:28 client.go:208: syncFromRadio: Failed to sync nodes: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:28 client.go:215: syncFromRadio: Syncing channels
+[RADIO] 2025/10/12 11:24:29 client.go:217: syncFromRadio: Failed to sync channels: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:29 client.go:224: syncFromRadio: Syncing config
+[RADIO] 2025/10/12 11:24:30 client.go:226: syncFromRadio: Failed to sync config: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:24:30 client.go:232: syncFromRadio: Data sync completed
+[RADIO] 2025/10/12 11:24:30 client.go:78: Initial data sync completed
+[RADIO] 2025/10/12 11:24:30 client.go:80: Connection fully established
+[RADIO] 2025/10/12 11:24:31 client.go:357: ExtractNodes: Processing 6 responses
+[RADIO] 2025/10/12 11:24:31 client.go:361: ExtractNodes: Processing response 0
+[RADIO] 2025/10/12 11:24:31 client.go:373: ExtractNodes: Response 0 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:24:31 client.go:376: ExtractNodes: Found NodeInfo in response 0
+[RADIO] 2025/10/12 11:24:31 client.go:381: ExtractNodes: Creating node with ID 1202389295
+[RADIO] 2025/10/12 11:24:31 client.go:386: ExtractNodes: Node 1202389295 names - Long: 'ATLAVOX BCN1 012f', Short: 'BCN1'
+[RADIO] 2025/10/12 11:24:31 client.go:397: ExtractNodes: Node 1202389295 metrics - Battery: 94%, Voltage: 4.11V
+[RADIO] 2025/10/12 11:24:31 client.go:407: ExtractNodes: Node 1202389295 position - Alt: 260, Lat: 302252032, Lon: -978583552
+[RADIO] 2025/10/12 11:24:31 client.go:414: ExtractNodes: Added node 1202389295 to list
+[RADIO] 2025/10/12 11:24:31 client.go:361: ExtractNodes: Processing response 1
+[RADIO] 2025/10/12 11:24:31 client.go:373: ExtractNodes: Response 1 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:24:31 client.go:376: ExtractNodes: Found NodeInfo in response 1
+[RADIO] 2025/10/12 11:24:31 client.go:381: ExtractNodes: Creating node with ID 3956399131
+[RADIO] 2025/10/12 11:24:31 client.go:386: ExtractNodes: Node 3956399131 names - Long: 'MeshyBot 🦾 cmd for menu or just chat', Short: '🤖'
+[RADIO] 2025/10/12 11:24:31 client.go:397: ExtractNodes: Node 3956399131 metrics - Battery: 101%, Voltage: 0.00V
+[RADIO] 2025/10/12 11:24:31 client.go:410: ExtractNodes: Node 3956399131 has no Position info
+[RADIO] 2025/10/12 11:24:31 client.go:414: ExtractNodes: Added node 3956399131 to list
+[RADIO] 2025/10/12 11:24:31 client.go:361: ExtractNodes: Processing response 2
+[RADIO] 2025/10/12 11:24:31 client.go:373: ExtractNodes: Response 2 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:24:31 client.go:376: ExtractNodes: Found NodeInfo in response 2
+[RADIO] 2025/10/12 11:24:31 client.go:381: ExtractNodes: Creating node with ID 1308964049
+[RADIO] 2025/10/12 11:24:31 client.go:386: ExtractNodes: Node 1308964049 names - Long: 'ATX 7th/Lavaca', Short: 'ATX1'
+[RADIO] 2025/10/12 11:24:31 client.go:397: ExtractNodes: Node 1308964049 metrics - Battery: 101%, Voltage: 4.23V
+[RADIO] 2025/10/12 11:24:31 client.go:410: ExtractNodes: Node 1308964049 has no Position info
+[RADIO] 2025/10/12 11:24:31 client.go:414: ExtractNodes: Added node 1308964049 to list
+[RADIO] 2025/10/12 11:24:31 client.go:361: ExtractNodes: Processing response 3
+[RADIO] 2025/10/12 11:24:31 client.go:373: ExtractNodes: Response 3 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:24:31 client.go:376: ExtractNodes: Found NodeInfo in response 3
+[RADIO] 2025/10/12 11:24:31 client.go:381: ExtractNodes: Creating node with ID 3411681181
+[RADIO] 2025/10/12 11:24:31 client.go:386: ExtractNodes: Node 3411681181 names - Long: 'Meshtastic 1f9d', Short: '1f9d'
+[RADIO] 2025/10/12 11:24:31 client.go:397: ExtractNodes: Node 3411681181 metrics - Battery: 101%, Voltage: 4.76V
+[RADIO] 2025/10/12 11:24:31 client.go:407: ExtractNodes: Node 3411681181 position - Alt: 209, Lat: 303300608, Lon: -977010688
+[RADIO] 2025/10/12 11:24:31 client.go:414: ExtractNodes: Added node 3411681181 to list
+[RADIO] 2025/10/12 11:24:31 client.go:361: ExtractNodes: Processing response 4
+[RADIO] 2025/10/12 11:24:31 client.go:373: ExtractNodes: Response 4 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:24:31 client.go:376: ExtractNodes: Found NodeInfo in response 4
+[RADIO] 2025/10/12 11:24:31 client.go:381: ExtractNodes: Creating node with ID 2887569815
+[RADIO] 2025/10/12 11:24:31 client.go:386: ExtractNodes: Node 2887569815 names - Long: 'K Cyber 2', Short: 'KCy2'
+[RADIO] 2025/10/12 11:24:31 client.go:397: ExtractNodes: Node 2887569815 metrics - Battery: 96%, Voltage: 4.13V
+[RADIO] 2025/10/12 11:24:31 client.go:407: ExtractNodes: Node 2887569815 position - Alt: 222, Lat: 302776320, Lon: -977534976
+[RADIO] 2025/10/12 11:24:31 client.go:414: ExtractNodes: Added node 2887569815 to list
+[RADIO] 2025/10/12 11:24:31 client.go:361: ExtractNodes: Processing response 5
+[RADIO] 2025/10/12 11:24:31 client.go:373: ExtractNodes: Response 5 payload variant type: *gomeshproto.FromRadio_NodeInfo
+[RADIO] 2025/10/12 11:24:31 client.go:376: ExtractNodes: Found NodeInfo in response 5
+[RADIO] 2025/10/12 11:24:31 client.go:381: ExtractNodes: Creating node with ID 3723841170
+[RADIO] 2025/10/12 11:24:31 client.go:386: ExtractNodes: Node 3723841170 names - Long: 'Meshtastic 4e92', Short: '4e92'
+[RADIO] 2025/10/12 11:24:31 client.go:397: ExtractNodes: Node 3723841170 metrics - Battery: 49%, Voltage: 3.72V
+[RADIO] 2025/10/12 11:24:31 client.go:410: ExtractNodes: Node 3723841170 has no Position info
+[RADIO] 2025/10/12 11:24:31 client.go:414: ExtractNodes: Added node 3723841170 to list
+[RADIO] 2025/10/12 11:24:31 client.go:421: ExtractNodes: Extracted 6 nodes total
+[RADIO] 2025/10/12 11:25:36 client.go:51: Starting connection to port: /dev/tty.usbserial-0001
+[RADIO] 2025/10/12 11:25:36 client.go:54: Calling radio.Init(/dev/tty.usbserial-0001)
+[RADIO] 2025/10/12 11:25:37 client.go:61: radio.Init succeeded
+[RADIO] 2025/10/12 11:25:37 client.go:65: Starting radio identification
+[RADIO] 2025/10/12 11:25:37 client.go:99: identifyRadio: Starting radio identification
+[RADIO] 2025/10/12 11:25:37 client.go:107: identifyRadio: Attempt 1/3 to get radio info
+[RADIO] 2025/10/12 11:25:38 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:25:38 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:25:39 client.go:107: identifyRadio: Attempt 2/3 to get radio info
+[RADIO] 2025/10/12 11:25:40 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:25:40 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:25:40 client.go:107: identifyRadio: Attempt 3/3 to get radio info
+[RADIO] 2025/10/12 11:25:41 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:25:41 client.go:122: identifyRadio: All attempts failed, creating placeholder radio. Error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:25:41 client.go:132: identifyRadio: Created placeholder radio with ID 12345
+[RADIO] 2025/10/12 11:25:41 client.go:70: Radio identification completed
+[RADIO] 2025/10/12 11:25:41 client.go:73: Starting initial data sync
+[RADIO] 2025/10/12 11:25:41 client.go:199: syncFromRadio: Starting data sync
+[RADIO] 2025/10/12 11:25:41 client.go:206: syncFromRadio: Syncing nodes
+[RADIO] 2025/10/12 11:25:41 client.go:413: syncNodes: Getting radio info for nodes
+[RADIO] 2025/10/12 11:25:41 client.go:416: syncNodes: GetRadioInfo failed: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:25:41 client.go:208: syncFromRadio: Failed to sync nodes: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:25:41 client.go:215: syncFromRadio: Skipping channel sync (known wire-format issue)
+[RADIO] 2025/10/12 11:25:41 client.go:216: syncFromRadio: Skipping config sync (known wire-format issue)
+[RADIO] 2025/10/12 11:25:41 client.go:218: syncFromRadio: Data sync completed
+[RADIO] 2025/10/12 11:25:41 client.go:78: Initial data sync completed
+[RADIO] 2025/10/12 11:25:41 client.go:80: Connection fully established
+[RADIO] 2025/10/12 11:26:58 client.go:51: Starting connection to port: /dev/tty.usbserial-0001
+[RADIO] 2025/10/12 11:26:58 client.go:54: Calling radio.Init(/dev/tty.usbserial-0001)
+[RADIO] 2025/10/12 11:26:59 client.go:61: radio.Init succeeded
+[RADIO] 2025/10/12 11:26:59 client.go:65: Starting radio identification
+[RADIO] 2025/10/12 11:26:59 client.go:99: identifyRadio: Starting radio identification
+[RADIO] 2025/10/12 11:26:59 client.go:107: identifyRadio: Attempt 1/3 to get radio info
+[RADIO] 2025/10/12 11:27:00 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:00 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:27:00 client.go:107: identifyRadio: Attempt 2/3 to get radio info
+[RADIO] 2025/10/12 11:27:03 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:03 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:27:04 client.go:107: identifyRadio: Attempt 3/3 to get radio info
+[RADIO] 2025/10/12 11:27:04 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:04 client.go:122: identifyRadio: All attempts failed, creating placeholder radio. Error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:04 client.go:132: identifyRadio: Created placeholder radio with ID 12345
+[RADIO] 2025/10/12 11:27:04 client.go:70: Radio identification completed
+[RADIO] 2025/10/12 11:27:04 client.go:73: Starting initial data sync
+[RADIO] 2025/10/12 11:27:04 client.go:199: syncFromRadio: Starting data sync
+[RADIO] 2025/10/12 11:27:04 client.go:206: syncFromRadio: Syncing nodes
+[RADIO] 2025/10/12 11:27:04 client.go:413: syncNodes: Getting radio info for nodes
+[RADIO] 2025/10/12 11:27:04 client.go:416: syncNodes: GetRadioInfo failed: read /dev/tty.usbserial-0001: file already closed
+[RADIO] 2025/10/12 11:27:04 client.go:208: syncFromRadio: Failed to sync nodes: read /dev/tty.usbserial-0001: file already closed
+[RADIO] 2025/10/12 11:27:04 client.go:215: syncFromRadio: Skipping channel sync (known wire-format issue)
+[RADIO] 2025/10/12 11:27:04 client.go:216: syncFromRadio: Skipping config sync (known wire-format issue)
+[RADIO] 2025/10/12 11:27:04 client.go:218: syncFromRadio: Data sync completed
+[RADIO] 2025/10/12 11:27:04 client.go:78: Initial data sync completed
+[RADIO] 2025/10/12 11:27:04 client.go:80: Connection fully established
+[RADIO] 2025/10/12 11:27:09 client.go:51: Starting connection to port: /dev/tty.usbserial-0001
+[RADIO] 2025/10/12 11:27:09 client.go:54: Calling radio.Init(/dev/tty.usbserial-0001)
+[RADIO] 2025/10/12 11:27:12 client.go:61: radio.Init succeeded
+[RADIO] 2025/10/12 11:27:12 client.go:65: Starting radio identification
+[RADIO] 2025/10/12 11:27:12 client.go:99: identifyRadio: Starting radio identification
+[RADIO] 2025/10/12 11:27:12 client.go:107: identifyRadio: Attempt 1/3 to get radio info
+[RADIO] 2025/10/12 11:27:13 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:13 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:27:13 client.go:107: identifyRadio: Attempt 2/3 to get radio info
+[RADIO] 2025/10/12 11:27:15 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:15 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:27:16 client.go:107: identifyRadio: Attempt 3/3 to get radio info
+[RADIO] 2025/10/12 11:27:17 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:17 client.go:122: identifyRadio: All attempts failed, creating placeholder radio. Error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:17 client.go:132: identifyRadio: Created placeholder radio with ID 12345
+[RADIO] 2025/10/12 11:27:17 client.go:70: Radio identification completed
+[RADIO] 2025/10/12 11:27:17 client.go:73: Starting initial data sync
+[RADIO] 2025/10/12 11:27:17 client.go:199: syncFromRadio: Starting data sync
+[RADIO] 2025/10/12 11:27:17 client.go:206: syncFromRadio: Syncing nodes
+[RADIO] 2025/10/12 11:27:17 client.go:413: syncNodes: Getting radio info for nodes
+[RADIO] 2025/10/12 11:27:17 client.go:416: syncNodes: GetRadioInfo failed: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:17 client.go:208: syncFromRadio: Failed to sync nodes: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:27:17 client.go:215: syncFromRadio: Skipping channel sync (known wire-format issue)
+[RADIO] 2025/10/12 11:27:17 client.go:216: syncFromRadio: Skipping config sync (known wire-format issue)
+[RADIO] 2025/10/12 11:27:17 client.go:218: syncFromRadio: Data sync completed
+[RADIO] 2025/10/12 11:27:17 client.go:78: Initial data sync completed
+[RADIO] 2025/10/12 11:27:17 client.go:80: Connection fully established
+[RADIO] 2025/10/12 11:36:09 client.go:51: 🔌 Starting connection to port: /dev/tty.usbserial-0001
+[RADIO] 2025/10/12 11:36:09 client.go:54: 📡 Initializing radio connection...
+[RADIO] 2025/10/12 11:36:10 client.go:61: ✅ Radio connection established
+[RADIO] 2025/10/12 11:36:10 client.go:65: 🔍 Identifying connected radio...
+[RADIO] 2025/10/12 11:36:10 client.go:99: identifyRadio: Starting radio identification
+[RADIO] 2025/10/12 11:36:10 client.go:107: identifyRadio: Attempt 1/3 to get radio info
+[RADIO] 2025/10/12 11:36:10 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:36:10 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:36:10 client.go:107: identifyRadio: Attempt 2/3 to get radio info
+[RADIO] 2025/10/12 11:36:11 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:36:11 client.go:116: identifyRadio: Sleeping 500ms before retry
+[RADIO] 2025/10/12 11:36:11 client.go:107: identifyRadio: Attempt 3/3 to get radio info
+[RADIO] 2025/10/12 11:36:12 client.go:109: identifyRadio: GetRadioInfo returned 0 responses, error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:36:12 client.go:122: identifyRadio: All attempts failed, creating placeholder radio. Error: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:36:12 client.go:132: identifyRadio: Created placeholder radio with ID 12345
+[RADIO] 2025/10/12 11:36:12 client.go:70: ✅ Radio identified: Unknown Radio (ID: 12345)
+[RADIO] 2025/10/12 11:36:12 client.go:73: 📊 Syncing mesh network data...
+[RADIO] 2025/10/12 11:36:12 client.go:199: 📊 Starting mesh network data sync...
+[RADIO] 2025/10/12 11:36:12 client.go:206: 👥 Syncing mesh nodes...
+[RADIO] 2025/10/12 11:36:12 client.go:413: syncNodes: Getting radio info for nodes
+[RADIO] 2025/10/12 11:36:12 client.go:416: syncNodes: GetRadioInfo failed: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:36:12 client.go:208: ⚠️ Node sync failed: proto: cannot parse invalid wire-format data
+[RADIO] 2025/10/12 11:36:12 client.go:215: ⏭️ Skipping channel sync (gomesh library wire-format issue)
+[RADIO] 2025/10/12 11:36:12 client.go:216: ⏭️ Skipping config sync (gomesh library wire-format issue)
+[RADIO] 2025/10/12 11:36:12 client.go:218: ✅ Data sync completed
+[RADIO] 2025/10/12 11:36:12 client.go:78: ✅ Data sync completed
+[RADIO] 2025/10/12 11:36:12 client.go:80: 🎉 Connection fully established - Ready to use!

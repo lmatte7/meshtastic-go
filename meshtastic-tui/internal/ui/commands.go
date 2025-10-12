@@ -18,6 +18,12 @@ type connectSuccessMsg struct {
 	Channels []ChannelInfo
 }
 
+type syncProgressMsg struct {
+	Stage   string // "connecting", "identifying", "syncing_nodes", "syncing_channels", "complete"
+	Message string
+	Error   string
+}
+
 type connectErrorMsg string
 
 type dataRefreshMsg struct {
@@ -73,7 +79,7 @@ func connectCmd(client *radio.Client, port string) tea.Cmd {
 			}
 		}
 
-		// Get channels from database (will be empty for now due to sync issues)
+		// Get channels from database
 		dbChannels, err := client.GetChannelsFromDB()
 		if err == nil {
 			for _, dbChannel := range dbChannels {

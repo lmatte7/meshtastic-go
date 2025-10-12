@@ -48,36 +48,36 @@ func NewClient() (*Client, error) {
 
 // Connect establishes a connection to the radio
 func (c *Client) Connect(port string) error {
-	logger.Printf("Starting connection to port: %s", port)
+	logger.Printf("🔌 Starting connection to port: %s", port)
 	c.port = port
 
-	logger.Printf("Calling radio.Init(%s)", port)
+	logger.Printf("📡 Initializing radio connection...")
 	err := c.radio.Init(port)
 	if err != nil {
-		logger.Printf("radio.Init failed: %v", err)
+		logger.Printf("❌ Radio initialization failed: %v", err)
 		c.connected = false
 		return fmt.Errorf("failed to connect to radio: %w", err)
 	}
-	logger.Printf("radio.Init succeeded")
+	logger.Printf("✅ Radio connection established")
 	c.connected = true
 
 	// Identify the radio and store in database
-	logger.Printf("Starting radio identification")
+	logger.Printf("🔍 Identifying connected radio...")
 	if err := c.identifyRadio(); err != nil {
-		logger.Printf("identifyRadio failed: %v", err)
+		logger.Printf("⚠️ Radio identification failed: %v", err)
 		return fmt.Errorf("failed to identify radio: %w", err)
 	}
-	logger.Printf("Radio identification completed")
+	logger.Printf("✅ Radio identified: %s (ID: %d)", c.currentRadio.LongName, c.currentRadio.NodeID)
 
 	// Load initial data from radio and cache in database
-	logger.Printf("Starting initial data sync")
+	logger.Printf("📊 Syncing mesh network data...")
 	if err := c.syncFromRadio(); err != nil {
-		logger.Printf("syncFromRadio failed: %v", err)
+		logger.Printf("⚠️ Data sync failed: %v", err)
 		return fmt.Errorf("failed to sync initial data: %w", err)
 	}
-	logger.Printf("Initial data sync completed")
+	logger.Printf("✅ Data sync completed")
 
-	logger.Printf("Connection fully established")
+	logger.Printf("🎉 Connection fully established - Ready to use!")
 	return nil
 }
 
@@ -196,26 +196,26 @@ func (c *Client) identifyRadio() error {
 
 // syncFromRadio loads data from radio and stores in database
 func (c *Client) syncFromRadio() error {
-	logger.Printf("syncFromRadio: Starting data sync")
+	logger.Printf("📊 Starting mesh network data sync...")
 	if c.currentRadio == nil {
-		logger.Printf("syncFromRadio: No current radio, aborting")
+		logger.Printf("❌ No current radio identified, aborting sync")
 		return fmt.Errorf("radio not identified")
 	}
 
 	// Sync nodes (don't fail connection if this fails)
-	logger.Printf("syncFromRadio: Syncing nodes")
+	logger.Printf("👥 Syncing mesh nodes...")
 	if err := c.syncNodes(); err != nil {
-		logger.Printf("syncFromRadio: Failed to sync nodes: %v", err)
+		logger.Printf("⚠️ Node sync failed: %v", err)
 		fmt.Printf("Warning: failed to sync nodes: %v\n", err)
 	} else {
-		logger.Printf("syncFromRadio: Nodes synced successfully")
+		logger.Printf("✅ Mesh nodes synced successfully")
 	}
 
 	// Skip channels and config sync for now due to gomesh library wire-format issues
-	logger.Printf("syncFromRadio: Skipping channel sync (known wire-format issue)")
-	logger.Printf("syncFromRadio: Skipping config sync (known wire-format issue)")
+	logger.Printf("⏭️ Skipping channel sync (gomesh library wire-format issue)")
+	logger.Printf("⏭️ Skipping config sync (gomesh library wire-format issue)")
 
-	logger.Printf("syncFromRadio: Data sync completed")
+	logger.Printf("✅ Data sync completed")
 	return nil
 }
 

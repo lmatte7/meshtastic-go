@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ const (
 	ViewChannels
 	ViewConfig
 	ViewHelp
+	ViewLogs
 )
 
 // Model is the main application model
@@ -38,6 +40,7 @@ type Model struct {
 	connecting   bool
 	connectError string
 	autoConnect  string // Auto-connect device path
+	syncProgress string // Current sync progress message
 
 	// Messages
 	messages          []radio.Message
@@ -69,6 +72,10 @@ type Model struct {
 	// Status
 	statusMsg  string
 	lastUpdate time.Time
+
+	// Logs
+	logViewport viewport.Model
+	logContent  string
 }
 
 type ChannelInfo struct {
@@ -128,6 +135,7 @@ func NewModel() (Model, error) {
 		nodeViewport:      viewport.New(0, 0),
 		channelViewport:   viewport.New(0, 0),
 		configViewport:    viewport.New(0, 0),
+		logViewport:       viewport.New(0, 0),
 		selectedNode:      -1,
 		selectedChannel:   -1,
 		lastUpdate:        time.Now(),
@@ -137,6 +145,17 @@ func NewModel() (Model, error) {
 // SetAutoConnect sets the device path for auto-connection
 func (m *Model) SetAutoConnect(devicePath string) {
 	m.autoConnect = devicePath
+}
+
+// loadLogContent loads the log file content
+func (m *Model) loadLogContent() {
+	content, err := os.ReadFile("./tmp.log")
+	if err != nil {
+		m.logContent = fmt.Sprintf("Error reading log file: %v", err)
+	} else {
+		m.logContent = string(content)
+	}
+	m.logViewport.SetContent(m.logContent)
 }
 
 func (m Model) Init() tea.Cmd {
@@ -169,6 +188,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.channelViewport.Height = vpHeight
 		m.configViewport.Width = m.width - 4
 		m.configViewport.Height = vpHeight
+		m.logViewport.Width = m.width - 4
+		m.logViewport.Height = vpHeight
 
 		m.updateViewportContent()
 		return m, nil
@@ -233,6 +254,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "f5":
 			m.currentView = ViewHelp
+			return m, nil
+		case "f6", "l":
+			m.currentView = ViewLogs
+			m.loadLogContent()
 			return m, nil
 		}
 
@@ -397,6 +422,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case ViewConfig:
 			m.configViewport, cmd = m.configViewport.Update(msg)
 			return m, cmd
+
+		case ViewLogs:
+			// Handle refresh for logs
+			if msg.String() == "r" {
+				m.loadLogContent()
+				return m, nil
+			}
+			m.logViewport, cmd = m.logViewport.Update(msg)
+			return m, cmd
 		}
 
 	case tickMsg:
@@ -426,6 +460,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.connecting = false
 		m.connectError = string(msg)
 		m.statusMsg = "Connection failed"
+		m.syncProgress = ""
+		return m, nil
+
+	case syncProgressMsg:
+		m.syncProgress = msg.Message
+		if msg.Error != "" {
+			m.syncProgress = fmt.Sprintf("⚠️ %s: %s", msg.Stage, msg.Error)
+		}
 		return m, nil
 
 	case dataRefreshMsg:
@@ -486,6 +528,8 @@ func (m Model) View() string {
 		content = m.renderConfig()
 	case ViewHelp:
 		content = m.renderHelp()
+	case ViewLogs:
+		content = m.renderLogs()
 	}
 
 	// Calculate available height for content
