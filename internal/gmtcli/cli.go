@@ -51,6 +51,13 @@ func CLIEntry(version, commit, builddate string) {
 						Aliases: []string{"n"},
 						Usage:   "Show all nodes on the mesh",
 						Action:  showNodeInfo,
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:     "json",
+								Usage:    "Output nodes in JSON",
+								Required: false,
+							},
+						},
 					},
 					{
 						Name:    "position",
