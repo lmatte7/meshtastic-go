@@ -36,46 +36,6 @@ func printConfig(r gomesh.Radio) error {
 		return err
 	}
 
-	for _, config := range configSettings {
-		if deviceConfig := config.Config.GetDevice(); deviceConfig != nil {
-			fmt.Printf("deviceConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-		if deviceConfig := config.Config.GetPosition(); deviceConfig != nil {
-			fmt.Printf("positionConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-		if deviceConfig := config.Config.GetPower(); deviceConfig != nil {
-			fmt.Printf("powerConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-		if deviceConfig := config.Config.GetNetwork(); deviceConfig != nil {
-			fmt.Printf("networkConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-		if deviceConfig := config.Config.GetDisplay(); deviceConfig != nil {
-			fmt.Printf("displayConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-		if deviceConfig := config.Config.GetLora(); deviceConfig != nil {
-			fmt.Printf("loraConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-		if deviceConfig := config.Config.GetBluetooth(); deviceConfig != nil {
-			fmt.Printf("bluetoothConfig: %+v\n", *deviceConfig)
-			continue
-		}
-
-	}
-
-	return nil
-
 	fmt.Printf("Radio Config:\n")
 	fmt.Printf("%-40s", "==============================================================================\n")
 	for _, config := range configSettings {
