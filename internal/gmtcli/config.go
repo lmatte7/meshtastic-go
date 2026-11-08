@@ -77,10 +77,7 @@ func printConfig(r gomesh.Radio) error {
 	return nil
 
 	fmt.Printf("Radio Config:\n")
-	fmt.Printf(
-		"%-40s",
-		"==============================================================================\n",
-	)
+	fmt.Printf("%-40s", "==============================================================================\n")
 	for _, config := range configSettings {
 		if deviceConfig := config.Config.GetDevice(); deviceConfig != nil {
 			printSection("Device Config Options", *deviceConfig)
@@ -108,10 +105,7 @@ func printConfig(r gomesh.Radio) error {
 			printSection("Serial Module Options", *moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetExternalNotification(); moduleConfig != nil {
-			printSection(
-				"External Notification Module Options",
-				*moduleConfig,
-			)
+			printSection("External Notification Module Options", *moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetStoreForward(); moduleConfig != nil {
 			printSection("Store Forward Module Options", *moduleConfig)
@@ -157,15 +151,9 @@ func showRadioConfig(c *cli.Context) error {
 
 func printSection(title string, t interface{}) {
 	v := reflect.ValueOf(t)
-	fmt.Printf(
-		"\n%-40s",
-		"-------------------------------------------------\n",
-	)
+	fmt.Printf("\n%-40s", "-------------------------------------------------\n")
 	fmt.Printf("%-48s|\n", title)
-	fmt.Printf(
-		"%-40s",
-		"-------------------------------------------------\n",
-	)
+	fmt.Printf("%-40s", "-------------------------------------------------\n")
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).CanInterface() {
 			fmt.Printf("%-40s", v.Type().Field(i).Name)
