@@ -8,6 +8,10 @@ BUILDDATE="$(date -u +%Y-%m-%d)"
 
 LDARGS="-X main.VERSION=$VERSION -X main.COMMIT=$COMMIT -X main.BUILDDATE=$BUILDDATE"
 
+# Everything is pure Go, so disable cgo to make cross-compiling work from
+# any host without a target C toolchain.
+export CGO_ENABLED=0
+
 SRC="./cmd/meshtastic-go"
 NAME="meshtastic-go"
 
