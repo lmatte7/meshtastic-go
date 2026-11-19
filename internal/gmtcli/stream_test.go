@@ -393,11 +393,11 @@ func TestStreamNodeWithoutUserStillHasID(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := lines(buf)[0]
-	if m["from"].(map[string]interface{})["node_id"] != "!1ba66ad4" {
+	if m["from"].(map[string]interface{})["node_id"] != "!1ba687d4" {
 		t.Errorf("from = %v", m["from"])
 	}
 	direct := m["reply"].(map[string]interface{})["direct"].(map[string]interface{})
-	if direct["to"] != "!1ba66ad4" {
+	if direct["to"] != "!1ba687d4" {
 		t.Errorf("reply.direct should address the sender, got %v", direct)
 	}
 }
