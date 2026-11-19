@@ -275,16 +275,30 @@ func (r *Radio) SendTextMessageWithID(message string, to int64, channel int64) (
 
 // SetRadioOwner sets the owner of the radio visible on the public mesh
 func (r *Radio) SetRadioOwner(name string) error {
+	return r.SetRadioOwnerNames(name, "")
+}
 
+// SetRadioOwnerNames sets the radio's long and short name. The short name is
+// at most four characters; when empty it is derived from the long name.
+func (r *Radio) SetRadioOwnerNames(name, short string) error {
 	if len(name) <= 2 {
 		return errors.New("name too short")
+	}
+	if short == "" {
+		short = name
+		if len(short) > 4 {
+			short = short[:4]
+		}
+	}
+	if len(short) > 4 {
+		return errors.New("short name must be at most 4 characters")
 	}
 
 	adminPacket := pb.AdminMessage{
 		PayloadVariant: &pb.AdminMessage_SetOwner{
 			SetOwner: &pb.User{
 				LongName:  name,
-				ShortName: name[:3],
+				ShortName: short,
 			},
 		},
 	}

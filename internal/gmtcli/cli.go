@@ -261,35 +261,40 @@ func CLIEntry(version, commit, builddate string) {
 				Subcommands: []*cli.Command{
 					{
 						Name:        "set",
-						Usage:       "Set a user preference",
-						Description: "Sets a user preference using the provided key/value combination",
+						Usage:       "Set a config value",
+						Description: "Sets one radio or module config value by the field name shown in \"config\" output. Enum values are given by name (for example Region US, Role CLIENT, ModemPreset LONG_FAST).",
 						Action:      setConfig,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "key",
 								Aliases:  []string{"k"},
-								Usage:    "Key of the user preferences to be changed",
+								Usage:    "Field name as shown by \"config\", for example Region or HopLimit",
 								Required: true,
 							},
 							&cli.StringFlag{
 								Name:     "value",
 								Aliases:  []string{"v"},
-								Usage:    "Value of the parameter",
+								Usage:    "The value: a number, true/false, text, or an enum name",
 								Required: true,
 							},
 						},
 					},
 					{
 						Name:        "owner",
-						Usage:       "Set the radio owner",
-						Description: "Sets the owner of the radio that is sent out over the network",
+						Usage:       "Set the radio's long and short name",
+						Description: "Sets the names other nodes see for this radio. The short name is at most four characters and defaults to the first four of the long name.",
 						Action:      setOwner,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "name",
 								Aliases:  []string{"n"},
-								Usage:    "The owner name",
+								Usage:    "The long name",
 								Required: true,
+							},
+							&cli.StringFlag{
+								Name:    "short",
+								Aliases: []string{"s"},
+								Usage:   "The short name, up to 4 characters",
 							},
 						},
 					},

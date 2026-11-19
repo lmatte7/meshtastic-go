@@ -26,7 +26,7 @@ func setOwner(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	return radio.SetRadioOwner(c.String("name"))
+	return radio.SetRadioOwnerNames(c.String("name"), c.String("short"))
 }
 
 func printConfig(r gomesh.Radio) error {

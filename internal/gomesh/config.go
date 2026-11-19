@@ -2,11 +2,14 @@ package gomesh
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // GetRadioConfig returns a filtered list of raiod and module config settings
@@ -517,39 +520,89 @@ func reflectForKey(t interface{}, key string) (keyFound bool) {
 }
 
 func setProtoValue(t interface{}, key string, value string) error {
-	rPref := reflect.ValueOf(t)
+	fv := reflect.ValueOf(t).Elem().FieldByName(key)
+	return setFieldValue(fv, value)
+}
 
-	rPref = rPref.Elem()
+// enumType is implemented by every generated protobuf enum.
+var enumType = reflect.TypeOf((*protoreflect.Enum)(nil)).Elem()
 
-	fv := rPref.FieldByName(key)
-	vType := fv.Type()
+// setFieldValue parses value as text and stores it in a protobuf struct
+// field. Enums accept their value names (case-insensitive, for example "US"
+// or "LONG_FAST") as well as numbers; optional scalar fields, which the
+// generated code represents as pointers, are set through a new pointer.
+func setFieldValue(fv reflect.Value, value string) error {
+	if !fv.IsValid() || !fv.CanSet() {
+		return errors.New("unknown Field")
+	}
 
-	// The acceptable values that can be set from the command line are uint32 and bool, so only check for those
-	switch vType.Kind() {
+	if fv.Kind() == reflect.Ptr && fv.Type().Elem().Kind() != reflect.Struct {
+		target := reflect.New(fv.Type().Elem())
+		if err := setFieldValue(target.Elem(), value); err != nil {
+			return err
+		}
+		fv.Set(target)
+		return nil
+	}
+
+	if fv.Type().Implements(enumType) {
+		return setEnumValue(fv, value)
+	}
+
+	switch fv.Kind() {
 	case reflect.Bool:
 		boolValue, err := strconv.ParseBool(value)
 		if err != nil {
 			return err
 		}
 		fv.SetBool(boolValue)
-	case reflect.Uint32:
-		uintValue, err := strconv.ParseUint(value, 10, 32)
+	case reflect.Uint32, reflect.Uint64:
+		uintValue, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
 			return err
 		}
 		fv.SetUint(uintValue)
-	case reflect.Int32:
-		intValue, err := strconv.ParseInt(value, 10, 32)
+	case reflect.Int32, reflect.Int64:
+		intValue, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return err
 		}
 		fv.SetInt(intValue)
+	case reflect.Float32, reflect.Float64:
+		floatValue, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return err
+		}
+		fv.SetFloat(floatValue)
 	case reflect.String:
 		fv.SetString(value)
-
+	case reflect.Slice, reflect.Array:
+		fv.SetBytes([]byte(value))
+	default:
+		return fmt.Errorf("cannot set a field of type %s from the command line", fv.Type())
 	}
-
 	return nil
+}
+
+// setEnumValue stores an enum given by name or number.
+func setEnumValue(fv reflect.Value, value string) error {
+	if number, err := strconv.ParseInt(value, 10, 32); err == nil {
+		fv.SetInt(number)
+		return nil
+	}
+	descriptor := fv.Interface().(protoreflect.Enum).Descriptor()
+	values := descriptor.Values()
+	for i := 0; i < values.Len(); i++ {
+		if strings.EqualFold(string(values.Get(i).Name()), value) {
+			fv.SetInt(int64(values.Get(i).Number()))
+			return nil
+		}
+	}
+	names := make([]string, 0, values.Len())
+	for i := 0; i < values.Len(); i++ {
+		names = append(names, string(values.Get(i).Name()))
+	}
+	return fmt.Errorf("unknown value %q; choose one of %s", value, strings.Join(names, ", "))
 }
 
 func sendAdminMessage(adminPacket pb.AdminMessage, r *Radio) error {

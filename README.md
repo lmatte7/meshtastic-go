@@ -15,6 +15,31 @@ Executables can be downloaded from the
 [releases](https://github.com/lmatte7/meshtastic-go/releases) page or built
 from source with `make build`.
 
+## Quickstart
+
+Setting up a radio fresh out of the box takes a handful of commands. Plug it
+in, tell the CLI where it is, and set the region (required before the radio
+will transmit), your names, the modem preset, the hop limit and the role:
+
+```
+export MESHTASTIC_RADIO_DEV=/dev/cu.usbmodem143101   # on macOS, optional with one radio attached
+
+meshtastic-go config set -k Region -v US              # or EU_868, EU_433, ANZ, ... (see "config")
+meshtastic-go config owner -n "Alice's T-Echo" -s ALCE
+meshtastic-go modem set -o lf                         # LONG_FAST, the default most meshes use
+meshtastic-go config set -k HopLimit -v 3
+meshtastic-go config set -k Role -v CLIENT            # or CLIENT_MUTE, ROUTER, ...
+meshtastic-go config set -k GpsMode -v ENABLED        # if the radio has a GPS
+meshtastic-go channel url -u 'https://meshtastic.org/e/#...'   # to join a private channel
+
+meshtastic-go info                                    # check the result
+```
+
+The radio reboots to apply some of these, so a command may take a few
+seconds while the next one waits for it to come back. Enum values are given
+by name as shown in `config` output; `config` lists every field that can be
+set.
+
 The protobuf bindings are generated from the current
 [Meshtastic protobufs](https://github.com/meshtastic/protobufs) release (see
 [Protobufs](#protobufs) below), so the tool understands the fields reported

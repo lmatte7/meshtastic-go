@@ -201,37 +201,9 @@ func (r *Radio) SetChannel(chIndex int, key string, value string) error {
 	fv := rPref.FieldByName(key)
 
 	if fv.IsValid() && fv.CanSet() {
-		vType := fv.Type()
-
-		// The acceptable values that can be set from the command line are uint32 and bool, so only check for those
-		switch vType.Kind() {
-		case reflect.Bool:
-			boolValue, err := strconv.ParseBool(value)
-			if err != nil {
-				return err
-			}
-			fv.SetBool(boolValue)
-		case reflect.Uint32:
-			uintValue, err := strconv.ParseUint(value, 10, 32)
-			if err != nil {
-				return err
-			}
-			fv.SetUint(uintValue)
-		case reflect.Int32:
-			uintValue, err := strconv.ParseInt(value, 10, 32)
-			if err != nil {
-				return err
-			}
-			fv.SetInt(uintValue)
-		case reflect.Array:
-			arrayValue := []byte(value)
-			fv.SetBytes(arrayValue)
-		case reflect.String:
-			fv.SetString(value)
-		case reflect.Slice:
-			fv.SetBytes([]byte(value))
+		if err := setFieldValue(fv, value); err != nil {
+			return err
 		}
-
 	} else if key == "PositionPrecision" {
 		uintValue, err := strconv.ParseUint(value, 10, 32)
 		if err != nil {
