@@ -150,7 +150,7 @@ func setModemOption(c *cli.Context) error {
 // improvement here shows up in both views.
 type MeshNode struct {
 	ID                  string  `json:"node_id,omitempty"`
-	NodeNumber          int     `json:"node_number,omitempty"`
+	NodeNumber          uint32  `json:"node_number,omitempty"`
 	LongName            string  `json:"longname,omitempty"`
 	ShortName           string  `json:"shortname,omitempty"`
 	AltitudeMeters      int     `json:"altitude_meters,omitempty"`
@@ -171,6 +171,12 @@ type MeshNode struct {
 
 // ProtoNodeToMeshNode converts a NodeInfo packet from the radio into a MeshNode.
 func ProtoNodeToMeshNode(node *gomeshproto.FromRadio_NodeInfo) MeshNode {
+	return protoNodeToMeshNodeAt(node, time.Now())
+}
+
+// protoNodeToMeshNodeAt is ProtoNodeToMeshNode with an explicit "now" so the
+// last-heard age can be computed deterministically.
+func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) MeshNode {
 	meshNode := MeshNode{}
 
 	if node == nil || node.NodeInfo == nil {
@@ -178,11 +184,11 @@ func ProtoNodeToMeshNode(node *gomeshproto.FromRadio_NodeInfo) MeshNode {
 	}
 	info := node.NodeInfo
 
-	meshNode.NodeNumber = int(info.Num)
+	meshNode.NodeNumber = info.Num
 
 	if info.LastHeard != 0 {
 		lastSeen := time.Unix(int64(info.LastHeard), 0).UTC()
-		sinceLastSeen := time.Since(lastSeen)
+		sinceLastSeen := now.Sub(lastSeen)
 		meshNode.LastHeard = lastSeen.Format(time.RFC3339)
 		meshNode.LastHeardSecondsAgo = int(sinceLastSeen.Seconds())
 		meshNode.LastHeardHuman = sinceLastSeen.Round(time.Second).String()
@@ -263,18 +269,19 @@ func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) error {
 		}
 		mn := ProtoNodeToMeshNode(node)
 
+		// Zero is a valid reading (sea level, 0% battery), so decide what to
+		// show from whether the radio reported the section at all.
 		battery, altitude, latitude, longitude, lastHeard := "N/A", "N/A", "N/A", "N/A", "N/A"
-		if mn.BatteryLevel != 0 {
+		if node.NodeInfo.DeviceMetrics != nil {
 			battery = fmt.Sprintf("%d%%", mn.BatteryLevel)
 		}
-		if mn.AltitudeMeters != 0 {
+		if position := node.NodeInfo.Position; position != nil {
 			altitude = fmt.Sprintf("%dm", mn.AltitudeMeters)
-		}
-		if mn.LatitudeDegrees != 0 {
-			latitude = fmt.Sprintf("%.7f", mn.LatitudeDegrees)
-		}
-		if mn.LongitudeDegrees != 0 {
-			longitude = fmt.Sprintf("%.7f", mn.LongitudeDegrees)
+			// A position with both coordinates exactly zero means no fix.
+			if position.LatitudeI != 0 || position.LongitudeI != 0 {
+				latitude = fmt.Sprintf("%.7f", mn.LatitudeDegrees)
+				longitude = fmt.Sprintf("%.7f", mn.LongitudeDegrees)
+			}
 		}
 		if mn.LastHeardHuman != "" {
 			lastHeard = mn.LastHeardHuman + " ago"

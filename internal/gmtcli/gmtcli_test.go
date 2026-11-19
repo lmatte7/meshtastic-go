@@ -8,7 +8,9 @@ import (
 )
 
 func TestProtoNodeToMeshNode(t *testing.T) {
-	lastHeard := time.Now().Add(-90 * time.Second).Unix()
+	// A fixed clock keeps the elapsed-time fields deterministic.
+	now := time.Date(2026, 11, 18, 12, 0, 0, 0, time.UTC)
+	lastHeard := now.Add(-90 * time.Second).Unix()
 
 	node := &gomeshproto.FromRadio_NodeInfo{
 		NodeInfo: &gomeshproto.NodeInfo{
@@ -36,7 +38,7 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		},
 	}
 
-	mn := ProtoNodeToMeshNode(node)
+	mn := protoNodeToMeshNodeAt(node, now)
 
 	checks := []struct {
 		name string
@@ -44,7 +46,7 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		want interface{}
 	}{
 		{"ID", mn.ID, "!9c048d2a"},
-		{"NodeNumber", mn.NodeNumber, 2617543978},
+		{"NodeNumber", mn.NodeNumber, uint32(2617543978)},
 		{"LongName", mn.LongName, "PalaceStation"},
 		{"ShortName", mn.ShortName, "PlcS"},
 		{"MACAddress", mn.MACAddress, "d5:0c:9c:04:8d:2a"},
@@ -56,14 +58,12 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		{"LongitudeDegrees", mn.LongitudeDegrees, -115.2385024},
 		{"LastHeard", mn.LastHeard, time.Unix(lastHeard, 0).UTC().Format(time.RFC3339)},
 		{"LastHeardHuman", mn.LastHeardHuman, "1m30s"},
+		{"LastHeardSecondsAgo", mn.LastHeardSecondsAgo, 90},
 	}
 	for _, c := range checks {
 		if c.got != c.want {
 			t.Errorf("%s = %v, want %v", c.name, c.got, c.want)
 		}
-	}
-	if mn.LastHeardSecondsAgo < 90 || mn.LastHeardSecondsAgo > 95 {
-		t.Errorf("LastHeardSecondsAgo = %d, want about 90", mn.LastHeardSecondsAgo)
 	}
 }
 
