@@ -592,14 +592,14 @@ func setEnumValue(fv reflect.Value, value string) error {
 	}
 	descriptor := fv.Interface().(protoreflect.Enum).Descriptor()
 	values := descriptor.Values()
-	for i := 0; i < values.Len(); i++ {
+	for i := range values.Len() {
 		if strings.EqualFold(string(values.Get(i).Name()), value) {
 			fv.SetInt(int64(values.Get(i).Number()))
 			return nil
 		}
 	}
 	names := make([]string, 0, values.Len())
-	for i := 0; i < values.Len(); i++ {
+	for i := range values.Len() {
 		names = append(names, string(values.Get(i).Name()))
 	}
 	return fmt.Errorf("unknown value %q; choose one of %s", value, strings.Join(names, ", "))
