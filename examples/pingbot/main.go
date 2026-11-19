@@ -23,16 +23,30 @@ import (
 	"syscall"
 )
 
+// eventID is an event's id, which is a number on message and packet lines
+// (the mesh packet id) and a string on the results of our own commands.
+type eventID string
+
+func (id *eventID) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		*id = eventID(s)
+		return nil
+	}
+	*id = eventID(string(b)) // a number: keep its digits
+	return nil
+}
+
 // event holds the parts of a stream line this bot looks at. Unknown fields
 // are ignored, so the bot keeps working as the stream grows new ones.
 type event struct {
-	Type     string `json:"type"`
-	ID       string `json:"id"`
-	Text     string `json:"text"`
-	Direct   bool   `json:"direct"`
-	Outgoing bool   `json:"outgoing"`
-	Implicit bool   `json:"implicit"`
-	Error    string `json:"error"`
+	Type     string  `json:"type"`
+	ID       eventID `json:"id"`
+	Text     string  `json:"text"`
+	Direct   bool    `json:"direct"`
+	Outgoing bool    `json:"outgoing"`
+	Implicit bool    `json:"implicit"`
+	Error    string  `json:"error"`
 	From     struct {
 		NodeID   string `json:"node_id"`
 		LongName string `json:"longname"`
@@ -48,21 +62,35 @@ type event struct {
 type bot struct {
 	commands io.Writer
 	log      *log.Logger
+	debug    bool
 	replies  int
+}
+
+// debugf logs only when -debug is on.
+func (b *bot) debugf(format string, args ...interface{}) {
+	if b.debug {
+		b.log.Printf("debug: "+format, args...)
+	}
 }
 
 // handle processes one line from the stream.
 func (b *bot) handle(line string) error {
 	var ev event
 	if err := json.Unmarshal([]byte(line), &ev); err != nil {
-		return fmt.Errorf("unreadable line from stream: %w", err)
+		return fmt.Errorf("unreadable line from stream: %w: %.200s", err, line)
 	}
+	b.debugf("recv %s id=%s from=%s direct=%v outgoing=%v text=%q", ev.Type, ev.ID, ev.From.NodeID, ev.Direct, ev.Outgoing, ev.Text)
 
 	switch ev.Type {
 	case "ready":
 		b.log.Printf("connected, waiting for !ping")
 	case "message":
-		if ev.Outgoing || !strings.EqualFold(strings.TrimSpace(ev.Text), "!ping") {
+		if ev.Outgoing {
+			b.debugf("ignoring our own outgoing message")
+			return nil
+		}
+		if !strings.EqualFold(strings.TrimSpace(ev.Text), "!ping") {
+			b.debugf("not a !ping")
 			return nil
 		}
 		return b.pong(ev)
@@ -106,6 +134,7 @@ func (b *bot) pong(ev event) error {
 		who = ev.From.NodeID
 	}
 	b.log.Printf("%s: !ping from %s, answering %s", command["id"], who, how)
+	b.debugf("send %s", line)
 	_, err = fmt.Fprintf(b.commands, "%s\n", line)
 	return err
 }
@@ -113,6 +142,7 @@ func (b *bot) pong(ev event) error {
 func main() {
 	port := flag.String("port", "", "serial port or IP address of the radio; defaults to MESHTASTIC_RADIO_DEV or, on macOS, the only attached USB radio")
 	bin := flag.String("bin", "meshtastic-go", "path to the meshtastic-go binary")
+	debug := flag.Bool("debug", false, "log every line received from the stream, every command sent, and why messages are ignored")
 	flag.Parse()
 
 	// With no -port, meshtastic-go resolves the port itself from
@@ -143,7 +173,7 @@ func main() {
 		stdin.Close()
 	}()
 
-	b := &bot{commands: stdin, log: log.New(os.Stderr, "pingbot: ", log.LstdFlags)}
+	b := &bot{commands: stdin, log: log.New(os.Stderr, "pingbot: ", log.LstdFlags), debug: *debug}
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {

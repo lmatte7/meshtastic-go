@@ -46,16 +46,30 @@ type node struct {
 
 func (n node) hasPosition() bool { return n.Latitude != 0 || n.Longitude != 0 }
 
+// eventID is an event's id, which is a number on message and packet lines
+// (the mesh packet id) and a string on the results of our own commands.
+type eventID string
+
+func (id *eventID) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		*id = eventID(s)
+		return nil
+	}
+	*id = eventID(string(b)) // a number: keep its digits
+	return nil
+}
+
 // event holds the parts of a stream line this bot looks at.
 type event struct {
-	Type     string `json:"type"`
-	ID       string `json:"id"`
-	Text     string `json:"text"`
-	Direct   bool   `json:"direct"`
-	Outgoing bool   `json:"outgoing"`
-	Implicit bool   `json:"implicit"`
-	Error    string `json:"error"`
-	From     node   `json:"from"`
+	Type     string  `json:"type"`
+	ID       eventID `json:"id"`
+	Text     string  `json:"text"`
+	Direct   bool    `json:"direct"`
+	Outgoing bool    `json:"outgoing"`
+	Implicit bool    `json:"implicit"`
+	Error    string  `json:"error"`
+	From     node    `json:"from"`
 	Reply    *struct {
 		Direct  map[string]interface{} `json:"direct"`
 		Channel map[string]interface{} `json:"channel"`
@@ -74,6 +88,7 @@ type request struct {
 type bot struct {
 	commands io.Writer
 	log      *log.Logger
+	debug    bool
 	now      func() time.Time
 	weather  func(location string) (string, error)
 	maxHops  int
@@ -100,12 +115,20 @@ func newBot(commands io.Writer, logger *log.Logger) *bot {
 	}
 }
 
+// debugf logs only when -debug is on.
+func (b *bot) debugf(format string, args ...interface{}) {
+	if b.debug {
+		b.log.Printf("debug: "+format, args...)
+	}
+}
+
 // handle processes one line from the stream.
 func (b *bot) handle(line string) error {
 	var ev event
 	if err := json.Unmarshal([]byte(line), &ev); err != nil {
-		return fmt.Errorf("unreadable line from stream: %w", err)
+		return fmt.Errorf("unreadable line from stream: %w: %.200s", err, line)
 	}
+	b.debugf("recv %s id=%s from=%s direct=%v outgoing=%v text=%q", ev.Type, ev.ID, ev.From.NodeID, ev.Direct, ev.Outgoing, ev.Text)
 
 	switch ev.Type {
 	case "ready":
@@ -131,11 +154,17 @@ func (b *bot) handle(line string) error {
 // onMessage reacts to "!weather [place]" by asking the stream for the node
 // list; the lookup happens when the list arrives.
 func (b *bot) onMessage(ev event) error {
-	if ev.Outgoing || ev.Reply == nil {
+	if ev.Outgoing {
+		b.debugf("ignoring our own outgoing message")
+		return nil
+	}
+	if ev.Reply == nil {
+		b.debugf("ignoring message without reply templates")
 		return nil
 	}
 	fields := strings.Fields(ev.Text)
 	if len(fields) == 0 || !strings.EqualFold(fields[0], "!weather") {
+		b.debugf("not a !weather request")
 		return nil
 	}
 
@@ -160,27 +189,30 @@ func (b *bot) onMessage(ev event) error {
 
 // onNodes finishes a pending request once the node list is available.
 func (b *bot) onNodes(ev event) error {
-	req, ok := b.pending[ev.ID]
+	req, ok := b.pending[string(ev.ID)]
 	if !ok {
+		b.debugf("nodes event %s is not for a pending request", ev.ID)
 		return nil
 	}
-	delete(b.pending, ev.ID)
+	delete(b.pending, string(ev.ID))
+	b.debugf("nodes event %s: %d nodes, my_node position %v,%v", ev.ID, len(ev.Nodes), ev.MyNode != nil && ev.MyNode.Latitude != 0, ev.MyNode != nil && ev.MyNode.Longitude != 0)
 
 	location, source := req.place, "for "+req.place
 	if location == "" {
 		var ok bool
 		location, source, ok = b.locate(ev.MyNode, ev.Nodes)
 		if !ok {
-			return b.send(req.reply, ev.ID, "Sorry, I don't know where I am: no GPS and no positioned nodes nearby.")
+			return b.send(req.reply, string(ev.ID), "Sorry, I don't know where I am: no GPS and no positioned nodes nearby.")
 		}
 	}
 
+	b.debugf("looking up weather for %q (%s)", location, source)
 	report, err := b.weather(location)
 	if err != nil {
 		b.log.Printf("%s: weather lookup failed: %v", ev.ID, err)
-		return b.send(req.reply, ev.ID, "Weather lookup failed, try again later.")
+		return b.send(req.reply, string(ev.ID), "Weather lookup failed, try again later.")
 	}
-	return b.send(req.reply, ev.ID, fmt.Sprintf("%s (%s)", report, source))
+	return b.send(req.reply, string(ev.ID), fmt.Sprintf("%s (%s)", report, source))
 }
 
 // locate returns the radio's position as "lat,lon" and a note on where it
@@ -250,6 +282,7 @@ func (b *bot) write(command map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
+	b.debugf("send %s", line)
 	_, err = fmt.Fprintf(b.commands, "%s\n", line)
 	return err
 }
@@ -290,6 +323,7 @@ func main() {
 	maxHops := flag.Int("max-hops", 2, "only use nodes at most this many hops away to estimate the position")
 	maxAge := flag.Duration("max-age", 24*time.Hour, "only use nodes heard within this long to estimate the position")
 	interval := flag.Duration("interval", 5*time.Minute, "answer at most one !weather (one lookup, one reply) per this interval")
+	debug := flag.Bool("debug", false, "log every line received from the stream, every command sent, and why messages are ignored")
 	flag.Parse()
 
 	// With no -port, meshtastic-go resolves the port itself from
@@ -325,6 +359,7 @@ func main() {
 	b.maxHops = *maxHops
 	b.maxAge = *maxAge
 	b.interval = *interval
+	b.debug = *debug
 
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)

@@ -62,6 +62,23 @@ func nodesEvent(id string, gps bool) string {
 		`]}`
 }
 
+func TestMessageLinesWithNumericIDsAreParsed(t *testing.T) {
+	// Message lines carry the mesh packet id as a number; command results
+	// carry our string ids. Both must parse.
+	b, commands, _ := newTestBot()
+	numeric := `{"type":"message","id":1836540931,"text":"!weather","direct":false,"outgoing":false,` +
+		`"from":{"node_id":"!43b59594"},"reply":{"direct":{"to":"!43b59594","channel":0},"channel":{"channel":0}}}`
+	if err := b.handle(numeric); err != nil {
+		t.Fatalf("message line with numeric id: %v", err)
+	}
+	if got := decodeLines(t, commands); len(got) != 1 || got[0]["command"] != "nodes" {
+		t.Errorf("request should have been accepted, got %v", got)
+	}
+	if err := b.handle(`{"type":"sent","id":"weather-1","text":"x"}`); err != nil {
+		t.Fatalf("result line with string id: %v", err)
+	}
+}
+
 func TestWeatherEstimatesPositionFromNearbyNodes(t *testing.T) {
 	b, commands, lookups := newTestBot()
 	if err := b.handle(weatherRequest); err != nil {

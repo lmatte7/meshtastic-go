@@ -14,7 +14,7 @@ func newTestBot() (*bot, *bytes.Buffer) {
 	return &bot{commands: &commands, log: log.New(io.Discard, "", 0)}, &commands
 }
 
-const channelPing = `{"type":"message","text":"!ping","direct":false,"outgoing":false,` +
+const channelPing = `{"type":"message","id":1836540931,"text":"!ping","direct":false,"outgoing":false,` +
 	`"from":{"node_id":"!43b59594","longname":"DvdGmz01"},` +
 	`"reply":{"direct":{"to":"!43b59594","channel":1},"channel":{"channel":1}}}`
 

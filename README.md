@@ -400,7 +400,9 @@ go run ./examples/weatherbot
 
 The bots find the radio the same way the CLI does (`-port`,
 `MESHTASTIC_RADIO_DEV`, or the only attached USB radio on macOS) and expect
-`meshtastic-go` on the `PATH` (`-bin` points elsewhere).
+`meshtastic-go` on the `PATH` (`-bin` points elsewhere). `-debug` logs every
+line received from the stream, every command sent, and the reason a message
+was ignored, which is the first thing to turn on when a bot does not answer.
 
 ### `config`
 
