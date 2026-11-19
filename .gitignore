@@ -5,3 +5,6 @@ meshtastic-go
 smoke/smoke
 .aider*
 .env
+# local Go workspace pointing at a sibling goMesh checkout
+go.work
+go.work.sum

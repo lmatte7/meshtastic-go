@@ -123,6 +123,16 @@ Every message line also carries a `reply` object with two ready-made commands, s
 "reply": {"direct": {"to": "!43b59594", "channel": 0}, "channel": {"channel": 0}}
 ```
 
+#### Example bot
+
+`examples/pingbot` is a complete bot in about a hundred lines of Go with no dependencies beyond the standard library. It runs `meshtastic-go stream --commands` as a subprocess, answers any `!ping` with `pong` on the channel it arrived on (or directly for a direct message), and logs the `sent`, `queued`, `delivered` and `failed` events for its replies:
+
+```
+go run ./examples/pingbot -port /dev/cu.usbmodem143101 -bin builds/meshtastic-go_osx
+```
+
+The same pattern works from any language: start the process, read lines, write lines.
+
 ### `config`
 
 The `config` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.
