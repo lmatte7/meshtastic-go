@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lmatte7/meshtastic-go/internal/gomesh"
 	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	"google.golang.org/protobuf/proto"
 )
@@ -70,6 +71,25 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		if c.got != c.want {
 			t.Errorf("%s = %v, want %v", c.name, c.got, c.want)
 		}
+	}
+}
+
+func TestParseModemPreset(t *testing.T) {
+	cases := map[string]gomeshproto.Config_LoRaConfig_ModemPreset{
+		"lf":           gomeshproto.Config_LoRaConfig_LONG_FAST,
+		"LF":           gomeshproto.Config_LoRaConfig_LONG_FAST,
+		"st":           gomeshproto.Config_LoRaConfig_SHORT_TURBO,
+		"LONG_FAST":    gomeshproto.Config_LoRaConfig_LONG_FAST,
+		"medium_turbo": gomeshproto.Config_LoRaConfig_MEDIUM_TURBO,
+	}
+	for in, want := range cases {
+		got, err := gomesh.ParseModemPreset(in)
+		if err != nil || got != want {
+			t.Errorf("ParseModemPreset(%q) = %v, %v; want %v", in, got, err, want)
+		}
+	}
+	if _, err := gomesh.ParseModemPreset("bogus"); err == nil {
+		t.Error("ParseModemPreset(\"bogus\") succeeded, want error")
 	}
 }
 

@@ -2,9 +2,11 @@ package gomesh
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
@@ -295,36 +297,78 @@ func (r *Radio) SetRadioOwner(name string) error {
 	return nil
 }
 
-// SetModemMode sets the channel modem setting to be fast or slow
-func (r *Radio) SetModemMode(mode string) error {
+// modemShortCodes are the short aliases accepted for modem presets alongside
+// the full preset names.
+var modemShortCodes = map[string]pb.Config_LoRaConfig_ModemPreset{
+	"lf":  pb.Config_LoRaConfig_LONG_FAST,
+	"ls":  pb.Config_LoRaConfig_LONG_SLOW,
+	"vls": pb.Config_LoRaConfig_VERY_LONG_SLOW,
+	"lm":  pb.Config_LoRaConfig_LONG_MODERATE,
+	"lt":  pb.Config_LoRaConfig_LONG_TURBO,
+	"ms":  pb.Config_LoRaConfig_MEDIUM_SLOW,
+	"mf":  pb.Config_LoRaConfig_MEDIUM_FAST,
+	"mt":  pb.Config_LoRaConfig_MEDIUM_TURBO,
+	"sl":  pb.Config_LoRaConfig_SHORT_SLOW,
+	"sf":  pb.Config_LoRaConfig_SHORT_FAST,
+	"st":  pb.Config_LoRaConfig_SHORT_TURBO,
+}
 
-	var modemSetting pb.Config_LoRaConfig_ModemPreset
-
-	if mode == "lf" {
-		modemSetting = pb.Config_LoRaConfig_LONG_FAST
-	} else if mode == "ls" {
-		modemSetting = pb.Config_LoRaConfig_LONG_SLOW
-	} else if mode == "vls" {
-		modemSetting = pb.Config_LoRaConfig_VERY_LONG_SLOW
-	} else if mode == "ms" {
-		modemSetting = pb.Config_LoRaConfig_MEDIUM_SLOW
-	} else if mode == "mf" {
-		modemSetting = pb.Config_LoRaConfig_MEDIUM_FAST
-	} else if mode == "sl" {
-		modemSetting = pb.Config_LoRaConfig_SHORT_SLOW
-	} else if mode == "sf" {
-		modemSetting = pb.Config_LoRaConfig_SHORT_FAST
-	} else if mode == "lm" {
-		modemSetting = pb.Config_LoRaConfig_LONG_MODERATE
+// ModemPresetShortCode returns the short alias for a preset, or "" if it has
+// none.
+func ModemPresetShortCode(preset pb.Config_LoRaConfig_ModemPreset) string {
+	for code, p := range modemShortCodes {
+		if p == preset {
+			return code
+		}
 	}
+	return ""
+}
+
+// ParseModemPreset resolves a short code such as "lf" or a preset name such
+// as "LONG_FAST" (case-insensitive) to a modem preset.
+func ParseModemPreset(mode string) (pb.Config_LoRaConfig_ModemPreset, error) {
+	if preset, ok := modemShortCodes[strings.ToLower(mode)]; ok {
+		return preset, nil
+	}
+	if value, ok := pb.Config_LoRaConfig_ModemPreset_value[strings.ToUpper(mode)]; ok {
+		return pb.Config_LoRaConfig_ModemPreset(value), nil
+	}
+	return 0, fmt.Errorf("unknown modem preset %q", mode)
+}
+
+// SetModemMode sets the LoRa modem preset. The mode is a short code or a
+// preset name as accepted by ParseModemPreset. The rest of the LoRa
+// configuration (region, hop limit, ...) is read from the radio first and
+// sent back unchanged.
+func (r *Radio) SetModemMode(mode string) error {
+	modemSetting, err := ParseModemPreset(mode)
+	if err != nil {
+		return err
+	}
+
+	configs, _, err := r.GetRadioConfig()
+	if err != nil {
+		return err
+	}
+
+	var lora *pb.Config_LoRaConfig
+	for _, config := range configs {
+		if l := config.Config.GetLora(); l != nil {
+			lora = l
+		}
+	}
+	if lora == nil {
+		return errors.New("radio did not report its LoRa config")
+	}
+
+	lora.UsePreset = true
+	lora.ModemPreset = modemSetting
 
 	adminPacket := pb.AdminMessage{
 		PayloadVariant: &pb.AdminMessage_SetConfig{
 			SetConfig: &pb.Config{
 				PayloadVariant: &pb.Config_Lora{
-					Lora: &pb.Config_LoRaConfig{
-						ModemPreset: modemSetting,
-					},
+					Lora: lora,
 				},
 			},
 		},

@@ -12,6 +12,7 @@ import (
 	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 func showRadioInfo(c *cli.Context) error {
@@ -118,16 +119,24 @@ func getRadioInfo(r gomesh.Radio, json bool) error {
 	return nil
 }
 
+// showModemOptions lists the modem presets the protobufs define, skipping the
+// ones marked deprecated, with the short code accepted by "modem set".
 func showModemOptions(c *cli.Context) error {
 	fmt.Println("Modem Options")
 	printDoubleDivider()
-	fmt.Printf("'lf' for %s\n", gomeshproto.Config_LoRaConfig_LONG_FAST.String())
-	fmt.Printf("'vls' for %s\n", gomeshproto.Config_LoRaConfig_VERY_LONG_SLOW.String())
-	fmt.Printf("'ms' for %s\n", gomeshproto.Config_LoRaConfig_MEDIUM_SLOW.String())
-	fmt.Printf("'mf' for %s\n", gomeshproto.Config_LoRaConfig_MEDIUM_FAST.String())
-	fmt.Printf("'sl' for %s\n", gomeshproto.Config_LoRaConfig_SHORT_SLOW.String())
-	fmt.Printf("'sf' for %s\n", gomeshproto.Config_LoRaConfig_SHORT_FAST.String())
-	fmt.Printf("'lm' for %s\n", gomeshproto.Config_LoRaConfig_LONG_MODERATE.String())
+	values := gomeshproto.Config_LoRaConfig_ModemPreset(0).Descriptor().Values()
+	for i := 0; i < values.Len(); i++ {
+		value := values.Get(i)
+		if opts, ok := value.Options().(*descriptorpb.EnumValueOptions); ok && opts.GetDeprecated() {
+			continue
+		}
+		preset := gomeshproto.Config_LoRaConfig_ModemPreset(value.Number())
+		code := gomesh.ModemPresetShortCode(preset)
+		if code != "" {
+			code = "'" + code + "'"
+		}
+		fmt.Printf("%-6s %s\n", code, preset.String())
+	}
 
 	return nil
 }

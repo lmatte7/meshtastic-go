@@ -339,7 +339,7 @@ func CLIEntry(version, commit, builddate string) {
 							&cli.StringFlag{
 								Name:     "option",
 								Aliases:  []string{"o"},
-								Usage:    "The modem option",
+								Usage:    "Modem preset short code or name, see 'modem options'",
 								Required: true,
 							},
 						},
