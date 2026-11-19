@@ -390,7 +390,8 @@ takes the mean position of nodes heard over the air (not via MQTT) within
 `-max-hops` hops (default 2), preferring nodes the stream has heard within
 `-max-age` (default 24h) and falling back to all of them when fewer than
 three have been heard yet. `!weather <place>` looks up a named place
-instead. Replies go back the way the request came. The bot is throttled as a
+instead. Replies go back the way the request came and contain the weather
+only; how the position was determined is logged, never sent to the mesh. The bot is throttled as a
 whole: at most one lookup and one reply per `-interval` (default 5m) no
 matter how many nodes ask, so a hostile mesh cannot use it to flood wttr.in
 or the channel. The first sender turned away in a period is told the cooldown

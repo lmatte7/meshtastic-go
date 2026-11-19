@@ -25,14 +25,14 @@ func newTestBot() (*bot, *bytes.Buffer, *[]string) {
 	return b, &commands, &lookups
 }
 
-func decodeLines(t *testing.T, buf *bytes.Buffer) []map[string]interface{} {
+func decodeLines(t *testing.T, buf *bytes.Buffer) []map[string]any {
 	t.Helper()
-	var out []map[string]interface{}
-	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+	var out []map[string]any
+	for line := range strings.SplitSeq(strings.TrimSpace(buf.String()), "\n") {
 		if line == "" {
 			continue
 		}
-		var m map[string]interface{}
+		var m map[string]any
 		if err := json.Unmarshal([]byte(line), &m); err != nil {
 			t.Fatalf("bot wrote invalid JSON %q: %v", line, err)
 		}
@@ -104,8 +104,8 @@ func TestWeatherEstimatesPositionFromNearbyNodes(t *testing.T) {
 	if _, hasTo := reply["to"]; hasTo {
 		t.Errorf("channel request should get a channel reply, got %v", reply)
 	}
-	text := reply["text"].(string)
-	if !strings.Contains(text, "Sunny") || !strings.Contains(text, "estimated from 2 nearby nodes") {
+	// The reply is the report alone: no coordinates, node counts or notes.
+	if text := reply["text"].(string); text != "☀️ Sunny +72°F (feels +70°F), wind ↗5mph, humidity 20%" {
 		t.Errorf("reply text = %q", text)
 	}
 }
@@ -128,8 +128,8 @@ func TestWeatherFallsBackToUnheardNodes(t *testing.T) {
 	if (*lookups)[0] != "36.200,-115.200" {
 		t.Errorf("lookup = %v, want the mean of all three nodes", *lookups)
 	}
-	if text := decodeLines(t, commands)[0]["text"].(string); !strings.Contains(text, "3 nearby nodes, some not heard recently") {
-		t.Errorf("reply text = %q", text)
+	if text := decodeLines(t, commands)[0]["text"].(string); strings.Contains(text, "nodes") {
+		t.Errorf("reply must not mention how the position was found, got %q", text)
 	}
 }
 
@@ -141,8 +141,8 @@ func TestWeatherPrefersRadioGPS(t *testing.T) {
 	if err := b.handle(nodesEvent(id, true)); err != nil {
 		t.Fatal(err)
 	}
-	if (*lookups)[0] != "36.100,-115.200" || !strings.Contains(decodeLines(t, commands)[0]["text"].(string), "GPS") {
-		t.Errorf("lookups = %v, reply = %s", *lookups, commands.String())
+	if (*lookups)[0] != "36.100,-115.200" || strings.Contains(decodeLines(t, commands)[0]["text"].(string), "GPS") {
+		t.Errorf("lookups = %v, reply = %s (the reply must not mention the position source)", *lookups, commands.String())
 	}
 }
 
@@ -157,8 +157,8 @@ func TestWeatherNamedPlaceAndDirectReply(t *testing.T) {
 		t.Errorf("lookup = %v", *lookups)
 	}
 	reply := decodeLines(t, commands)[0]
-	if reply["to"] != "!43b59594" || !strings.Contains(reply["text"].(string), "for Reykjavik, Iceland") {
-		t.Errorf("direct reply = %v", reply)
+	if reply["to"] != "!43b59594" || strings.Contains(reply["text"].(string), "Reykjavik") {
+		t.Errorf("direct reply = %v (the reply must not echo the place)", reply)
 	}
 }
 
@@ -191,7 +191,7 @@ func TestWeatherLookupFailureAndThrottle(t *testing.T) {
 	// sender is told the cooldown by direct message, the rest get nothing,
 	// and no lookup happens.
 	commands.Reset()
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		other := strings.ReplaceAll(weatherRequest, "!43b59594", fmt.Sprintf("!%08x", 1000+i))
 		_ = b.handle(other)
 	}

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -71,8 +72,8 @@ type event struct {
 	Error    string  `json:"error"`
 	From     node    `json:"from"`
 	Reply    *struct {
-		Direct  map[string]interface{} `json:"direct"`
-		Channel map[string]interface{} `json:"channel"`
+		Direct  map[string]any `json:"direct"`
+		Channel map[string]any `json:"channel"`
 	} `json:"reply"`
 	// Filled in on "nodes" events.
 	MyNode *node  `json:"my_node"`
@@ -81,7 +82,7 @@ type event struct {
 
 // request is a !weather waiting for the node list.
 type request struct {
-	reply map[string]interface{}
+	reply map[string]any
 	place string
 }
 
@@ -120,7 +121,7 @@ func newBot(commands io.Writer, logger *log.Logger) *bot {
 }
 
 // debugf logs only when -debug is on.
-func (b *bot) debugf(format string, args ...interface{}) {
+func (b *bot) debugf(format string, args ...any) {
 	if b.debug {
 		b.log.Printf("debug: "+format, args...)
 	}
@@ -198,7 +199,7 @@ func (b *bot) onMessage(ev event) error {
 	id := fmt.Sprintf("weather-%d", b.counter)
 	b.pending[id] = request{reply: reply, place: strings.Join(fields[1:], " ")}
 	b.log.Printf("%s: !weather from %s", id, ev.From.NodeID)
-	return b.write(map[string]interface{}{"id": id, "command": "nodes"})
+	return b.write(map[string]any{"id": id, "command": "nodes"})
 }
 
 // onNodes finishes a pending request once the node list is available.
@@ -220,13 +221,15 @@ func (b *bot) onNodes(ev event) error {
 		}
 	}
 
+	// The reply is the weather and nothing else: where the position came
+	// from is logged here and never sent to the mesh.
 	b.debugf("looking up weather for %q (%s)", location, source)
 	report, err := b.weather(location)
 	if err != nil {
 		b.log.Printf("%s: weather lookup failed: %v", ev.ID, err)
 		return b.send(req.reply, string(ev.ID), "Weather lookup failed, try again later.")
 	}
-	return b.send(req.reply, string(ev.ID), fmt.Sprintf("%s (%s)", report, source))
+	return b.send(req.reply, string(ev.ID), report)
 }
 
 // locate returns the radio's position as "lat,lon" and a note on where it
@@ -281,17 +284,15 @@ func coords(lat, lon float64) string {
 }
 
 // send writes a reply command built from a reply template.
-func (b *bot) send(template map[string]interface{}, id, text string) error {
-	command := make(map[string]interface{}, len(template)+2)
-	for k, v := range template {
-		command[k] = v
-	}
+func (b *bot) send(template map[string]any, id, text string) error {
+	command := make(map[string]any, len(template)+2)
+	maps.Copy(command, template)
 	command["id"] = id
 	command["text"] = text
 	return b.write(command)
 }
 
-func (b *bot) write(command map[string]interface{}) error {
+func (b *bot) write(command map[string]any) error {
 	line, err := json.Marshal(command)
 	if err != nil {
 		return err
