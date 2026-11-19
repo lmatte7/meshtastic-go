@@ -392,8 +392,10 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 			fmt.Printf("%s", "\n\nNode Info\n")
 			v := reflect.ValueOf(*nodeInfo)
 			for i := 0; i < v.NumField(); i++ {
-				fmt.Printf("%-25s", v.Type().Field(i).Name)
-				fmt.Printf("%v\n", v.Field(i))
+				if v.Field(i).CanInterface() {
+					fmt.Printf("%-25s", v.Type().Field(i).Name)
+					fmt.Printf("%v\n", v.Field(i))
+				}
 			}
 		}
 	}
