@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/signal"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -119,10 +119,23 @@ var portPayloadTypes = map[gomeshproto.PortNum]func() proto.Message{
 // or short name (which must match exactly one known node); leave it out to
 // broadcast on the channel. ID is echoed back in the resulting event.
 type StreamCommand struct {
-	ID      string          `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
+	// Command selects what to do. Empty or "send" sends Text; "nodes" asks
+	// for the cached node list, answered with a StreamNodes event.
+	Command string          `json:"command,omitempty"`
 	To      json.RawMessage `json:"to,omitempty"`
 	Channel uint32          `json:"channel"`
 	Text    string          `json:"text"`
+}
+
+// StreamNodes answers a "nodes" command with every node the radio knows
+// about, as the stream currently has them cached.
+type StreamNodes struct {
+	Type   string     `json:"type"`
+	At     time.Time  `json:"at"`
+	ID     string     `json:"id,omitempty"`
+	MyNode *MeshNode  `json:"my_node,omitempty"`
+	Nodes  []MeshNode `json:"nodes"`
 }
 
 // StreamReply is attached to every message so a bot can answer without
@@ -380,6 +393,14 @@ func (s *packetStream) execute(line string) error {
 		return s.out.Encode(StreamSent{Type: "error", At: s.now().UTC(), Error: "invalid command: " + err.Error()})
 	}
 
+	switch command.Command {
+	case "", "send":
+	case "nodes":
+		return s.out.Encode(s.nodesEvent(command.ID))
+	default:
+		return s.out.Encode(StreamSent{Type: "error", At: s.now().UTC(), ID: command.ID, Error: fmt.Sprintf("unknown command %q", command.Command)})
+	}
+
 	result := StreamSent{
 		Type:    "sent",
 		At:      s.now().UTC(),
@@ -414,6 +435,23 @@ func (s *packetStream) execute(line string) error {
 		s.pending[packetID] = pendingSend{id: command.ID, to: to, channel: command.Channel, sentAt: s.now()}
 	}
 	return s.out.Encode(result)
+}
+
+// nodesEvent builds the answer to a "nodes" command: the cached node list in
+// node number order.
+func (s *packetStream) nodesEvent(id string) StreamNodes {
+	event := StreamNodes{
+		Type:   "nodes",
+		At:     s.now().UTC(),
+		ID:     id,
+		MyNode: s.node(s.myNode),
+		Nodes:  make([]MeshNode, 0, len(s.nodes)),
+	}
+	for _, node := range s.nodes {
+		event.Nodes = append(event.Nodes, node)
+	}
+	sort.Slice(event.Nodes, func(i, j int) bool { return event.Nodes[i].NodeNumber < event.Nodes[j].NodeNumber })
+	return event
 }
 
 // deliveryEvent builds a StreamDelivery for a pending message.
@@ -594,8 +632,8 @@ func (s *packetStream) learnUser(from uint32, payload []byte) {
 	if user.HwModel != gomeshproto.HardwareModel_UNSET {
 		node.HardwareModel = user.HwModel.String()
 	}
-	if len(user.Macaddr) > 0 {
-		node.MACAddress = net.HardwareAddr(user.Macaddr).String()
+	if mac := macAddress(user); mac != "" {
+		node.MACAddress = mac
 	}
 	s.nodes[from] = node
 }

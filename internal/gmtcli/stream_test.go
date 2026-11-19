@@ -480,6 +480,37 @@ func TestStreamCommands(t *testing.T) {
 	}
 }
 
+func TestStreamNodesCommand(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	buf.Reset()
+	if err := s.execute(`{"id":"n1","command":"nodes"}`); err != nil {
+		t.Fatal(err)
+	}
+	got := lines(buf)[0]
+	if got["type"] != "nodes" || got["id"] != "n1" {
+		t.Fatalf("nodes event = %v", got)
+	}
+	if got["my_node"].(map[string]interface{})["node_id"] != "!534c8a43" {
+		t.Errorf("my_node = %v", got["my_node"])
+	}
+	nodes := got["nodes"].([]interface{})
+	if len(nodes) != 2 {
+		t.Fatalf("expected the two cached nodes, got %d", len(nodes))
+	}
+	first := nodes[0].(map[string]interface{})
+	if first["node_number"] != float64(testPeerNode) {
+		t.Errorf("nodes should be sorted by node number, first = %v", first)
+	}
+
+	buf.Reset()
+	if err := s.execute(`{"id":"x","command":"dance"}`); err != nil {
+		t.Fatal(err)
+	}
+	if got := lines(buf)[0]; got["type"] != "error" || got["id"] != "x" {
+		t.Errorf("unknown command should produce an error event, got %v", got)
+	}
+}
+
 func TestStreamStopsWhenStdinCloses(t *testing.T) {
 	s, _ := newTestStream(t, false)
 	lines := make(chan string)

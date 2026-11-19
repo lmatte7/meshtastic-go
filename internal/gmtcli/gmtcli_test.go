@@ -16,6 +16,9 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		NodeInfo: &gomeshproto.NodeInfo{
 			Num:       2617543978,
 			LastHeard: uint32(lastHeard),
+			Snr:       -1.75,
+			HopsAway:  1,
+			ViaMqtt:   true,
 			User: &gomeshproto.User{
 				Id:        "!9c048d2a",
 				LongName:  "PalaceStation",
@@ -59,6 +62,9 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		{"LastHeard", mn.LastHeard, time.Unix(lastHeard, 0).UTC().Format(time.RFC3339)},
 		{"LastHeardHuman", mn.LastHeardHuman, "1m30s"},
 		{"LastHeardSecondsAgo", mn.LastHeardSecondsAgo, 90},
+		{"SNR", mn.SNR, -1.75},
+		{"HopsAway", mn.HopsAway, 1},
+		{"ViaMQTT", mn.ViaMQTT, true},
 	}
 	for _, c := range checks {
 		if c.got != c.want {
