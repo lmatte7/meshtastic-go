@@ -108,33 +108,33 @@ meshtastic-go info nodes --json
 
 ```json
 [
-  {
-    "node_id": "!43b59594",
-    "node_number": 1135973780,
-    "longname": "DvdGmz01",
-    "shortname": "DG01",
-    "altitude_meters": 471,
-    "latitude_degrees": 36.1824256,
-    "longitude_degrees": -115.1926272,
-    "mac_address": "48:ca:43:b5:95:94",
-    "public_key": "+wbec92kaoh/kIxrntNL75cAPf/r5iOfdoOrbacohBs=",
-    "is_licensed": false,
-    "role": "CLIENT",
-    "hardware_model": "HELTEC_V3",
-    "battery_level_percent": 101,
-    "battery_volts": 4.234,
-    "channel_utilization_percent": 12.45,
-    "air_utilization_transmit_percent": 0.12,
-    "uptime_seconds": 121,
-    "snr_db": -1.75,
-    "hops_away": 1,
-    "via_mqtt": false,
-    "is_favorite": false,
-    "is_ignored": false,
-    "last_heard": "2026-11-19T05:46:01Z",
-    "last_heard_seconds_ago": 94,
-    "last_heard_human": "1m34s"
-  }
+    {
+        "node_id": "!43b59594",
+        "node_number": 1135973780,
+        "longname": "DvdGmz01",
+        "shortname": "DG01",
+        "altitude_meters": 471,
+        "latitude_degrees": 36.1824256,
+        "longitude_degrees": -115.1926272,
+        "mac_address": "48:ca:43:b5:95:94",
+        "public_key": "+wbec92kaoh/kIxrntNL75cAPf/r5iOfdoOrbacohBs=",
+        "is_licensed": false,
+        "role": "CLIENT",
+        "hardware_model": "HELTEC_V3",
+        "battery_level_percent": 101,
+        "battery_volts": 4.234,
+        "channel_utilization_percent": 12.45,
+        "air_utilization_transmit_percent": 0.12,
+        "uptime_seconds": 121,
+        "snr_db": -1.75,
+        "hops_away": 1,
+        "via_mqtt": false,
+        "is_favorite": false,
+        "is_ignored": false,
+        "last_heard": "2026-11-19T05:46:01Z",
+        "last_heard_seconds_ago": 94,
+        "last_heard_human": "1m34s"
+    }
 ]
 ```
 
@@ -182,8 +182,51 @@ for broadcasts) and `channel` resolved from the radio's node and channel
 database. `direct` is true for messages addressed to this radio, `broadcast`
 for channel messages.
 
+The output is one object per line; it is shown formatted here for
+readability, which means exactly the same thing.
+
 ```json
-{"type":"message","received_at":"2026-11-19T04:12:08Z","id":1836540931,"from":{"node_id":"!43b59594","node_number":1135973780,"longname":"DvdGmz01","shortname":"DG01","role":"CLIENT","hardware_model":"HELTEC_V3","is_licensed":false},"broadcast":true,"direct":false,"outgoing":false,"channel":{"index":0,"name":"","role":"PRIMARY"},"port":"TEXT_MESSAGE_APP","text":"hello mesh","reply":{"direct":{"to":"!43b59594","channel":0},"channel":{"channel":0}},"snr_db":-1.75,"rssi_dbm":-110,"hop_limit":2,"hop_start":3,"hops_taken":1,"via_mqtt":false,"want_ack":false,"priority":"UNSET"}
+{
+    "type": "message",
+    "received_at": "2026-11-19T04:12:08Z",
+    "id": 1836540931,
+    "from": {
+        "node_id": "!43b59594",
+        "node_number": 1135973780,
+        "longname": "DvdGmz01",
+        "shortname": "DG01",
+        "role": "CLIENT",
+        "hardware_model": "HELTEC_V3",
+        "is_licensed": false
+    },
+    "broadcast": true,
+    "direct": false,
+    "outgoing": false,
+    "channel": {
+        "index": 0,
+        "name": "",
+        "role": "PRIMARY"
+    },
+    "port": "TEXT_MESSAGE_APP",
+    "text": "hello mesh",
+    "reply": {
+        "direct": {
+            "to": "!43b59594",
+            "channel": 0
+        },
+        "channel": {
+            "channel": 0
+        }
+    },
+    "snr_db": -1.75,
+    "rssi_dbm": -110,
+    "hop_limit": 2,
+    "hop_start": 3,
+    "hops_taken": 1,
+    "via_mqtt": false,
+    "want_ack": false,
+    "priority": "UNSET"
+}
 ```
 
 With `--full`, every other packet is printed too with `"type": "packet"`:
@@ -209,7 +252,12 @@ one as a text message, so a bot can reply without opening a second
 connection to the radio:
 
 ```json
-{"id": "reply-17", "to": "!43b59594", "channel": 0, "text": "hello back"}
+{
+    "id": "reply-17",
+    "to": "!43b59594",
+    "channel": 0,
+    "text": "hello back"
+}
 ```
 
 `to` is a node number, a `!xxxxxxxx` node id, or a node's long or short name
@@ -238,15 +286,62 @@ assemble addresses itself. `reply.direct` messages the sender privately and
 one, add `text`, and write it back:
 
 ```json
-"reply": {"direct": {"to": "!43b59594", "channel": 0}, "channel": {"channel": 0}}
+"reply": {
+    "direct": {
+        "to": "!43b59594",
+        "channel": 0
+    },
+    "channel": {
+        "channel": 0
+    }
+}
 ```
 
 A command line may also ask the stream for its cached node list instead of
-sending: `{"id": "n1", "command": "nodes"}` is answered with
-`{"type": "nodes", "id": "n1", "my_node": {...}, "nodes": [...]}`, the same
-node records `info nodes --json` prints, including `hops_away`, `via_mqtt`
-and `snr_db`. This lets a bot reason about the mesh without opening a second
-connection to the radio.
+sending:
+
+```json
+{
+    "id": "n1",
+    "command": "nodes"
+}
+```
+
+It is answered with a `nodes` event carrying the same node records
+`info nodes --json` prints, including `hops_away`, `via_mqtt` and `snr_db`,
+so a bot can reason about the mesh without opening a second connection to
+the radio:
+
+```json
+{
+    "type": "nodes",
+    "at": "2026-11-19T04:12:09Z",
+    "id": "n1",
+    "my_node": {
+        "node_id": "!534c8a43",
+        "node_number": 1397525059,
+        "longname": "Meshtastic 8a43",
+        "shortname": "8a43",
+        "hardware_model": "T_ECHO"
+    },
+    "nodes": [
+        {
+            "node_id": "!43b59594",
+            "node_number": 1135973780,
+            "longname": "DvdGmz01",
+            "shortname": "DG01",
+            "latitude_degrees": 36.1824256,
+            "longitude_degrees": -115.1926272,
+            "hops_away": 1,
+            "via_mqtt": false,
+            "snr_db": -1.75,
+            "last_heard": "2026-11-19T04:10:51Z",
+            "last_heard_seconds_ago": 78,
+            "last_heard_human": "1m18s"
+        }
+    ]
+}
+```
 
 #### Example bots
 
