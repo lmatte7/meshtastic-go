@@ -281,19 +281,21 @@ func wttr(units string) func(string) (string, error) {
 }
 
 func main() {
-	port := flag.String("port", "", "serial port or IP address of the radio (required)")
+	port := flag.String("port", "", "serial port or IP address of the radio; defaults to MESHTASTIC_RADIO_DEV or, on macOS, the only attached USB radio")
 	bin := flag.String("bin", "meshtastic-go", "path to the meshtastic-go binary")
 	units := flag.String("units", "u", "wttr.in units: u (US customary) or m (metric)")
 	maxHops := flag.Int("max-hops", 2, "only use nodes at most this many hops away to estimate the position")
 	maxAge := flag.Duration("max-age", 24*time.Hour, "only use nodes heard within this long to estimate the position")
 	interval := flag.Duration("interval", 5*time.Minute, "answer at most one !weather (one lookup, one reply) per this interval")
 	flag.Parse()
-	if *port == "" {
-		flag.Usage()
-		os.Exit(2)
-	}
 
-	cmd := exec.Command(*bin, "--port", *port, "stream", "--commands")
+	// With no -port, meshtastic-go resolves the port itself from
+	// MESHTASTIC_RADIO_DEV or the attached devices.
+	args := []string{"stream", "--commands"}
+	if *port != "" {
+		args = append([]string{"--port", *port}, args...)
+	}
+	cmd := exec.Command(*bin, args...)
 	cmd.Stderr = os.Stderr
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

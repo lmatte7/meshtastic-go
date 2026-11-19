@@ -369,7 +369,8 @@ func CLIEntry(version, commit, builddate string) {
 			&cli.StringFlag{
 				Name:    "port",
 				Aliases: []string{"p"},
-				Usage:   "specify a port",
+				Usage:   "serial port or IP address of the radio; on macOS defaults to the only /dev/cu.usb* device if there is exactly one",
+				EnvVars: []string{"MESHTASTIC_RADIO_DEV"},
 			},
 		},
 	}

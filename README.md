@@ -6,7 +6,20 @@ Meshtastic Go is a CLI for meshtastic devices built in Go. This tool provides an
 
 A full list of commands can be viewed by running `--help`. Each command also has its own `--help` flag that provides more information on its subcommands and flags.
 
-Every command requires the `--port` flag to be set to the port the radio is attached to. This can be set to a serial port (like `/dev/cu.SLAB_USBtoUART`) or an IP address depending on which communication method should be used to communicate with the radio. The CLI will automatically determine if TCP or serial communications should be used depending on what value is provided to `--port`.
+Every command needs to know the port the radio is attached to: a serial port (like `/dev/cu.usbmodem143101`) or an IP address, in which case TCP is used. The port is taken from, in order:
+
+1. the `--port` flag;
+2. the `MESHTASTIC_RADIO_DEV` environment variable;
+3. on macOS, the only `/dev/cu.usb*` device present, if there is exactly one.
+
+Setting the environment variable once is the convenient way to work with a radio:
+
+```
+export MESHTASTIC_RADIO_DEV=/dev/cu.usbmodem143101
+meshtastic-go info nodes
+```
+
+If none of the three yields a port, or several USB devices are attached, the command exits with a message saying so.
 
 ```
 NAME:
@@ -30,7 +43,7 @@ COMMANDS:
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --port value, -p value  specify a port
+   --port value, -p value  serial port or IP address of the radio; on macOS defaults to the only /dev/cu.usb* device if there is exactly one [$MESHTASTIC_RADIO_DEV]
    --help, -h              show help (default: false)
    --version, -v           print the version (default: false)
 ```
@@ -92,7 +105,7 @@ OPTIONS:
 The `stream` command is meant to be run as a long-lived subprocess by another program, for example a bot or web backend. It prints one JSON object per line (JSON Lines) to stdout and runs until it is interrupted or the radio link fails, in which case it exits non-zero.
 
 ```
-meshtastic-go --port /dev/cu.usbmodem143101 stream
+meshtastic-go stream
 ```
 
 The first line has `"type": "ready"` and carries this radio's own node (`my_node`) and the configured channels. After that every text message the radio receives, direct or on a channel, is printed with `"type": "message"`, decrypted by the radio, with the sender (`from`), recipient (`to`, omitted for broadcasts) and `channel` resolved from the radio's node and channel database. `direct` is true for messages addressed to this radio, `broadcast` for channel messages.
@@ -132,14 +145,17 @@ Each directory under `examples/` is a complete bot in standard-library Go. They 
 `examples/pingbot` answers any `!ping` with `pong` on the channel it arrived on (or directly for a direct message), and logs the `sent`, `queued`, `delivered` and `failed` events for its replies:
 
 ```
-go run ./examples/pingbot -port /dev/cu.usbmodem143101 -bin builds/meshtastic-go_osx
+export MESHTASTIC_RADIO_DEV=/dev/cu.usbmodem143101
+go run ./examples/pingbot -bin builds/meshtastic-go_osx
 ```
 
 `examples/weatherbot` answers `!weather` with the current weather from [wttr.in](https://wttr.in) for where the radio is. It uses the radio's GPS position when it has one; otherwise it asks the stream for the node list and takes the mean position of nodes heard over the air (not via MQTT) within `-max-hops` hops (default 2), preferring nodes heard within `-max-age` (default 24h) but falling back to older ones when fewer than three look recent, since a radio without a time source stamps everything with a stale clock. `!weather <place>` looks up a named place instead. Replies go back the way the request came. The bot is throttled as a whole: at most one lookup and one reply per `-interval` (default 5m) no matter how many nodes ask, so a hostile mesh cannot use it to flood wttr.in or the channel:
 
 ```
-go run ./examples/weatherbot -port /dev/cu.usbmodem143101 -bin builds/meshtastic-go_osx -units u
+go run ./examples/weatherbot -bin builds/meshtastic-go_osx -units u
 ```
+
+Both bots accept `-port` as well; without it the port comes from `MESHTASTIC_RADIO_DEV` or, on macOS, the only attached USB radio.
 
 ### `config`
 

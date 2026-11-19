@@ -111,15 +111,17 @@ func (b *bot) pong(ev event) error {
 }
 
 func main() {
-	port := flag.String("port", "", "serial port or IP address of the radio (required)")
+	port := flag.String("port", "", "serial port or IP address of the radio; defaults to MESHTASTIC_RADIO_DEV or, on macOS, the only attached USB radio")
 	bin := flag.String("bin", "meshtastic-go", "path to the meshtastic-go binary")
 	flag.Parse()
-	if *port == "" {
-		flag.Usage()
-		os.Exit(2)
-	}
 
-	cmd := exec.Command(*bin, "--port", *port, "stream", "--commands")
+	// With no -port, meshtastic-go resolves the port itself from
+	// MESHTASTIC_RADIO_DEV or the attached devices.
+	args := []string{"stream", "--commands"}
+	if *port != "" {
+		args = append([]string{"--port", *port}, args...)
+	}
+	cmd := exec.Command(*bin, args...)
 	cmd.Stderr = os.Stderr
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
