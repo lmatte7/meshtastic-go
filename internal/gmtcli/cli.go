@@ -341,6 +341,33 @@ func CLIEntry(version, commit, builddate string) {
 				},
 			},
 			{
+				Name:        "nodedb",
+				Usage:       "Manage the radio's node database",
+				UsageText:   "nodedb [command]",
+				Description: "The radio keeps a table of the nodes it has heard, which has a fixed size and can fill up with stale entries.",
+				ArgsUsage:   "",
+				Subcommands: []*cli.Command{
+					{
+						Name:        "list",
+						Usage:       "List the nodes in the database",
+						Description: "Prints every node the radio knows about, as a table or with --json as node records.",
+						Action:      showNodeInfo,
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "json",
+								Usage: "Output nodes in JSON",
+							},
+						},
+					},
+					{
+						Name:        "reset",
+						Usage:       "Clear the node database",
+						Description: "Asks the radio to forget every node it knows about. It rebuilds the table from the nodes it hears from then on. There is no confirmation.",
+						Action:      resetNodeDB,
+					},
+				},
+			},
+			{
 				Name:        "reset",
 				Usage:       "Factory reset the radio",
 				UsageText:   "reset - Factory reset the radio",

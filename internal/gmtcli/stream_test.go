@@ -244,6 +244,15 @@ func TestStreamRoundsDecodedPayloadNumbers(t *testing.T) {
 	if got := roundValue(json.Number("1.23456789"), "something_else"); got != 1.2346 {
 		t.Errorf("default rounding = %v, want 1.2346", got)
 	}
+
+	// A macaddr bytes field arrives from protobuf JSON as base64 and is
+	// shown as a MAC address; other strings are untouched.
+	if got := roundValue("2RGpvklG", "macaddr"); got != "d9:11:a9:be:49:46" {
+		t.Errorf("macaddr = %v, want d9:11:a9:be:49:46", got)
+	}
+	if got := roundValue("2RGpvklG", "long_name"); got != "2RGpvklG" {
+		t.Errorf("non-mac string changed to %v", got)
+	}
 }
 
 func TestStreamLearnsNodesFromNodeInfoBroadcasts(t *testing.T) {

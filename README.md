@@ -59,6 +59,7 @@ COMMANDS:
    config    Update radio config
    location  Set location
    locate    Show where the radio is
+   nodedb    Manage the radio's node database
    reset     Factory reset the radio
    modem     Set the modem mode
    help, h   Shows a list of commands or help for one command
@@ -360,6 +361,22 @@ COMMANDS:
    options  show modem options
    set      set a modem option
    help, h  Shows a list of commands or help for one command
+```
+
+### `nodedb`
+
+The radio keeps a fixed-size table of the nodes it has heard (80 entries on
+nRF52 boards such as the T-Echo, 100 on larger ones). It can fill up with
+nodes from days ago that are never heard again, at which point recently
+heard neighbours may not get an entry and `info nodes` and `locate` do not
+see them. `nodedb list` prints the table (the same as `info nodes`, with
+`--json` for node records), and `nodedb reset` asks the radio to forget every
+node; it rebuilds the table from the nodes it hears from then on. There is no
+confirmation.
+
+```
+meshtastic-go nodedb list
+meshtastic-go nodedb reset
 ```
 
 ### `reset`

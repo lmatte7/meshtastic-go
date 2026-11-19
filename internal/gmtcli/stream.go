@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"sort"
@@ -790,9 +791,11 @@ var payloadDecimals = map[string]int{
 
 const defaultDecimals = 4
 
-// roundPayloadNumbers rounds the numbers in a decoded payload's JSON to the
-// precision they actually carry: float32 readings otherwise print with every
-// digit a float64 can hold. Integers are left alone. Field order is not
+// roundPayloadNumbers tidies a decoded payload's JSON for people and
+// programs alike: numbers are rounded to the precision they actually carry
+// (float32 readings otherwise print with every digit a float64 can hold),
+// integers are left alone, and a macaddr, which protobuf JSON renders as
+// base64, becomes the usual colon-separated hex. Field order is not
 // preserved (keys come out sorted), which is fine for a payload blob.
 func roundPayloadNumbers(raw []byte) json.RawMessage {
 	decoder := json.NewDecoder(strings.NewReader(string(raw)))
@@ -818,6 +821,13 @@ func roundValue(v interface{}, key string) interface{} {
 	case []interface{}:
 		for i, child := range x {
 			x[i] = roundValue(child, key)
+		}
+		return x
+	case string:
+		if key == "macaddr" {
+			if mac, err := base64.StdEncoding.DecodeString(x); err == nil && len(mac) > 0 {
+				return net.HardwareAddr(mac).String()
+			}
 		}
 		return x
 	case json.Number:
