@@ -105,6 +105,22 @@ With `--full`, every other packet is printed too with `"type": "packet"`: positi
 
 The node and channel database is re-requested from the radio every five minutes, which also keeps the firmware forwarding packets to the connection.
 
+#### Sending from the same process
+
+With `--commands`, `stream` also reads JSON lines from stdin and sends each one as a text message, so a bot can reply without opening a second connection to the radio:
+
+```json
+{"id": "reply-17", "to": "!43b59594", "channel": 0, "text": "hello back"}
+```
+
+`to` is a node number, a `!xxxxxxxx` node id, or a node's long or short name (it must match exactly one node the radio knows); leave it out to broadcast on the channel. `channel` defaults to 0 and `id` is optional and echoed back. Each command produces one event, `{"type": "sent", ...}` with the resolved recipient and channel, or `{"type": "error", "error": "..."}` when the line was invalid or the radio refused it (for example a message over 240 bytes). When stdin is closed the stream exits with status 0.
+
+Every message line also carries a `reply` object with two ready-made commands, so a bot answering something like `!weather` does not need to assemble addresses itself. `reply.direct` messages the sender privately and `reply.channel` answers publicly on the channel the message arrived on; copy one, add `text`, and write it back:
+
+```json
+"reply": {"direct": {"to": "!43b59594", "channel": 0}, "channel": {"channel": 0}}
+```
+
 ### `config`
 
 The `config` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.

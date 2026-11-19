@@ -147,6 +147,10 @@ func CLIEntry(version, commit, builddate string) {
 						Name:  "full",
 						Usage: "Also stream positions, telemetry, node info, routing and undecryptable packets",
 					},
+					&cli.BoolFlag{
+						Name:  "commands",
+						Usage: "Read JSON lines from stdin ({\"to\": node, \"channel\": index, \"text\": \"...\"}) and send them as text messages; exit when stdin closes",
+					},
 				},
 			},
 			{

@@ -1,6 +1,7 @@
 package gmtcli
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,6 +10,8 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -71,6 +74,7 @@ type StreamPacket struct {
 
 	Port          string          `json:"port,omitempty"`
 	Text          string          `json:"text,omitempty"`
+	Reply         *StreamReply    `json:"reply,omitempty"`
 	Payload       json.RawMessage `json:"payload,omitempty"`
 	PayloadBase64 string          `json:"payload_base64,omitempty"`
 	Encrypted     bool            `json:"encrypted,omitempty"`
@@ -106,14 +110,101 @@ var portPayloadTypes = map[gomeshproto.PortNum]func() proto.Message{
 	gomeshproto.PortNum_REMOTE_HARDWARE_APP: func() proto.Message { return &gomeshproto.HardwareMessage{} },
 }
 
+// StreamCommand is one line read from stdin with --commands: a text message
+// to send. To may be a node number, a "!xxxxxxxx" node id, or a node's long
+// or short name (which must match exactly one known node); leave it out to
+// broadcast on the channel. ID is echoed back in the resulting event.
+type StreamCommand struct {
+	ID      string          `json:"id,omitempty"`
+	To      json.RawMessage `json:"to,omitempty"`
+	Channel uint32          `json:"channel"`
+	Text    string          `json:"text"`
+}
+
+// StreamReply is attached to every message so a bot can answer without
+// assembling addresses itself: copy Direct to message the sender privately
+// or Channel to answer publicly where the message arrived, add "text", and
+// write it to stdin with --commands.
+type StreamReply struct {
+	Direct  StreamCommandTemplate `json:"direct"`
+	Channel StreamCommandTemplate `json:"channel"`
+}
+
+// StreamCommandTemplate is a StreamCommand without the text.
+type StreamCommandTemplate struct {
+	To      string `json:"to,omitempty"`
+	Channel uint32 `json:"channel"`
+}
+
+// resolveRecipient turns the "to" of a command into a node number. It
+// returns 0 for a broadcast.
+func (s *packetStream) resolveRecipient(raw json.RawMessage) (uint32, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+
+	var number uint32
+	if err := json.Unmarshal(raw, &number); err == nil {
+		return number, nil
+	}
+
+	var name string
+	if err := json.Unmarshal(raw, &name); err != nil {
+		return 0, fmt.Errorf("to must be a node number, a \"!xxxxxxxx\" node id or a node name")
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return 0, nil
+	}
+
+	if strings.HasPrefix(name, "!") {
+		number64, err := strconv.ParseUint(name[1:], 16, 32)
+		if err != nil {
+			return 0, fmt.Errorf("invalid node id %q", name)
+		}
+		return uint32(number64), nil
+	}
+
+	var matches []uint32
+	for num, node := range s.nodes {
+		if strings.EqualFold(node.LongName, name) || strings.EqualFold(node.ShortName, name) {
+			matches = append(matches, num)
+		}
+	}
+	switch len(matches) {
+	case 1:
+		return matches[0], nil
+	case 0:
+		return 0, fmt.Errorf("no known node named %q", name)
+	default:
+		return 0, fmt.Errorf("%d nodes are named %q; use the node id instead", len(matches), name)
+	}
+}
+
+// StreamSent reports the outcome of a StreamCommand. Type is "sent" when the
+// radio accepted the message and "error" otherwise.
+type StreamSent struct {
+	Type      string         `json:"type"`
+	At        time.Time      `json:"at"`
+	ID        string         `json:"id,omitempty"`
+	To        *MeshNode      `json:"to,omitempty"`
+	Broadcast bool           `json:"broadcast"`
+	Channel   *StreamChannel `json:"channel,omitempty"`
+	Text      string         `json:"text,omitempty"`
+	Error     string         `json:"error,omitempty"`
+}
+
 // packetStream turns FromRadio packets into JSON lines, keeping a cache of
 // the radio's node and channel database so every line carries sender and
-// channel details.
+// channel details. With commands set it also sends text messages read from
+// that channel.
 type packetStream struct {
 	radio    gomesh.Radio
 	full     bool
 	out      *json.Encoder
 	now      func() time.Time
+	send     func(text string, to int64, channel int64) error
+	commands <-chan string
 	myNode   uint32
 	nodes    map[uint32]MeshNode
 	channels map[uint32]StreamChannel
@@ -128,6 +219,7 @@ func newPacketStream(radio gomesh.Radio, full bool, w io.Writer) *packetStream {
 		full:     full,
 		out:      enc,
 		now:      time.Now,
+		send:     radio.SendTextMessage,
 		nodes:    make(map[uint32]MeshNode),
 		channels: make(map[uint32]StreamChannel),
 	}
@@ -142,14 +234,33 @@ func streamMessages(c *cli.Context) error {
 	defer stop()
 
 	s := newPacketStream(radio, c.Bool("full"), os.Stdout)
+	if c.Bool("commands") {
+		s.commands = readLines(os.Stdin)
+	}
 	if err := s.run(ctx); err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
 	return nil
 }
 
-// run requests the radio's database, then forwards packets until the context
-// is cancelled or the radio link fails.
+// readLines delivers each line of r on the returned channel and closes it at
+// end of input.
+func readLines(r io.Reader) <-chan string {
+	lines := make(chan string)
+	go func() {
+		defer close(lines)
+		scanner := bufio.NewScanner(r)
+		scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+		for scanner.Scan() {
+			lines <- scanner.Text()
+		}
+	}()
+	return lines
+}
+
+// run requests the radio's database, then forwards packets (and sends any
+// queued commands) until the context is cancelled, stdin is closed in
+// --commands mode, or the radio link fails.
 func (s *packetStream) run(ctx context.Context) error {
 	if err := s.requestConfig(); err != nil {
 		return err
@@ -166,6 +277,15 @@ func (s *packetStream) run(ctx context.Context) error {
 				return err
 			}
 		}
+		open, err := s.drainCommands()
+		if err != nil {
+			return err
+		}
+		if !open {
+			// The parent closed our stdin, which is its way of asking us to
+			// stop.
+			return nil
+		}
 		if !s.now().Before(nextRefresh) {
 			if err := s.requestConfig(); err != nil {
 				return err
@@ -174,6 +294,69 @@ func (s *packetStream) run(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// drainCommands sends every command line waiting on stdin. It reports false
+// once stdin has been closed and no more lines will arrive.
+func (s *packetStream) drainCommands() (open bool, err error) {
+	if s.commands == nil {
+		return true, nil
+	}
+	for {
+		select {
+		case line, ok := <-s.commands:
+			if !ok {
+				return false, nil
+			}
+			if err := s.execute(line); err != nil {
+				return true, err
+			}
+		default:
+			return true, nil
+		}
+	}
+}
+
+// execute parses one command line, sends the message and writes the outcome.
+// Problems with the command itself are reported as an "error" event rather
+// than returned, so one bad line does not take the stream down.
+func (s *packetStream) execute(line string) error {
+	if strings.TrimSpace(line) == "" {
+		return nil
+	}
+
+	var command StreamCommand
+	if err := json.Unmarshal([]byte(line), &command); err != nil {
+		return s.out.Encode(StreamSent{Type: "error", At: s.now().UTC(), Error: "invalid command: " + err.Error()})
+	}
+
+	result := StreamSent{
+		Type:    "sent",
+		At:      s.now().UTC(),
+		ID:      command.ID,
+		Channel: s.channel(command.Channel),
+		Text:    command.Text,
+	}
+
+	to, err := s.resolveRecipient(command.To)
+	result.Broadcast = to == 0 || to == broadcastNodeNumber
+	if !result.Broadcast {
+		result.To = s.node(to)
+	}
+
+	switch {
+	case err != nil:
+		result.Type, result.Error = "error", err.Error()
+	case command.Text == "":
+		result.Type, result.Error = "error", "text is required"
+	case command.Channel > 7:
+		result.Type, result.Error = "error", "channel must be between 0 and 7"
+	default:
+		if err := s.send(command.Text, int64(to), int64(command.Channel)); err != nil {
+			result.Type, result.Error = "error", err.Error()
+		}
+	}
+	return s.out.Encode(result)
 }
 
 // requestConfig asks the radio to send its configuration, channel and node
@@ -329,6 +512,10 @@ func (s *packetStream) packetEvent(packet *gomeshproto.MeshPacket) StreamPacket 
 	if decoded.GetPortnum() == gomeshproto.PortNum_TEXT_MESSAGE_APP {
 		event.Type = "message"
 		event.Text = string(decoded.GetPayload())
+		event.Reply = &StreamReply{
+			Direct:  StreamCommandTemplate{To: event.From.ID, Channel: packet.GetChannel()},
+			Channel: StreamCommandTemplate{Channel: packet.GetChannel()},
+		}
 		return event
 	}
 

@@ -3,6 +3,8 @@ package gmtcli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -232,6 +234,116 @@ func TestStreamLearnsNodesFromNodeInfoBroadcasts(t *testing.T) {
 	from := lines(buf)[0]["from"].(map[string]interface{})
 	if from["longname"] != "WS7R G2 Base" || from["hardware_model"] != "STATION_G2" {
 		t.Errorf("sender details should come from the node info broadcast, got %v", from)
+	}
+}
+
+func TestStreamReplyTemplates(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	buf.Reset()
+	if err := s.handle(textPacket(testOtherNode, broadcastNodeNumber, 1, "!weather")); err != nil {
+		t.Fatal(err)
+	}
+	reply := lines(buf)[0]["reply"].(map[string]interface{})
+	direct := reply["direct"].(map[string]interface{})
+	channel := reply["channel"].(map[string]interface{})
+	if direct["to"] != "!3b46af94" || direct["channel"] != float64(1) {
+		t.Errorf("direct reply template = %v", direct)
+	}
+	if _, hasTo := channel["to"]; hasTo || channel["channel"] != float64(1) {
+		t.Errorf("channel reply template = %v", channel)
+	}
+}
+
+// fakeSender records the messages a stream asked the radio to send.
+type fakeSender struct {
+	calls []string
+	err   error
+}
+
+func (f *fakeSender) send(text string, to int64, channel int64) error {
+	f.calls = append(f.calls, fmt.Sprintf("%s|%d|%d", text, to, channel))
+	return f.err
+}
+
+func TestStreamCommands(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	sender := &fakeSender{}
+	s.send = sender.send
+
+	cases := []struct {
+		name     string
+		line     string
+		wantCall string // "" means nothing should be sent
+		wantType string
+		wantErr  string
+	}{
+		{"broadcast by default", `{"id":"a","channel":1,"text":"hello all"}`, "hello all|0|1", "sent", ""},
+		{"numeric to", `{"to":1135973780,"text":"hi"}`, "hi|1135973780|0", "sent", ""},
+		{"node id to", `{"to":"!43b59594","text":"hi"}`, "hi|1135973780|0", "sent", ""},
+		{"long name to", `{"to":"dvdgmz01","text":"hi"}`, "hi|1135973780|0", "sent", ""},
+		{"short name to", `{"to":"DG01","text":"hi"}`, "hi|1135973780|0", "sent", ""},
+		{"reply template with text", `{"to":"!43b59594","channel":0,"text":"72F and sunny"}`, "72F and sunny|1135973780|0", "sent", ""},
+		{"unknown name", `{"to":"nobody","text":"hi"}`, "", "error", `no known node named "nobody"`},
+		{"bad id", `{"to":"!zz","text":"hi"}`, "", "error", `invalid node id "!zz"`},
+		{"missing text", `{"to":"DG01"}`, "", "error", "text is required"},
+		{"bad channel", `{"channel":9,"text":"hi"}`, "", "error", "channel must be between 0 and 7"},
+		{"invalid json", `{"to":`, "", "error", "invalid command"},
+		{"blank line", `   `, "", "", ""},
+	}
+	for _, c := range cases {
+		buf.Reset()
+		sender.calls = nil
+		if err := s.execute(c.line); err != nil {
+			t.Fatalf("%s: execute returned %v", c.name, err)
+		}
+		if c.wantType == "" {
+			if buf.Len() != 0 {
+				t.Errorf("%s: expected no output, got %s", c.name, buf.String())
+			}
+			continue
+		}
+		got := lines(buf)[0]
+		if got["type"] != c.wantType {
+			t.Errorf("%s: type = %v, want %v (%v)", c.name, got["type"], c.wantType, got["error"])
+		}
+		if c.wantErr != "" && !strings.Contains(got["error"].(string), c.wantErr) {
+			t.Errorf("%s: error = %v, want it to contain %q", c.name, got["error"], c.wantErr)
+		}
+		if c.wantCall == "" && len(sender.calls) != 0 {
+			t.Errorf("%s: unexpected send %v", c.name, sender.calls)
+		}
+		if c.wantCall != "" && (len(sender.calls) != 1 || sender.calls[0] != c.wantCall) {
+			t.Errorf("%s: sends = %v, want [%s]", c.name, sender.calls, c.wantCall)
+		}
+	}
+
+	// A sent event names the resolved recipient and echoes the id.
+	buf.Reset()
+	_ = s.execute(`{"id":"reply-17","to":"DG01","text":"hi"}`)
+	got := lines(buf)[0]
+	if got["id"] != "reply-17" || got["broadcast"] != false || got["to"].(map[string]interface{})["longname"] != "DvdGmz01" {
+		t.Errorf("sent event = %v", got)
+	}
+
+	// Radio errors are relayed as error events, not failures of the stream.
+	sender.err = errors.New("message too large")
+	buf.Reset()
+	if err := s.execute(`{"text":"x"}`); err != nil {
+		t.Fatal(err)
+	}
+	if got := lines(buf)[0]; got["type"] != "error" || got["error"] != "message too large" {
+		t.Errorf("relayed radio error = %v", got)
+	}
+}
+
+func TestStreamStopsWhenStdinCloses(t *testing.T) {
+	s, _ := newTestStream(t, false)
+	lines := make(chan string)
+	close(lines)
+	s.commands = lines
+	open, err := s.drainCommands()
+	if err != nil || open {
+		t.Errorf("drainCommands on closed stdin = open %v, err %v; want closed", open, err)
 	}
 }
 
