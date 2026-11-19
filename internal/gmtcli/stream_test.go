@@ -216,6 +216,36 @@ func TestStreamSkipsNonTextWithoutFull(t *testing.T) {
 	}
 }
 
+func TestStreamRoundsDecodedPayloadNumbers(t *testing.T) {
+	telemetry, _ := proto.Marshal(&gomeshproto.Telemetry{
+		Time: 1795061528,
+		Variant: &gomeshproto.Telemetry_DeviceMetrics{DeviceMetrics: &gomeshproto.DeviceMetrics{
+			BatteryLevel: 101, Voltage: 4.8169999, ChannelUtilization: 12.451667, AirUtilTx: 4.222472,
+		}},
+	})
+	s, buf := newTestStream(t, true)
+	buf.Reset()
+	_ = s.handle(&gomeshproto.FromRadio{PayloadVariant: &gomeshproto.FromRadio_Packet{Packet: &gomeshproto.MeshPacket{
+		From: testPeerNode, To: broadcastNodeNumber,
+		PayloadVariant: &gomeshproto.MeshPacket_Decoded{Decoded: &gomeshproto.Data{Portnum: gomeshproto.PortNum_TELEMETRY_APP, Payload: telemetry}},
+	}}})
+	metrics := lines(buf)[0]["payload"].(map[string]interface{})["device_metrics"].(map[string]interface{})
+	want := map[string]float64{"battery_level": 101, "voltage": 4.817, "channel_utilization": 12.45, "air_util_tx": 4.22}
+	for k, w := range want {
+		if metrics[k] != w {
+			t.Errorf("%s = %v, want %v", k, metrics[k], w)
+		}
+	}
+	if got := lines(buf)[0]["payload"].(map[string]interface{})["time"]; got != float64(1795061528) {
+		t.Errorf("integers must be untouched, time = %v", got)
+	}
+
+	// Unknown float fields fall back to four decimals.
+	if got := roundValue(json.Number("1.23456789"), "something_else"); got != 1.2346 {
+		t.Errorf("default rounding = %v, want 1.2346", got)
+	}
+}
+
 func TestStreamLearnsNodesFromNodeInfoBroadcasts(t *testing.T) {
 	s, buf := newTestStream(t, false)
 	buf.Reset()

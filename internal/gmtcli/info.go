@@ -212,7 +212,7 @@ func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) 
 	// Meshtastic derives a node's id from its number, so one can always be
 	// given even when the radio has not received the node's user info.
 	meshNode.ID = nodeIDFromNumber(info.Num)
-	meshNode.SNR = roundTo(float64(info.Snr), 2) // the radio reports quarter-dB steps
+	meshNode.SNR = roundTo(float64(info.Snr), 3)
 	meshNode.HopsAway = int(info.HopsAway)
 	meshNode.ViaMQTT = info.ViaMqtt
 
@@ -242,9 +242,9 @@ func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) 
 	// round to what is useful.
 	if metrics := info.GetDeviceMetrics(); metrics != nil {
 		meshNode.BatteryLevel = int(metrics.BatteryLevel)
-		meshNode.Voltage = roundTo(float64(metrics.Voltage), 2)
-		meshNode.ChannelUtilization = roundTo(float64(metrics.ChannelUtilization), 1)
-		meshNode.AirUtilTx = roundTo(float64(metrics.AirUtilTx), 1)
+		meshNode.Voltage = roundTo(float64(metrics.Voltage), 3)
+		meshNode.ChannelUtilization = roundTo(float64(metrics.ChannelUtilization), 2)
+		meshNode.AirUtilTx = roundTo(float64(metrics.AirUtilTx), 2)
 	}
 
 	if position := info.GetPosition(); position != nil {

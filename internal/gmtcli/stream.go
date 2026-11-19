@@ -744,7 +744,98 @@ func decodePayload(port gomeshproto.PortNum, payload []byte) (json.RawMessage, b
 	if err != nil {
 		return nil, false
 	}
-	return json.RawMessage(out), true
+	return roundPayloadNumbers(out), true
+}
+
+// payloadDecimals is how many decimal places known protobuf fields keep when
+// a decoded payload is printed. Anything not listed keeps defaultDecimals.
+var payloadDecimals = map[string]int{
+	"air_util_tx":          2,
+	"channel_utilization":  2,
+	"battery_level":        1,
+	"voltage":              3,
+	"current":              3,
+	"temperature":          2,
+	"relative_humidity":    2,
+	"barometric_pressure":  2,
+	"gas_resistance":       1,
+	"lux":                  2,
+	"white_lux":            2,
+	"ir_lux":               2,
+	"uv_lux":               2,
+	"wind_speed":           2,
+	"wind_gust":            2,
+	"wind_lull":            2,
+	"rainfall_1h":          2,
+	"rainfall_24h":         2,
+	"soil_temperature":     2,
+	"iaq":                  1,
+	"distance":             2,
+	"weight":               3,
+	"radiation":            3,
+	"ch1_voltage":          3,
+	"ch2_voltage":          3,
+	"ch3_voltage":          3,
+	"ch1_current":          3,
+	"ch2_current":          3,
+	"ch3_current":          3,
+	"snr":                  3,
+	"rx_snr":               3,
+	"ground_speed":         2,
+	"ground_track":         2,
+	"gps_accuracy":         2,
+	"altitude_hae":         2,
+	"altitude_geoidal_sep": 2,
+}
+
+const defaultDecimals = 4
+
+// roundPayloadNumbers rounds the numbers in a decoded payload's JSON to the
+// precision they actually carry: float32 readings otherwise print with every
+// digit a float64 can hold. Integers are left alone. Field order is not
+// preserved (keys come out sorted), which is fine for a payload blob.
+func roundPayloadNumbers(raw []byte) json.RawMessage {
+	decoder := json.NewDecoder(strings.NewReader(string(raw)))
+	decoder.UseNumber()
+	var value interface{}
+	if err := decoder.Decode(&value); err != nil {
+		return raw
+	}
+	out, err := json.Marshal(roundValue(value, ""))
+	if err != nil {
+		return raw
+	}
+	return out
+}
+
+func roundValue(v interface{}, key string) interface{} {
+	switch x := v.(type) {
+	case map[string]interface{}:
+		for k, child := range x {
+			x[k] = roundValue(child, k)
+		}
+		return x
+	case []interface{}:
+		for i, child := range x {
+			x[i] = roundValue(child, key)
+		}
+		return x
+	case json.Number:
+		if !strings.ContainsAny(x.String(), ".eE") {
+			return x // an integer
+		}
+		f, err := x.Float64()
+		if err != nil {
+			return x
+		}
+		places, ok := payloadDecimals[key]
+		if !ok {
+			places = defaultDecimals
+		}
+		return roundTo(f, places)
+	default:
+		return v
+	}
 }
 
 // node returns the cached details for a node, or the little that can be

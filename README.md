@@ -114,7 +114,7 @@ The first line has `"type": "ready"` and carries this radio's own node (`my_node
 {"type":"message","received_at":"2026-11-19T04:12:08Z","id":1836540931,"from":{"node_id":"!43b59594","node_number":1135973780,"longname":"DvdGmz01","shortname":"DG01","role":"CLIENT","hardware_model":"HELTEC_V3","is_licensed":false},"broadcast":true,"direct":false,"outgoing":false,"channel":{"index":0,"name":"","role":"PRIMARY"},"port":"TEXT_MESSAGE_APP","text":"hello mesh","snr_db":-1.75,"rssi_dbm":-110,"hop_limit":2,"hop_start":3,"hops_taken":1,"via_mqtt":false,"want_ack":false,"priority":"UNSET"}
 ```
 
-With `--full`, every other packet is printed too with `"type": "packet"`: positions, telemetry, node info, routing and so on carry their payload as JSON under `payload` when the port is known, otherwise as `payload_base64`. Packets the radio could not decrypt have `"encrypted": true`.
+With `--full`, every other packet is printed too with `"type": "packet"`: positions, telemetry, node info, routing and so on carry their payload as JSON under `payload` when the port is known (with readings rounded to a sensible precision), otherwise as `payload_base64`. Packets the radio could not decrypt have `"encrypted": true`.
 
 The node and channel database is re-requested from the radio every five minutes, which also keeps the firmware forwarding packets to the connection.
 
