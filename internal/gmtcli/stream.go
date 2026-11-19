@@ -3,9 +3,7 @@ package gmtcli
 import (
 	"bufio"
 	"context"
-	"crypto/rand"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -264,46 +262,14 @@ func newPacketStream(radio gomesh.Radio, full bool, w io.Writer) *packetStream {
 	return s
 }
 
-// sendText builds and sends a text message with a packet id of our choosing,
-// so the radio's later queue status and acknowledgement can be matched back
-// to the command. A zero "to" broadcasts on the channel.
+// sendText sends a text message and returns the packet id the library
+// assigned, so the radio's later queue status and acknowledgement can be
+// matched back to the command. A zero "to" broadcasts on the channel.
 func (s *packetStream) sendText(text string, to, channel uint32) (uint32, error) {
 	if len(text) > int(gomeshproto.Constants_DATA_PAYLOAD_LEN) {
 		return 0, fmt.Errorf("message too large: %d bytes, maximum %d", len(text), gomeshproto.Constants_DATA_PAYLOAD_LEN)
 	}
-	if to == 0 {
-		to = broadcastNodeNumber
-	}
-	id := s.newPacketID()
-
-	radioMessage := gomeshproto.ToRadio{PayloadVariant: &gomeshproto.ToRadio_Packet{Packet: &gomeshproto.MeshPacket{
-		To:      to,
-		Id:      id,
-		Channel: channel,
-		WantAck: true,
-		PayloadVariant: &gomeshproto.MeshPacket_Decoded{Decoded: &gomeshproto.Data{
-			Portnum: gomeshproto.PortNum_TEXT_MESSAGE_APP,
-			Payload: []byte(text),
-		}},
-	}}}
-	out, err := proto.Marshal(&radioMessage)
-	if err != nil {
-		return 0, err
-	}
-	return id, s.radio.SendPacket(out)
-}
-
-// newPacketID returns a random non-zero packet id not already in flight.
-func (s *packetStream) newPacketID() uint32 {
-	for {
-		var b [4]byte
-		// crypto/rand.Read never returns an error on supported platforms.
-		rand.Read(b[:])
-		id := binary.BigEndian.Uint32(b[:])
-		if _, inFlight := s.pending[id]; id != 0 && !inFlight {
-			return id
-		}
-	}
+	return s.radio.SendTextMessageWithID(text, int64(to), int64(channel))
 }
 
 // streamMessages is the action for the stream command.

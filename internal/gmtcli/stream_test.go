@@ -402,14 +402,10 @@ func TestStreamNodeWithoutUserStillHasID(t *testing.T) {
 	}
 }
 
-func TestStreamSendTextBuildsPacket(t *testing.T) {
+func TestStreamSendTextRejectsOversized(t *testing.T) {
 	s, _ := newTestStream(t, false)
 	if _, err := s.sendText(strings.Repeat("x", 238), 0, 0); err == nil {
 		t.Error("oversized message should be rejected before reaching the radio")
-	}
-	id1, id2 := s.newPacketID(), s.newPacketID()
-	if id1 == 0 || id2 == 0 || id1 == id2 {
-		t.Errorf("packet ids should be non-zero and distinct, got %d and %d", id1, id2)
 	}
 }
 
