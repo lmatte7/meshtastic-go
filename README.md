@@ -123,15 +123,23 @@ Every message line also carries a `reply` object with two ready-made commands, s
 "reply": {"direct": {"to": "!43b59594", "channel": 0}, "channel": {"channel": 0}}
 ```
 
-#### Example bot
+A command line may also ask the stream for its cached node list instead of sending: `{"id": "n1", "command": "nodes"}` is answered with `{"type": "nodes", "id": "n1", "my_node": {...}, "nodes": [...]}`, the same node records `info nodes --json` prints, including `hops_away`, `via_mqtt` and `snr_db`. This lets a bot reason about the mesh without opening a second connection to the radio.
 
-`examples/pingbot` is a complete bot in about a hundred lines of Go with no dependencies beyond the standard library. It runs `meshtastic-go stream --commands` as a subprocess, answers any `!ping` with `pong` on the channel it arrived on (or directly for a direct message), and logs the `sent`, `queued`, `delivered` and `failed` events for its replies:
+#### Example bots
+
+Each directory under `examples/` is a complete bot in standard-library Go. They run `meshtastic-go stream --commands` as a subprocess, read its lines and write commands back, so the same pattern works from any language.
+
+`examples/pingbot` answers any `!ping` with `pong` on the channel it arrived on (or directly for a direct message), and logs the `sent`, `queued`, `delivered` and `failed` events for its replies:
 
 ```
 go run ./examples/pingbot -port /dev/cu.usbmodem143101 -bin builds/meshtastic-go_osx
 ```
 
-The same pattern works from any language: start the process, read lines, write lines.
+`examples/weatherbot` answers `!weather` with the current weather from [wttr.in](https://wttr.in) for where the radio is. It uses the radio's GPS position when it has one; otherwise it asks the stream for the node list and takes the mean position of nodes heard over the air (not via MQTT) within `-max-hops` hops (default 2), preferring nodes heard within `-max-age` (default 24h) but falling back to older ones when fewer than three look recent, since a radio without a time source stamps everything with a stale clock. `!weather <place>` looks up a named place instead. Replies go back the way the request came. The bot is throttled as a whole: at most one lookup and one reply per `-interval` (default 5m) no matter how many nodes ask, so a hostile mesh cannot use it to flood wttr.in or the channel:
+
+```
+go run ./examples/weatherbot -port /dev/cu.usbmodem143101 -bin builds/meshtastic-go_osx -units u
+```
 
 ### `config`
 
