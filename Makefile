@@ -1,0 +1,21 @@
+.PHONY: default build test lint fmt fmt-check clean
+
+default: build
+
+build: test
+	./build.sh
+
+test:
+	go test -v ./...
+
+lint:
+	golangci-lint run
+
+fmt:
+	gofmt -w .
+
+fmt-check:
+	@test -z "$$(gofmt -l .)" || { echo "gofmt needed on:"; gofmt -l .; exit 1; }
+
+clean:
+	rm -rf builds

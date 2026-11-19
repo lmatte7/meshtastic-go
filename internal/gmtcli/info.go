@@ -1,8 +1,11 @@
-package main
+package gmtcli
 
 import (
+	"encoding/json"
 	"fmt"
+	"net"
 	"reflect"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/lmatte7/gomesh"
@@ -39,7 +42,7 @@ func showNodeInfo(c *cli.Context) error {
 	radio := getRadio(c)
 	defer radio.Close()
 
-	return displayNodes(radio)
+	return displayNodes(radio, c.Bool("json"))
 }
 
 func factoryResetRadio(c *cli.Context) error {
@@ -79,7 +82,7 @@ func showPositionInfo(c *cli.Context) error {
 	return nil
 }
 
-func displayNodes(r gomesh.Radio) error {
+func displayNodes(r gomesh.Radio, jsonFormat bool) error {
 	responses, err := r.GetRadioInfo()
 	if err != nil {
 		return err
@@ -92,9 +95,10 @@ func displayNodes(r gomesh.Radio) error {
 		}
 	}
 
-	printNodes(nodes)
-
-	return nil
+	if jsonFormat {
+		return printNodesJSON(nodes)
+	}
+	return printNodes(nodes)
 }
 
 func getRadioInfo(r gomesh.Radio, json bool) error {
@@ -139,44 +143,164 @@ func setModemOption(c *cli.Context) error {
 	return nil
 }
 
-func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) {
+// MeshNode is a flattened, human-friendly view of a node on the mesh. Enums
+// are resolved to their names, the MAC address is formatted, coordinates are
+// in degrees and the last-heard time is given both as a timestamp and as an
+// age. Both the JSON output and the node table are produced from it, so any
+// improvement here shows up in both views.
+type MeshNode struct {
+	ID                  string  `json:"node_id,omitempty"`
+	NodeNumber          uint32  `json:"node_number,omitempty"`
+	LongName            string  `json:"longname,omitempty"`
+	ShortName           string  `json:"shortname,omitempty"`
+	AltitudeMeters      int     `json:"altitude_meters,omitempty"`
+	LatitudeDegrees     float64 `json:"latitude_degrees,omitempty"`
+	LongitudeDegrees    float64 `json:"longitude_degrees,omitempty"`
+	MACAddress          string  `json:"mac_address,omitempty"`
+	IsLicensed          bool    `json:"is_licensed"`
+	Role                string  `json:"role,omitempty"`
+	HardwareModel       string  `json:"hardware_model,omitempty"`
+	BatteryLevel        int     `json:"battery_level_percent,omitempty"`
+	Voltage             float64 `json:"battery_volts,omitempty"`
+	ChannelUtilization  float64 `json:"channel_utilization_percent,omitempty"`
+	AirUtilTx           float64 `json:"air_utilization_transmit_percent,omitempty"`
+	LastHeard           string  `json:"last_heard,omitempty"`
+	LastHeardSecondsAgo int     `json:"last_heard_seconds_ago,omitempty"`
+	LastHeardHuman      string  `json:"last_heard_human,omitempty"`
+}
+
+// ProtoNodeToMeshNode converts a NodeInfo packet from the radio into a MeshNode.
+func ProtoNodeToMeshNode(node *gomeshproto.FromRadio_NodeInfo) MeshNode {
+	return protoNodeToMeshNodeAt(node, time.Now())
+}
+
+// protoNodeToMeshNodeAt is ProtoNodeToMeshNode with an explicit "now" so the
+// last-heard age can be computed deterministically.
+func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) MeshNode {
+	meshNode := MeshNode{}
+
+	if node == nil || node.NodeInfo == nil {
+		return meshNode
+	}
+	info := node.NodeInfo
+
+	meshNode.NodeNumber = info.Num
+
+	if info.LastHeard != 0 {
+		lastSeen := time.Unix(int64(info.LastHeard), 0).UTC()
+		sinceLastSeen := now.Sub(lastSeen)
+		meshNode.LastHeard = lastSeen.Format(time.RFC3339)
+		meshNode.LastHeardSecondsAgo = int(sinceLastSeen.Seconds())
+		meshNode.LastHeardHuman = sinceLastSeen.Round(time.Second).String()
+	}
+
+	if user := info.GetUser(); user != nil {
+		meshNode.ID = user.Id
+		meshNode.LongName = user.LongName
+		meshNode.ShortName = user.ShortName
+		meshNode.IsLicensed = user.IsLicensed
+		meshNode.Role = user.Role.String()
+		if user.HwModel != gomeshproto.HardwareModel_UNSET {
+			meshNode.HardwareModel = user.HwModel.String()
+		}
+		if len(user.Macaddr) > 0 {
+			meshNode.MACAddress = net.HardwareAddr(user.Macaddr).String()
+		}
+	}
+
+	if metrics := info.GetDeviceMetrics(); metrics != nil {
+		meshNode.BatteryLevel = int(metrics.BatteryLevel)
+		meshNode.Voltage = float64(metrics.Voltage)
+		meshNode.ChannelUtilization = float64(metrics.ChannelUtilization)
+		meshNode.AirUtilTx = float64(metrics.AirUtilTx)
+	}
+
+	if position := info.GetPosition(); position != nil {
+		meshNode.AltitudeMeters = int(position.Altitude)
+		// The radio reports coordinates as integers in units of 1e-7 degrees.
+		meshNode.LatitudeDegrees = float64(position.LatitudeI) / 1e7
+		meshNode.LongitudeDegrees = float64(position.LongitudeI) / 1e7
+	}
+
+	return meshNode
+}
+
+func printNodesJSON(nodes []*gomeshproto.FromRadio_NodeInfo) error {
+	meshNodes := make([]MeshNode, 0, len(nodes))
+	for _, node := range nodes {
+		meshNodes = append(meshNodes, ProtoNodeToMeshNode(node))
+	}
+	out, err := json.Marshal(meshNodes)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(out))
+	return nil
+}
+
+// orNA returns "N/A" for empty values so the table never shows blank cells.
+func orNA(value string) string {
+	if value == "" {
+		return "N/A"
+	}
+	return value
+}
+
+func printNodes(nodes []*gomeshproto.FromRadio_NodeInfo) error {
 	fmt.Printf("\n")
 	fmt.Printf("Nodes in Mesh:\n")
 
 	printDoubleDivider()
-	fmt.Printf("| %-15s| ", "Node Number")
-	fmt.Printf("%-15s| ", "User")
-	fmt.Printf("%-15s| ", "Battery")
-	fmt.Printf("%-15s| ", "Altitude")
-	fmt.Printf("%-15s| ", "Latitude")
-	fmt.Printf("%-15s", "Longitude      |\n")
+	fmt.Printf("| %-10s| ", "Node ID")
+	fmt.Printf("%-11s| ", "Node Number")
+	fmt.Printf("%-40s| ", "Long Name")
+	fmt.Printf("%-6s| ", "Short")
+	fmt.Printf("%-14s| ", "Role")
+	fmt.Printf("%-24s| ", "Hardware")
+	fmt.Printf("%-8s| ", "Battery")
+	fmt.Printf("%-9s| ", "Altitude")
+	fmt.Printf("%-13s| ", "Latitude")
+	fmt.Printf("%-13s| ", "Longitude")
+	fmt.Printf("%-14s|\n", "Last Heard")
 	printSingleDivider()
 	for _, node := range nodes {
-		if node.NodeInfo != nil {
-			fmt.Printf("| %-15s| ", fmt.Sprint(node.NodeInfo.Num))
-			if node.NodeInfo.User != nil {
-				fmt.Printf("%-15s| ", node.NodeInfo.User.LongName)
-			} else {
-				fmt.Printf("%-15s| ", "N/A")
-			}
-			if node.NodeInfo.DeviceMetrics != nil {
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel))
-			} else {
-				fmt.Printf("%-15s| ", "N/A")
-			}
-			if node.NodeInfo.Position != nil {
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.Altitude))
-				fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.Position.LatitudeI))
-				fmt.Printf("%-15s", fmt.Sprint(node.NodeInfo.Position.LongitudeI))
-			} else {
-				fmt.Printf("%-15s| ", "N/A")
-				fmt.Printf("%-15s| ", "N/A")
-				fmt.Printf("%-15s| ", "N/A")
-			}
-			fmt.Printf("%s", "|\n")
+		if node.NodeInfo == nil {
+			continue
 		}
+		mn := ProtoNodeToMeshNode(node)
+
+		// Zero is a valid reading (sea level, 0% battery), so decide what to
+		// show from whether the radio reported the section at all.
+		battery, altitude, latitude, longitude, lastHeard := "N/A", "N/A", "N/A", "N/A", "N/A"
+		if node.NodeInfo.DeviceMetrics != nil {
+			battery = fmt.Sprintf("%d%%", mn.BatteryLevel)
+		}
+		if position := node.NodeInfo.Position; position != nil {
+			altitude = fmt.Sprintf("%dm", mn.AltitudeMeters)
+			// A position with both coordinates exactly zero means no fix.
+			if position.LatitudeI != 0 || position.LongitudeI != 0 {
+				latitude = fmt.Sprintf("%.7f", mn.LatitudeDegrees)
+				longitude = fmt.Sprintf("%.7f", mn.LongitudeDegrees)
+			}
+		}
+		if mn.LastHeardHuman != "" {
+			lastHeard = mn.LastHeardHuman + " ago"
+		}
+
+		fmt.Printf("| %-10s| ", orNA(mn.ID))
+		fmt.Printf("%-11d| ", mn.NodeNumber)
+		fmt.Printf("%-40s| ", orNA(mn.LongName))
+		fmt.Printf("%-6s| ", orNA(mn.ShortName))
+		fmt.Printf("%-14s| ", orNA(mn.Role))
+		fmt.Printf("%-24s| ", orNA(mn.HardwareModel))
+		fmt.Printf("%-8s| ", battery)
+		fmt.Printf("%-9s| ", altitude)
+		fmt.Printf("%-13s| ", latitude)
+		fmt.Printf("%-13s| ", longitude)
+		fmt.Printf("%-14s|\n", lastHeard)
 	}
 	printDoubleDivider()
+	return nil
 }
 
 func printJsonRadioInfo(info []*gomeshproto.FromRadio) {
@@ -275,8 +399,10 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 			fmt.Printf("%s", "\n\nNode Info\n")
 			v := reflect.ValueOf(*nodeInfo)
 			for i := 0; i < v.NumField(); i++ {
-				fmt.Printf("%-25s", v.Type().Field(i).Name)
-				fmt.Printf("%v\n", v.Field(i))
+				if v.Field(i).CanInterface() {
+					fmt.Printf("%-25s", v.Type().Field(i).Name)
+					fmt.Printf("%v\n", v.Field(i))
+				}
 			}
 		}
 	}

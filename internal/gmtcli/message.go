@@ -1,6 +1,7 @@
-package main
+package gmtcli
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -85,15 +86,34 @@ func printMessages(messages []*gomeshproto.FromRadio_Packet) {
 	}
 }
 
-func printJsonMessages(messages []*gomeshproto.FromRadio_Packet) {
-	for _, message := range messages {
-		fmt.Printf("{\"from\":%s,", fmt.Sprint(message.Packet.From))
-		fmt.Printf("\"to\":%s,", fmt.Sprint(message.Packet.To))
-		fmt.Printf("\"portnum\": \"%s\",", message.Packet.GetDecoded().GetPortnum().String())
-		fmt.Printf("\"channel\":%s,", fmt.Sprint(message.Packet.Channel))
-		re := regexp.MustCompile(`\r?\n`)
-		escMesg := re.ReplaceAllString(string(message.Packet.GetDecoded().Payload), "")
-		fmt.Printf("\"Payload\": \"%s\"", escMesg)
-		fmt.Printf("%s", "}\n")
+func printJsonMessages(messages []*gomeshproto.FromRadio_Packet) error {
+
+	// Field names and types match the previous hand-built JSON output: node
+	// numbers and the channel index are numbers, and channel 0 is always
+	// present.
+	type MeshTextMessage struct {
+		From    uint32 `json:"from"`
+		To      uint32 `json:"to"`
+		Portnum string `json:"portnum"`
+		Channel uint32 `json:"channel"`
+		Payload string `json:"Payload"`
 	}
+
+	for _, message := range messages {
+		meshTextMessage := MeshTextMessage{
+			From:    message.Packet.From,
+			To:      message.Packet.To,
+			Portnum: message.Packet.GetDecoded().GetPortnum().String(),
+			Channel: message.Packet.Channel,
+			Payload: string(message.Packet.GetDecoded().Payload),
+		}
+
+		output, err := json.Marshal(meshTextMessage)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(output))
+	}
+
+	return nil
 }
