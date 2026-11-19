@@ -251,7 +251,7 @@ type pendingSend struct {
 type packetStream struct {
 	radio    gomesh.Radio
 	full     bool
-	out      eventEncoder
+	out      *json.Encoder
 	now      func() time.Time
 	send     func(text string, to, channel uint32) (packetID uint32, err error)
 	commands <-chan string
@@ -269,10 +269,14 @@ type packetStream struct {
 }
 
 func newPacketStream(radio gomesh.Radio, full bool, w io.Writer) *packetStream {
+	// One compact JSON document per line; pipe through jq for a readable view.
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+
 	s := &packetStream{
 		radio:    radio,
 		full:     full,
-		out:      newLineEncoder(w),
+		out:      enc,
 		now:      time.Now,
 		nodes:    make(map[uint32]MeshNode),
 		channels: make(map[uint32]StreamChannel),
@@ -321,8 +325,6 @@ func streamMessages(c *cli.Context) error {
 	defer stop()
 
 	s := newPacketStream(radio, c.Bool("full"), os.Stdout)
-	// JSON Lines for programs, indented colour for people at a terminal.
-	s.out = newStreamEncoder(os.Stdout)
 	if c.Bool("commands") {
 		s.commands = readLines(os.Stdin)
 	}

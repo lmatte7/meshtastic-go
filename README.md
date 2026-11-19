@@ -166,9 +166,8 @@ COMMANDS:
 The `stream` command is meant to be run as a long-lived subprocess by another
 program, for example a bot or web backend. It prints one JSON object per line
 (JSON Lines) to stdout and runs until it is interrupted or the radio link
-fails, in which case it exits non-zero. When stdout is a terminal it prints
-indented, colourised JSON instead so the output is readable by eye; set
-`NO_COLOR` to keep the indentation without colour.
+fails, in which case it exits non-zero. Pipe it through `jq` for a
+human-readable view.
 
 ```
 meshtastic-go stream
