@@ -322,7 +322,7 @@ func CLIEntry(version, commit, builddate string) {
 				UsageText:   "modem [command] - set modem mode",
 				Description: "Set the modem mode for the radio",
 				ArgsUsage:   "",
-				Action:      factoryResetRadio,
+				Action:      showModemOptions,
 				Subcommands: []*cli.Command{
 					{
 						Name:        "options",
