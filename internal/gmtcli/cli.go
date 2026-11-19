@@ -327,6 +327,20 @@ func CLIEntry(version, commit, builddate string) {
 				},
 			},
 			{
+				Name:        "locate",
+				Usage:       "Show where the radio is",
+				UsageText:   "locate [--json] - show the radio's GPS fix, or estimate its position",
+				Description: "Prints the radio's GPS position if it has a fix. Otherwise estimates its position from the nodes it heard directly (not via MQTT) in the last 15 minutes that report a position, weighting each by its signal strength.",
+				ArgsUsage:   "",
+				Action:      locateRadio,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "json",
+						Usage: "Output the position and contributing nodes as JSON",
+					},
+				},
+			},
+			{
 				Name:        "reset",
 				Usage:       "Factory reset the radio",
 				UsageText:   "reset - Factory reset the radio",

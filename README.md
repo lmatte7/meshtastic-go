@@ -205,6 +205,14 @@ OPTIONS:
    --help, -h  show help (default: false)
 ```
 
+### `locate`
+
+`locate` prints the radio's GPS position if it has a fix. Without one it estimates the position from the nodes the radio heard directly (zero hops, not via MQTT) in the last 15 minutes that report a position, as the mean of their positions weighted by received signal power (10^(SNR/10)), so a strong nearby neighbour counts for far more than a faint distant one. `--json` prints the position and the contributing nodes with their weights.
+
+```
+meshtastic-go locate
+```
+
 ### `channel`  
 ```
 NAME:
