@@ -65,13 +65,13 @@ func textPacket(from, to uint32, channel uint32, text string) *gomeshproto.FromR
 	}}}
 }
 
-func lines(buf *bytes.Buffer) []map[string]interface{} {
-	var out []map[string]interface{}
-	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+func lines(buf *bytes.Buffer) []map[string]any {
+	var out []map[string]any
+	for line := range strings.SplitSeq(strings.TrimSpace(buf.String()), "\n") {
 		if line == "" {
 			continue
 		}
-		var m map[string]interface{}
+		var m map[string]any
 		if err := json.Unmarshal([]byte(line), &m); err != nil {
 			panic("invalid JSON line: " + line + ": " + err.Error())
 		}
@@ -86,15 +86,15 @@ func TestStreamReadyLine(t *testing.T) {
 	if len(got) != 1 || got[0]["type"] != "ready" {
 		t.Fatalf("expected a single ready line, got %v", got)
 	}
-	myNode := got[0]["my_node"].(map[string]interface{})
+	myNode := got[0]["my_node"].(map[string]any)
 	if myNode["node_id"] != "!534c8a43" {
 		t.Errorf("my_node = %v", myNode)
 	}
-	channels := got[0]["channels"].([]interface{})
+	channels := got[0]["channels"].([]any)
 	if len(channels) != 2 {
 		t.Fatalf("expected the two enabled channels, got %v", channels)
 	}
-	if channels[1].(map[string]interface{})["name"] != "bots" {
+	if channels[1].(map[string]any)["name"] != "bots" {
 		t.Errorf("channels = %v", channels)
 	}
 }
@@ -117,11 +117,11 @@ func TestStreamDirectMessage(t *testing.T) {
 	if m["direct"] != true || m["broadcast"] != false || m["outgoing"] != false {
 		t.Errorf("direct/broadcast/outgoing = %v/%v/%v", m["direct"], m["broadcast"], m["outgoing"])
 	}
-	from := m["from"].(map[string]interface{})
+	from := m["from"].(map[string]any)
 	if from["longname"] != "DvdGmz01" || from["node_number"] != float64(testPeerNode) {
 		t.Errorf("from = %v", from)
 	}
-	to := m["to"].(map[string]interface{})
+	to := m["to"].(map[string]any)
 	if to["node_id"] != "!534c8a43" {
 		t.Errorf("to = %v", to)
 	}
@@ -153,11 +153,11 @@ func TestStreamChannelMessageFromUnknownNode(t *testing.T) {
 	if _, hasTo := m["to"]; hasTo {
 		t.Error("broadcast messages should not carry a recipient")
 	}
-	channel := m["channel"].(map[string]interface{})
+	channel := m["channel"].(map[string]any)
 	if channel["index"] != float64(1) || channel["name"] != "bots" || channel["role"] != "SECONDARY" {
 		t.Errorf("channel = %v", channel)
 	}
-	from := m["from"].(map[string]interface{})
+	from := m["from"].(map[string]any)
 	if from["node_id"] != "!3b46af94" || from["node_number"] != float64(testOtherNode) {
 		t.Errorf("unknown sender should still get an id and number, got %v", from)
 	}
@@ -203,7 +203,7 @@ func TestStreamSkipsNonTextWithoutFull(t *testing.T) {
 	if pos["type"] != "packet" || pos["port"] != "POSITION_APP" {
 		t.Errorf("position line = %v", pos)
 	}
-	payload := pos["payload"].(map[string]interface{})
+	payload := pos["payload"].(map[string]any)
 	if payload["latitude_i"] != float64(361824256) || payload["altitude"] != float64(471) {
 		t.Errorf("decoded position payload = %v", payload)
 	}
@@ -211,7 +211,7 @@ func TestStreamSkipsNonTextWithoutFull(t *testing.T) {
 	if enc["encrypted"] != true || enc["payload_base64"] != "AQID" || enc["port"] != nil {
 		t.Errorf("encrypted line = %v", enc)
 	}
-	if enc["channel"].(map[string]interface{})["index"] != float64(0xab) {
+	if enc["channel"].(map[string]any)["index"] != float64(0xab) {
 		t.Errorf("encrypted packets should report the channel hash, got %v", enc["channel"])
 	}
 }
@@ -229,14 +229,14 @@ func TestStreamRoundsDecodedPayloadNumbers(t *testing.T) {
 		From: testPeerNode, To: broadcastNodeNumber,
 		PayloadVariant: &gomeshproto.MeshPacket_Decoded{Decoded: &gomeshproto.Data{Portnum: gomeshproto.PortNum_TELEMETRY_APP, Payload: telemetry}},
 	}}})
-	metrics := lines(buf)[0]["payload"].(map[string]interface{})["device_metrics"].(map[string]interface{})
+	metrics := lines(buf)[0]["payload"].(map[string]any)["device_metrics"].(map[string]any)
 	want := map[string]float64{"battery_level": 101, "voltage": 4.817, "channel_utilization": 12.45, "air_util_tx": 4.22}
 	for k, w := range want {
 		if metrics[k] != w {
 			t.Errorf("%s = %v, want %v", k, metrics[k], w)
 		}
 	}
-	if got := lines(buf)[0]["payload"].(map[string]interface{})["time"]; got != float64(1795061528) {
+	if got := lines(buf)[0]["payload"].(map[string]any)["time"]; got != float64(1795061528) {
 		t.Errorf("integers must be untouched, time = %v", got)
 	}
 
@@ -273,7 +273,7 @@ func TestStreamLearnsNodesFromNodeInfoBroadcasts(t *testing.T) {
 	if err := s.handle(textPacket(testOtherNode, testMyNode, 0, "now you know me")); err != nil {
 		t.Fatal(err)
 	}
-	from := lines(buf)[0]["from"].(map[string]interface{})
+	from := lines(buf)[0]["from"].(map[string]any)
 	if from["longname"] != "WS7R G2 Base" || from["hardware_model"] != "STATION_G2" {
 		t.Errorf("sender details should come from the node info broadcast, got %v", from)
 	}
@@ -285,9 +285,9 @@ func TestStreamReplyTemplates(t *testing.T) {
 	if err := s.handle(textPacket(testOtherNode, broadcastNodeNumber, 1, "!weather")); err != nil {
 		t.Fatal(err)
 	}
-	reply := lines(buf)[0]["reply"].(map[string]interface{})
-	direct := reply["direct"].(map[string]interface{})
-	channel := reply["channel"].(map[string]interface{})
+	reply := lines(buf)[0]["reply"].(map[string]any)
+	direct := reply["direct"].(map[string]any)
+	channel := reply["channel"].(map[string]any)
 	if direct["to"] != "!3b46af94" || direct["channel"] != float64(1) {
 		t.Errorf("direct reply template = %v", direct)
 	}
@@ -362,7 +362,7 @@ func TestStreamDeliveryTracking(t *testing.T) {
 	if delivered["type"] != "delivered" || delivered["id"] != "dm-1" || delivered["implicit"] != nil {
 		t.Errorf("delivered event = %v", delivered)
 	}
-	if delivered["from"].(map[string]interface{})["shortname"] != "DG01" || delivered["to"].(map[string]interface{})["shortname"] != "DG01" {
+	if delivered["from"].(map[string]any)["shortname"] != "DG01" || delivered["to"].(map[string]any)["shortname"] != "DG01" {
 		t.Errorf("delivered from/to = %v / %v", delivered["from"], delivered["to"])
 	}
 	if _, still := s.pending[1001]; still {
@@ -380,7 +380,7 @@ func TestStreamDeliveryTracking(t *testing.T) {
 	if implicit["type"] != "delivered" || implicit["implicit"] != true || implicit["broadcast"] != true || implicit["id"] != "bc-1" {
 		t.Errorf("implicit ack event = %v", implicit)
 	}
-	if implicit["channel"].(map[string]interface{})["name"] != "bots" {
+	if implicit["channel"].(map[string]any)["name"] != "bots" {
 		t.Errorf("implicit ack channel = %v", implicit["channel"])
 	}
 
@@ -435,10 +435,10 @@ func TestStreamNodeWithoutUserStillHasID(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := lines(buf)[0]
-	if m["from"].(map[string]interface{})["node_id"] != "!1ba687d4" {
+	if m["from"].(map[string]any)["node_id"] != "!1ba687d4" {
 		t.Errorf("from = %v", m["from"])
 	}
-	direct := m["reply"].(map[string]interface{})["direct"].(map[string]interface{})
+	direct := m["reply"].(map[string]any)["direct"].(map[string]any)
 	if direct["to"] != "!1ba687d4" {
 		t.Errorf("reply.direct should address the sender, got %v", direct)
 	}
@@ -507,7 +507,7 @@ func TestStreamCommands(t *testing.T) {
 	buf.Reset()
 	_ = s.execute(`{"id":"reply-17","to":"DG01","text":"hi"}`)
 	got := lines(buf)[0]
-	if got["id"] != "reply-17" || got["broadcast"] != false || got["to"].(map[string]interface{})["longname"] != "DvdGmz01" {
+	if got["id"] != "reply-17" || got["broadcast"] != false || got["to"].(map[string]any)["longname"] != "DvdGmz01" {
 		t.Errorf("sent event = %v", got)
 	}
 
@@ -532,14 +532,14 @@ func TestStreamNodesCommand(t *testing.T) {
 	if got["type"] != "nodes" || got["id"] != "n1" {
 		t.Fatalf("nodes event = %v", got)
 	}
-	if got["my_node"].(map[string]interface{})["node_id"] != "!534c8a43" {
+	if got["my_node"].(map[string]any)["node_id"] != "!534c8a43" {
 		t.Errorf("my_node = %v", got["my_node"])
 	}
-	nodes := got["nodes"].([]interface{})
+	nodes := got["nodes"].([]any)
 	if len(nodes) != 2 {
 		t.Fatalf("expected the two cached nodes, got %d", len(nodes))
 	}
-	first := nodes[0].(map[string]interface{})
+	first := nodes[0].(map[string]any)
 	if first["node_number"] != float64(testPeerNode) {
 		t.Errorf("nodes should be sorted by node number, first = %v", first)
 	}
@@ -570,8 +570,8 @@ func TestStreamNodeAgesComeFromReceipt(t *testing.T) {
 
 	buf.Reset()
 	_ = s.execute(`{"id":"n","command":"nodes"}`)
-	for _, n := range lines(buf)[0]["nodes"].([]interface{}) {
-		node := n.(map[string]interface{})
+	for _, n := range lines(buf)[0]["nodes"].([]any) {
+		node := n.(map[string]any)
 		switch node["node_number"] {
 		case float64(testPeerNode):
 			if node["last_heard"] != heardAt.UTC().Format(time.RFC3339) || node["last_heard_seconds_ago"] != float64(90) || node["last_heard_human"] != "1m30s" {

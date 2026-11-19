@@ -144,19 +144,19 @@ func showChannelOptions(c *cli.Context) error {
 			fmt.Printf("%s", "\nGeneric Channel Options\n")
 			printDoubleDivider()
 			v := reflect.ValueOf(*channelInfo.Channel)
-			for i := 0; i < v.NumField(); i++ {
+			for i := range v.NumField() {
 				if v.Type().Field(i).IsExported() {
 					if v.Type().Field(i).Name == "Settings" {
 						fmt.Println("\nChannel Setting Options")
 						printDoubleDivider()
 						cv := reflect.ValueOf(*channelInfo.Channel.Settings)
-						for j := 0; j < cv.NumField(); j++ {
+						for j := range cv.NumField() {
 							if cv.Type().Field(j).IsExported() {
 								if cv.Type().Field(j).Name == "ModuleSettings" {
 									fmt.Println("\nModule Setting Options")
 									printDoubleDivider()
 									mv := reflect.ValueOf(*channelInfo.Channel.Settings.ModuleSettings)
-									for k := 0; k < mv.NumField(); k++ {
+									for k := range mv.NumField() {
 										if mv.Type().Field(k).IsExported() {
 											fmt.Printf("%v\n", mv.Type().Field(k).Name)
 										}

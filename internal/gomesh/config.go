@@ -503,7 +503,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 	return nil
 }
 
-func reflectForKey(t interface{}, key string) (keyFound bool) {
+func reflectForKey(t any, key string) (keyFound bool) {
 
 	keyFound = false
 	crValues := reflect.ValueOf(t)
@@ -519,7 +519,7 @@ func reflectForKey(t interface{}, key string) (keyFound bool) {
 	return
 }
 
-func setProtoValue(t interface{}, key string, value string) error {
+func setProtoValue(t any, key string, value string) error {
 	fv := reflect.ValueOf(t).Elem().FieldByName(key)
 	return setFieldValue(fv, value)
 }

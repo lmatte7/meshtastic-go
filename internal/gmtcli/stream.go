@@ -810,7 +810,7 @@ const defaultDecimals = 4
 func roundPayloadNumbers(raw []byte) json.RawMessage {
 	decoder := json.NewDecoder(strings.NewReader(string(raw)))
 	decoder.UseNumber()
-	var value interface{}
+	var value any
 	if err := decoder.Decode(&value); err != nil {
 		return raw
 	}
@@ -821,14 +821,14 @@ func roundPayloadNumbers(raw []byte) json.RawMessage {
 	return out
 }
 
-func roundValue(v interface{}, key string) interface{} {
+func roundValue(v any, key string) any {
 	switch x := v.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for k, child := range x {
 			x[k] = roundValue(child, k)
 		}
 		return x
-	case []interface{}:
+	case []any:
 		for i, child := range x {
 			x[i] = roundValue(child, key)
 		}

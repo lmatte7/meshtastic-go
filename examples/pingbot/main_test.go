@@ -22,9 +22,9 @@ const directPing = `{"type":"message","text":" !PING ","direct":true,"outgoing":
 	`"from":{"node_id":"!43b59594"},` +
 	`"reply":{"direct":{"to":"!43b59594","channel":0},"channel":{"channel":0}}}`
 
-func decode(t *testing.T, line string) map[string]interface{} {
+func decode(t *testing.T, line string) map[string]any {
 	t.Helper()
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(line), &m); err != nil {
 		t.Fatalf("bot wrote invalid JSON %q: %v", line, err)
 	}

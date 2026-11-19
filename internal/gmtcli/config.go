@@ -109,12 +109,12 @@ func showRadioConfig(c *cli.Context) error {
 	return printConfig(radio)
 }
 
-func printSection(title string, t interface{}) {
+func printSection(title string, t any) {
 	v := reflect.ValueOf(t)
 	fmt.Printf("\n%-40s", "-------------------------------------------------\n")
 	fmt.Printf("%-48s|\n", title)
 	fmt.Printf("%-40s", "-------------------------------------------------\n")
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		if v.Field(i).CanInterface() {
 			fmt.Printf("%-40s", v.Type().Field(i).Name)
 			fmt.Printf("%s\n", fieldString(v.Field(i)))

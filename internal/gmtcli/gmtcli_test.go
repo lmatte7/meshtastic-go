@@ -48,8 +48,8 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 
 	checks := []struct {
 		name string
-		got  interface{}
-		want interface{}
+		got  any
+		want any
 	}{
 		{"ID", mn.ID, "!9c048d2a"},
 		{"NodeNumber", mn.NodeNumber, uint32(2617543978)},

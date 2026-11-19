@@ -53,8 +53,8 @@ type event struct {
 	} `json:"from"`
 	// Reply carries the ready-made command templates from the stream.
 	Reply *struct {
-		Direct  map[string]interface{} `json:"direct"`
-		Channel map[string]interface{} `json:"channel"`
+		Direct  map[string]any `json:"direct"`
+		Channel map[string]any `json:"channel"`
 	} `json:"reply"`
 }
 
@@ -67,7 +67,7 @@ type bot struct {
 }
 
 // debugf logs only when -debug is on.
-func (b *bot) debugf(format string, args ...interface{}) {
+func (b *bot) debugf(format string, args ...any) {
 	if b.debug {
 		b.log.Printf("debug: "+format, args...)
 	}

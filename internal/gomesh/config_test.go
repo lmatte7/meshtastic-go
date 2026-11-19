@@ -14,7 +14,7 @@ func TestSetFieldValue(t *testing.T) {
 	position := &pb.Config_PositionConfig{}
 
 	cases := []struct {
-		msg   interface{}
+		msg   any
 		key   string
 		value string
 		check func() bool

@@ -126,7 +126,7 @@ func showModemOptions(c *cli.Context) error {
 	fmt.Println("Modem Options")
 	printDoubleDivider()
 	values := gomeshproto.Config_LoRaConfig_ModemPreset(0).Descriptor().Values()
-	for i := 0; i < values.Len(); i++ {
+	for i := range values.Len() {
 		value := values.Get(i)
 		if opts, ok := value.Options().(*descriptorpb.EnumValueOptions); ok && opts.GetDeprecated() {
 			continue
@@ -460,7 +460,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 			if deviceInfo := config.GetDevice(); deviceInfo != nil {
 				fmt.Printf("%s", "\nDevice Settings\n")
 				v := reflect.ValueOf(*deviceInfo)
-				for i := 0; i < v.NumField(); i++ {
+				for i := range v.NumField() {
 					if v.Field(i).CanInterface() {
 						fmt.Printf("%-25s", v.Type().Field(i).Name)
 						fmt.Printf("%s\n", fieldString(v.Field(i)))
@@ -472,7 +472,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 		if metaInfo := packet.GetMetadata(); metaInfo != nil {
 			fmt.Printf("%s", "Radio Metadata\n")
 			v := reflect.ValueOf(*metaInfo)
-			for i := 0; i < v.NumField(); i++ {
+			for i := range v.NumField() {
 				if v.Field(i).CanInterface() {
 					fmt.Printf("%-25s", v.Type().Field(i).Name)
 					fmt.Printf("%s\n", fieldString(v.Field(i)))
@@ -482,7 +482,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 		if nodeInfo := packet.GetNodeInfo(); nodeInfo != nil {
 			fmt.Printf("%s", "\n\nNode Info\n")
 			v := reflect.ValueOf(*nodeInfo)
-			for i := 0; i < v.NumField(); i++ {
+			for i := range v.NumField() {
 				if v.Field(i).CanInterface() {
 					fmt.Printf("%-25s", v.Type().Field(i).Name)
 					fmt.Printf("%s\n", fieldString(v.Field(i)))
@@ -502,7 +502,7 @@ func displayPositionInfo(packet *gomeshproto.FromRadio) {
 		if gpsConfig := config.GetPosition(); gpsConfig != nil {
 			fmt.Printf("%s", "\n\nPosition Settings\n")
 			v := reflect.ValueOf(*gpsConfig)
-			for i := 0; i < v.NumField(); i++ {
+			for i := range v.NumField() {
 				if v.Field(i).CanInterface() {
 					fmt.Printf("%-35s", v.Type().Field(i).Name)
 					fmt.Printf("%s\n", fieldString(v.Field(i)))
