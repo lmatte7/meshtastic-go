@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/lmatte7/gomesh"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh"
 	"github.com/urfave/cli/v2"
 )
 

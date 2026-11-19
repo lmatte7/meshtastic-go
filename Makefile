@@ -1,4 +1,4 @@
-.PHONY: default build test lint fmt fmt-check clean
+.PHONY: default build test lint fmt fmt-check proto clean
 
 default: build
 
@@ -16,6 +16,10 @@ fmt:
 
 fmt-check:
 	@test -z "$$(gofmt -l .)" || { echo "gofmt needed on:"; gofmt -l .; exit 1; }
+
+# Regenerate the protobuf bindings; needs protoc and protoc-gen-go.
+proto:
+	./genproto.sh
 
 clean:
 	rm -rf builds

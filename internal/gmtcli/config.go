@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/lmatte7/gomesh"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh"
 	"github.com/urfave/cli/v2"
 )
 
@@ -117,7 +117,7 @@ func printSection(title string, t interface{}) {
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).CanInterface() {
 			fmt.Printf("%-40s", v.Type().Field(i).Name)
-			fmt.Printf("%v\n", v.Field(i))
+			fmt.Printf("%s\n", fieldString(v.Field(i)))
 		}
 	}
 }

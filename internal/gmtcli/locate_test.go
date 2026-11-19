@@ -6,10 +6,12 @@ import (
 	"time"
 )
 
+func hops(n int) *int { return &n }
+
 func TestEstimateLocationPrefersGPS(t *testing.T) {
 	nodes := []MeshNode{
 		{NodeNumber: 1, LatitudeDegrees: 36.1, LongitudeDegrees: -115.2, AltitudeMeters: 620},
-		{NodeNumber: 2, LatitudeDegrees: 37, LongitudeDegrees: -116, SNR: 10, LastHeard: "t", LastHeardSecondsAgo: 60},
+		{NodeNumber: 2, LatitudeDegrees: 37, LongitudeDegrees: -116, SNR: 10, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: 60},
 	}
 	loc, err := estimateLocation(1, nodes, locateMaxAge)
 	if err != nil {
@@ -25,8 +27,8 @@ func TestEstimateLocationWeightsBySNR(t *testing.T) {
 	// ten times the weight of the weak one.
 	nodes := []MeshNode{
 		{NodeNumber: 1}, // our radio, no fix
-		{NodeNumber: 2, ID: "!2", LatitudeDegrees: 36.0, LongitudeDegrees: -115.0, SNR: 10, LastHeard: "t", LastHeardSecondsAgo: 60},
-		{NodeNumber: 3, ID: "!3", LatitudeDegrees: 36.11, LongitudeDegrees: -115.11, SNR: 0, LastHeard: "t", LastHeardSecondsAgo: 120},
+		{NodeNumber: 2, ID: "!2", LatitudeDegrees: 36.0, LongitudeDegrees: -115.0, SNR: 10, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: 60},
+		{NodeNumber: 3, ID: "!3", LatitudeDegrees: 36.11, LongitudeDegrees: -115.11, SNR: 0, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: 120},
 	}
 	loc, err := estimateLocation(1, nodes, locateMaxAge)
 	if err != nil {
@@ -45,13 +47,14 @@ func TestEstimateLocationWeightsBySNR(t *testing.T) {
 }
 
 func TestEstimateLocationFilters(t *testing.T) {
-	good := MeshNode{NodeNumber: 2, LatitudeDegrees: 36, LongitudeDegrees: -115, SNR: 5, LastHeard: "t", LastHeardSecondsAgo: 60}
+	good := MeshNode{NodeNumber: 2, LatitudeDegrees: 36, LongitudeDegrees: -115, SNR: 5, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: 60}
 	cases := map[string]MeshNode{
-		"via mqtt":         {NodeNumber: 3, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, LastHeard: "t", LastHeardSecondsAgo: 10, ViaMQTT: true},
-		"relayed":          {NodeNumber: 4, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, LastHeard: "t", LastHeardSecondsAgo: 10, HopsAway: 1},
-		"too old":          {NodeNumber: 5, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, LastHeard: "t", LastHeardSecondsAgo: int(locateMaxAge/time.Second) + 1},
-		"never heard":      {NodeNumber: 6, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20},
-		"without position": {NodeNumber: 7, SNR: 20, LastHeard: "t", LastHeardSecondsAgo: 10},
+		"via mqtt":         {NodeNumber: 3, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: 10, ViaMQTT: true},
+		"relayed":          {NodeNumber: 4, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, HopsAway: hops(1), LastHeard: "t", LastHeardSecondsAgo: 10},
+		"hops unknown":     {NodeNumber: 5, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, LastHeard: "t", LastHeardSecondsAgo: 10},
+		"too old":          {NodeNumber: 6, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: int(locateMaxAge/time.Second) + 1},
+		"never heard":      {NodeNumber: 7, LatitudeDegrees: 40, LongitudeDegrees: -100, SNR: 20, HopsAway: hops(0)},
+		"without position": {NodeNumber: 8, SNR: 20, HopsAway: hops(0), LastHeard: "t", LastHeardSecondsAgo: 10},
 	}
 	for name, excluded := range cases {
 		loc, err := estimateLocation(1, []MeshNode{{NodeNumber: 1}, good, excluded}, locateMaxAge)

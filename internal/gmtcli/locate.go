@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	"github.com/urfave/cli/v2"
 )
 
@@ -100,7 +100,9 @@ func estimateLocation(myNode uint32, nodes []MeshNode, maxAge time.Duration) (Lo
 			}
 			continue
 		}
-		if !hasPosition || node.ViaMQTT || node.HopsAway != 0 || node.LastHeard == "" {
+		// Direct means the radio said zero hops; a node whose hop count the
+		// radio did not report cannot be assumed to be nearby.
+		if !hasPosition || node.ViaMQTT || node.HopsAway == nil || *node.HopsAway != 0 || node.LastHeard == "" {
 			continue
 		}
 		if time.Duration(node.LastHeardSecondsAgo)*time.Second > maxAge {

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lmatte7/gomesh"
-	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -57,8 +57,8 @@ func newTestStream(t *testing.T, full bool) (*packetStream, *bytes.Buffer) {
 
 func textPacket(from, to uint32, channel uint32, text string) *gomeshproto.FromRadio {
 	return &gomeshproto.FromRadio{PayloadVariant: &gomeshproto.FromRadio_Packet{Packet: &gomeshproto.MeshPacket{
-		From: from, To: to, Channel: channel, Id: 1836540931, RxTime: 1795061528,
-		RxSnr: -1.75, RxRssi: -110, HopLimit: 2, HopStart: 3,
+		From: from, To: to, Channel: channel, Id: 1836540931, RxTime: proto.Uint32(1795061528),
+		RxSnr: -1.75, RxRssi: proto.Int32(-110), HopLimit: 2, HopStart: 3,
 		PayloadVariant: &gomeshproto.MeshPacket_Decoded{Decoded: &gomeshproto.Data{
 			Portnum: gomeshproto.PortNum_TEXT_MESSAGE_APP, Payload: []byte(text),
 		}},
@@ -167,7 +167,7 @@ func TestStreamSkipsNonTextWithoutFull(t *testing.T) {
 	s, buf := newTestStream(t, false)
 	buf.Reset()
 
-	position, _ := proto.Marshal(&gomeshproto.Position{LatitudeI: 361824256, LongitudeI: -1151926272, Altitude: 471})
+	position, _ := proto.Marshal(&gomeshproto.Position{LatitudeI: proto.Int32(361824256), LongitudeI: proto.Int32(-1151926272), Altitude: proto.Int32(471)})
 	responses := []*gomeshproto.FromRadio{
 		{PayloadVariant: &gomeshproto.FromRadio_Packet{Packet: &gomeshproto.MeshPacket{
 			From: testPeerNode, To: broadcastNodeNumber, Id: 7,
@@ -220,7 +220,7 @@ func TestStreamRoundsDecodedPayloadNumbers(t *testing.T) {
 	telemetry, _ := proto.Marshal(&gomeshproto.Telemetry{
 		Time: 1795061528,
 		Variant: &gomeshproto.Telemetry_DeviceMetrics{DeviceMetrics: &gomeshproto.DeviceMetrics{
-			BatteryLevel: 101, Voltage: 4.8169999, ChannelUtilization: 12.451667, AirUtilTx: 4.222472,
+			BatteryLevel: proto.Uint32(101), Voltage: proto.Float32(4.8169999), ChannelUtilization: proto.Float32(12.451667), AirUtilTx: proto.Float32(4.222472),
 		}},
 	})
 	s, buf := newTestStream(t, true)

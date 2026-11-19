@@ -15,8 +15,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lmatte7/gomesh"
-	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

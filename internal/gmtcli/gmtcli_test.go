@@ -4,7 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh"
+	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestProtoNodeToMeshNode(t *testing.T) {
@@ -17,7 +19,6 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 			Num:       2617543978,
 			LastHeard: uint32(lastHeard),
 			Snr:       -1.75,
-			HopsAway:  1,
 			ViaMqtt:   true,
 			User: &gomeshproto.User{
 				Id:        "!9c048d2a",
@@ -28,16 +29,18 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 				Role:      gomeshproto.Config_DeviceConfig_CLIENT_MUTE,
 			},
 			DeviceMetrics: &gomeshproto.DeviceMetrics{
-				BatteryLevel:       100,
-				Voltage:            4.2169998,
-				ChannelUtilization: 18.366666793823242,
-				AirUtilTx:          2.9119999408721924,
+				BatteryLevel:       proto.Uint32(100),
+				Voltage:            proto.Float32(4.2169998),
+				ChannelUtilization: proto.Float32(18.366666793823242),
+				AirUtilTx:          proto.Float32(2.9119999408721924),
+				UptimeSeconds:      proto.Uint32(3600),
 			},
 			Position: &gomeshproto.Position{
-				LatitudeI:  361758720,
-				LongitudeI: -1152385024,
-				Altitude:   750,
+				LatitudeI:  proto.Int32(361758720),
+				LongitudeI: proto.Int32(-1152385024),
+				Altitude:   proto.Int32(750),
 			},
+			HopsAway: proto.Uint32(2),
 		},
 	}
 
@@ -66,12 +69,53 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		{"LastHeardHuman", mn.LastHeardHuman, "1m30s"},
 		{"LastHeardSecondsAgo", mn.LastHeardSecondsAgo, 90},
 		{"SNR", mn.SNR, -1.75},
-		{"HopsAway", mn.HopsAway, 1},
 		{"ViaMQTT", mn.ViaMQTT, true},
+		{"UptimeSeconds", mn.UptimeSeconds, 3600},
+	}
+	if mn.HopsAway == nil || *mn.HopsAway != 2 {
+		t.Errorf("HopsAway = %v, want 2", mn.HopsAway)
 	}
 	for _, c := range checks {
 		if c.got != c.want {
 			t.Errorf("%s = %v, want %v", c.name, c.got, c.want)
+		}
+	}
+}
+
+func TestParseModemPreset(t *testing.T) {
+	cases := map[string]gomeshproto.Config_LoRaConfig_ModemPreset{
+		"lf":           gomeshproto.Config_LoRaConfig_LONG_FAST,
+		"LF":           gomeshproto.Config_LoRaConfig_LONG_FAST,
+		"st":           gomeshproto.Config_LoRaConfig_SHORT_TURBO,
+		"LONG_FAST":    gomeshproto.Config_LoRaConfig_LONG_FAST,
+		"medium_turbo": gomeshproto.Config_LoRaConfig_MEDIUM_TURBO,
+	}
+	for in, want := range cases {
+		got, err := gomesh.ParseModemPreset(in)
+		if err != nil || got != want {
+			t.Errorf("ParseModemPreset(%q) = %v, %v; want %v", in, got, err, want)
+		}
+	}
+	if _, err := gomesh.ParseModemPreset("bogus"); err == nil {
+		t.Error("ParseModemPreset(\"bogus\") succeeded, want error")
+	}
+}
+
+func TestHumanDuration(t *testing.T) {
+	cases := []struct {
+		d    time.Duration
+		want string
+	}{
+		{0, "0s"},
+		{45 * time.Second, "45s"},
+		{90 * time.Second, "1m30s"},
+		{9*time.Hour + 5*time.Minute + 18*time.Second, "9h5m18s"},
+		{104*time.Hour + 36*time.Minute + 34*time.Second, "4d8h36m"},
+		{-5 * time.Second, "0s"},
+	}
+	for _, c := range cases {
+		if got := humanDuration(c.d); got != c.want {
+			t.Errorf("humanDuration(%v) = %q, want %q", c.d, got, c.want)
 		}
 	}
 }
@@ -90,6 +134,9 @@ func TestProtoNodeToMeshNodeSparse(t *testing.T) {
 	}
 	if mn.LastHeard != "" || mn.LastHeardHuman != "" || mn.LastHeardSecondsAgo != 0 {
 		t.Errorf("expected empty last-heard fields, got %+v", mn)
+	}
+	if mn.HopsAway != nil {
+		t.Errorf("expected nil HopsAway when unreported, got %d", *mn.HopsAway)
 	}
 
 	if empty := ProtoNodeToMeshNode(&gomeshproto.FromRadio_NodeInfo{}); empty != (MeshNode{}) {
