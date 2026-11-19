@@ -1,7 +1,6 @@
 package gomesh
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"math/rand"
@@ -15,11 +14,25 @@ import (
 const start1 = byte(0x94)
 const start2 = byte(0xc3)
 const headerLen = 4
-const maxToFromRadioSzie = 512
+const maxToFromRadioSize = 512
 const broadcastAddr = "^all"
 const localAddr = "^local"
 const defaultHopLimit = 3
 const broadcastNum = 0xffffffff
+
+// configRequestID is sent with want_config_id; the radio echoes it back in
+// config_complete_id once it has finished sending its configuration and node
+// database.
+const configRequestID = 42
+
+// configTimeout bounds how long GetRadioInfo waits for the radio to finish
+// answering a configuration request. ESP32 boards reboot when the serial port
+// is opened and need several seconds before they respond at all.
+const configTimeout = 30 * time.Second
+
+// configRetryInterval is how often the configuration request is repeated
+// while the radio has not answered yet.
+const configRetryInterval = 3 * time.Second
 
 // Radio holds the port and serial io.ReadWriteCloser struct to maintain one serial connection
 type Radio struct {
@@ -48,7 +61,7 @@ func (r *Radio) Init(port string) error {
 // SendPacket takes a protbuf packet, construct the appropriate header and sends it to the radio
 func (r *Radio) SendPacket(protobufPacket []byte) (err error) {
 
-	packageLength := len(string(protobufPacket))
+	packageLength := len(protobufPacket)
 
 	header := []byte{start1, start2, byte(packageLength>>8) & 0xff, byte(packageLength) & 0xff}
 
@@ -62,82 +75,51 @@ func (r *Radio) SendPacket(protobufPacket []byte) (err error) {
 
 }
 
-// ReadResponse reads any responses in the serial port, convert them to a FromRadio protobuf and return
-func (r *Radio) ReadResponse(timeout bool) (FromRadioPackets []*pb.FromRadio, err error) {
-
+// ReadResponse reads whatever the radio is currently sending, decodes it into
+// FromRadio packets and returns once the link goes idle.
+//
+// Each packet arrives framed as [START1, START2, length (2 bytes, big endian),
+// protobuf]. Bytes outside a frame (for example boot or debug text) are
+// skipped until the next START1/START2 pair. The timeout argument is kept for
+// compatibility; the read always returns when the link is idle.
+func (r *Radio) ReadResponse(timeout bool) (packets []*pb.FromRadio, err error) {
 	b := make([]byte, 1)
+	var frame []byte
 
-	emptyByte := make([]byte, 0)
-	processedBytes := make([]byte, 0)
-	repeatByteCounter := 0
-	previousByte := make([]byte, 1)
-	/************************************************************************************************
-	* Process the returned data byte by byte until we have a valid command
-	* Each command will come back with [START1, START2, PROTOBUF_PACKET]
-	* where the protobuf packet is sent in binary. After reading START1 and START2
-	* we use the next bytes to find the length of the packet.
-	* After finding the length the looop continues to gather bytes until the length of the gathered
-	* bytes is equal to the packet length plus the header
-	 */
 	for {
-		err := r.streamer.Read(b)
-		// fmt.Printf("Byte: %q\n", b)
-		if bytes.Equal(b, previousByte) {
-			repeatByteCounter++
-		} else {
-			repeatByteCounter = 0
+		n, err := r.streamer.Read(b)
+		if n == 0 || errors.Is(err, io.EOF) || errors.Is(err, os.ErrDeadlineExceeded) {
+			// Idle: the serial inter-character timeout or TCP read deadline
+			// expired without data.
+			return packets, nil
 		}
-		// Only break on repeated bytes if we're not in the middle of reading a valid packet
-		shouldBreakOnRepeat := repeatByteCounter > 20 && (len(processedBytes) < headerLen)
-
-		if err == io.EOF || shouldBreakOnRepeat || errors.Is(err, os.ErrDeadlineExceeded) {
-			break
-		} else if err != nil {
-			return nil, err
+		if err != nil {
+			return packets, err
 		}
-		copy(previousByte, b)
 
-		if len(b) > 0 {
+		frame = append(frame, b[0])
 
-			pointer := len(processedBytes)
-
-			processedBytes = append(processedBytes, b...)
-
-			if pointer == 0 {
-				if b[0] != start1 {
-					processedBytes = emptyByte
-				}
-			} else if pointer == 1 {
-				if b[0] != start2 {
-					processedBytes = emptyByte
-				}
-			} else if pointer >= headerLen {
-				packetLength := int(processedBytes[2])<<8 | int(processedBytes[3])
-
-				if pointer == headerLen {
-					if packetLength > maxToFromRadioSzie {
-						processedBytes = emptyByte
-					}
-				}
-
-				if len(processedBytes) != 0 && pointer+1 == packetLength+headerLen {
-					fromRadio := pb.FromRadio{}
-					if err := proto.Unmarshal(processedBytes[headerLen:], &fromRadio); err != nil {
-						return nil, err
-					}
-					FromRadioPackets = append(FromRadioPackets, &fromRadio)
-					processedBytes = emptyByte
-				}
+		switch {
+		case len(frame) == 1 && frame[0] != start1:
+			frame = frame[:0]
+		case len(frame) == 2 && frame[1] != start2:
+			frame = frame[:0]
+		case len(frame) == headerLen && frameLength(frame) > maxToFromRadioSize:
+			// Not a real header; resynchronise on the next start byte.
+			frame = frame[:0]
+		case len(frame) > headerLen && len(frame) == headerLen+frameLength(frame):
+			packet := &pb.FromRadio{}
+			if err := proto.Unmarshal(frame[headerLen:], packet); err == nil {
+				packets = append(packets, packet)
 			}
-
-		} else {
-			break
+			frame = frame[:0]
 		}
-
 	}
+}
 
-	return FromRadioPackets, nil
-
+// frameLength returns the payload length encoded in a frame header.
+func frameLength(frame []byte) int {
+	return int(frame[2])<<8 | int(frame[3])
 }
 
 // createAdminPacket builds a admin message packet to send to the radio
@@ -168,66 +150,68 @@ func (r *Radio) createAdminPacket(nodeNum uint32, payload []byte) (packetOut []b
 
 }
 
-// getNodeNum returns the current NodeNumber after querying the radio
-func (r *Radio) getNodeNum() (err error) {
-	// Send first request for Radio and Node information
-	nodeInfo := pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
-
-	out, err := proto.Marshal(&nodeInfo)
-	if err != nil {
-		return err
-	}
-
-	r.SendPacket(out)
-
+// getNodeNum queries the radio and stores its own node number, which admin
+// messages are addressed to.
+func (r *Radio) getNodeNum() error {
 	radioResponses, err := r.GetRadioInfo()
 	if err != nil {
 		return err
 	}
 
-	// Gather the Node number for channel settings requests
-	nodeNum := uint32(0)
 	for _, response := range radioResponses {
 		if info, ok := response.GetPayloadVariant().(*pb.FromRadio_MyInfo); ok {
-			nodeNum = info.MyInfo.MyNodeNum
+			r.nodeNum = info.MyInfo.MyNodeNum
 		}
 	}
 
-	r.nodeNum = nodeNum
-	return
+	return nil
 }
 
-// GetRadioInfo retrieves information from the radio including config and adjacent Node information
-func (r *Radio) GetRadioInfo() (radioResponses []*pb.FromRadio, err error) {
-	// Send first request for Radio and Node information
-	nodeInfo := pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: 42}}
-
-	out, err := proto.Marshal(&nodeInfo)
+// GetRadioInfo asks the radio for its configuration and node database and
+// returns every packet it sends up to the matching config_complete_id.
+//
+// The request is repeated every few seconds until the radio starts answering,
+// because boards that reboot when the serial port is opened discard anything
+// sent before their firmware is up. Reading continues across short gaps in
+// the stream until the radio reports the dump complete or the overall timeout
+// expires.
+func (r *Radio) GetRadioInfo() ([]*pb.FromRadio, error) {
+	request := pb.ToRadio{PayloadVariant: &pb.ToRadio_WantConfigId{WantConfigId: configRequestID}}
+	out, err := proto.Marshal(&request)
 	if err != nil {
 		return nil, err
 	}
 
-	r.SendPacket(out)
+	var responses []*pb.FromRadio
+	deadline := time.Now().Add(configTimeout)
+	var nextRequest time.Time
 
-	checks := 0
+	for time.Now().Before(deadline) {
+		if len(responses) == 0 && !time.Now().Before(nextRequest) {
+			if err := r.SendPacket(out); err != nil {
+				return nil, err
+			}
+			nextRequest = time.Now().Add(configRetryInterval)
+		}
 
-	radioResponses, err = r.ReadResponse(true)
-
-	for checks < 5 && len(radioResponses) == 0 {
-		radioResponses, err = r.ReadResponse(true)
+		packets, err := r.ReadResponse(true)
 		if err != nil {
 			return nil, err
 		}
 
-		checks++
-		time.Sleep(1 * time.Second)
+		for _, packet := range packets {
+			responses = append(responses, packet)
+			if packet.GetConfigCompleteId() == configRequestID {
+				return responses, nil
+			}
+		}
 	}
 
-	if len(radioResponses) == 0 {
-		return nil, errors.New("failed to get radio info")
+	if len(responses) == 0 {
+		return nil, errors.New("no response from radio")
 	}
-	return
 
+	return responses, nil
 }
 
 // SendTextMessage sends a free form text message to other radios
@@ -244,7 +228,6 @@ func (r *Radio) SendTextMessage(message string, to int64, channel int64) error {
 		return errors.New("message too large")
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	packetID := rand.Intn(2386828-1) + 1
 
 	radioMessage := pb.ToRadio{

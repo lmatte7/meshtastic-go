@@ -74,23 +74,16 @@ func (s *streamer) Write(p []byte) error {
 	return nil
 }
 
-func (s *streamer) Read(p []byte) error {
-
+// Read fills p with bytes from the radio and reports how many were read. The
+// serial port returns after a short inter-character timeout and the TCP port
+// after a read deadline, so a zero count with io.EOF or a deadline error just
+// means the link was idle.
+func (s *streamer) Read(p []byte) (int, error) {
 	if s.isTCP {
 		s.netPort.SetReadDeadline(time.Now().Add(2 * time.Second))
-		_, err := s.netPort.Read(p)
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err := s.serialPort.Read(p)
-		if err != nil {
-			return err
-		}
+		return s.netPort.Read(p)
 	}
-
-	return nil
-
+	return s.serialPort.Read(p)
 }
 
 func (s *streamer) Close() {
