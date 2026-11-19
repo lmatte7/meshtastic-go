@@ -2,8 +2,9 @@
 // for where the radio is, looked up from wttr.in.
 //
 // The radio's own GPS position is used when it has one. Otherwise the
-// position is estimated as the mean of the positions of nodes the radio has
-// heard over the air recently (no MQTT, at most a few hops away). The reply
+// position is estimated as the mean of the positions of nodes heard over the
+// air (no MQTT, at most a few hops away), preferring ones heard recently. The
+// reply
 // goes back the way the request came: on the channel, or directly for a
 // direct message. "!weather <place>" looks up a named place instead.
 //
@@ -39,6 +40,7 @@ type node struct {
 	Longitude           float64 `json:"longitude_degrees"`
 	HopsAway            int     `json:"hops_away"`
 	ViaMQTT             bool    `json:"via_mqtt"`
+	LastHeard           string  `json:"last_heard"` // empty if the stream has not heard the node
 	LastHeardSecondsAgo int     `json:"last_heard_seconds_ago"`
 }
 
@@ -198,14 +200,15 @@ func (b *bot) locate(me *node, nodes []node) (location, source string, ok bool) 
 			continue
 		}
 		candidates = append(candidates, n)
-		if b.maxAge <= 0 || time.Duration(n.LastHeardSecondsAgo)*time.Second <= b.maxAge {
+		heard := n.LastHeard != "" // the stream has received a packet from it
+		if b.maxAge <= 0 || (heard && time.Duration(n.LastHeardSecondsAgo)*time.Second <= b.maxAge) {
 			recent = append(recent, n)
 		}
 	}
 
-	// Prefer recently heard nodes, but radios without a time source stamp
-	// everything with a stale clock, so fall back to all candidates rather
-	// than refusing when too few look recent.
+	// Prefer nodes heard recently, but right after start-up few nodes have
+	// been heard yet, so fall back to all candidates rather than refusing
+	// when too few are recent.
 	chosen, note := recent, "estimated from %d nearby nodes"
 	if len(recent) < minRecentNodes && len(candidates) > 0 {
 		chosen, note = candidates, "estimated from %d nearby nodes, some not heard recently"

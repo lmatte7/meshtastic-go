@@ -111,7 +111,7 @@ meshtastic-go stream
 The first line has `"type": "ready"` and carries this radio's own node (`my_node`) and the configured channels. After that every text message the radio receives, direct or on a channel, is printed with `"type": "message"`, decrypted by the radio, with the sender (`from`), recipient (`to`, omitted for broadcasts) and `channel` resolved from the radio's node and channel database. `direct` is true for messages addressed to this radio, `broadcast` for channel messages.
 
 ```json
-{"type":"message","received_at":"2026-11-19T04:12:08Z","id":1836540931,"rx_time":"2026-11-19T04:12:08Z","from":{"node_id":"!43b59594","node_number":1135973780,"longname":"DvdGmz01","shortname":"DG01","role":"CLIENT","hardware_model":"HELTEC_V3","is_licensed":false},"broadcast":true,"direct":false,"outgoing":false,"channel":{"index":0,"name":"","role":"PRIMARY"},"port":"TEXT_MESSAGE_APP","text":"hello mesh","snr_db":-1.75,"rssi_dbm":-110,"hop_limit":2,"hop_start":3,"hops_taken":1,"via_mqtt":false,"want_ack":false,"priority":"UNSET"}
+{"type":"message","received_at":"2026-11-19T04:12:08Z","id":1836540931,"from":{"node_id":"!43b59594","node_number":1135973780,"longname":"DvdGmz01","shortname":"DG01","role":"CLIENT","hardware_model":"HELTEC_V3","is_licensed":false},"broadcast":true,"direct":false,"outgoing":false,"channel":{"index":0,"name":"","role":"PRIMARY"},"port":"TEXT_MESSAGE_APP","text":"hello mesh","snr_db":-1.75,"rssi_dbm":-110,"hop_limit":2,"hop_start":3,"hops_taken":1,"via_mqtt":false,"want_ack":false,"priority":"UNSET"}
 ```
 
 With `--full`, every other packet is printed too with `"type": "packet"`: positions, telemetry, node info, routing and so on carry their payload as JSON under `payload` when the port is known, otherwise as `payload_base64`. Packets the radio could not decrypt have `"encrypted": true`.
@@ -138,7 +138,7 @@ Every message line also carries a `reply` object with two ready-made commands, s
 
 A command line may also ask the stream for its cached node list instead of sending: `{"id": "n1", "command": "nodes"}` is answered with `{"type": "nodes", "id": "n1", "my_node": {...}, "nodes": [...]}`, the same node records `info nodes --json` prints, including `hops_away`, `via_mqtt` and `snr_db`. This lets a bot reason about the mesh without opening a second connection to the radio.
 
-Radios without a time source (no GPS fix, no phone) run a clock that can be days off. The stream measures the offset from each packet's `rx_time` against its own receipt time and, once known, reports it as `radio_clock_offset_seconds` (wall clock minus radio clock) on `ready`, `nodes` and every packet line. In `nodes` events each node's `last_heard_source` says where its last-heard fields come from: `stream` for nodes the stream has itself heard during this run (exact, from the wall clock), `radio_corrected` for the radio's stamp moved by the offset, or `radio` for the stamp as the radio gave it. A radio whose clock it considers invalid sends no `rx_time` and stops updating `last_heard` entirely, so on such a radio only nodes heard during the run have trustworthy ages.
+Timestamps in the stream are the stream's own: `received_at` on every line is when the packet arrived, and in `nodes` events the `last_heard` fields say when the stream last received a packet from that node during this run. Nodes it has not heard yet carry no last-heard fields. The radio's own timestamps are not reported, because a radio without a time source (no GPS fix, no phone) stamps with a clock that can be days off.
 
 #### Example bots
 
@@ -150,7 +150,7 @@ Each directory under `examples/` is a complete bot in standard-library Go. They 
 go run ./examples/pingbot
 ```
 
-`examples/weatherbot` answers `!weather` with the current weather from [wttr.in](https://wttr.in) for where the radio is. It uses the radio's GPS position when it has one; otherwise it asks the stream for the node list and takes the mean position of nodes heard over the air (not via MQTT) within `-max-hops` hops (default 2), preferring nodes heard within `-max-age` (default 24h) but falling back to older ones when fewer than three look recent, since a radio without a time source stamps everything with a stale clock. `!weather <place>` looks up a named place instead. Replies go back the way the request came. The bot is throttled as a whole: at most one lookup and one reply per `-interval` (default 5m) no matter how many nodes ask, so a hostile mesh cannot use it to flood wttr.in or the channel:
+`examples/weatherbot` answers `!weather` with the current weather from [wttr.in](https://wttr.in) for where the radio is. It uses the radio's GPS position when it has one; otherwise it asks the stream for the node list and takes the mean position of nodes heard over the air (not via MQTT) within `-max-hops` hops (default 2), preferring nodes the stream has heard within `-max-age` (default 24h) and falling back to all of them when fewer than three have been heard yet. `!weather <place>` looks up a named place instead. Replies go back the way the request came. The bot is throttled as a whole: at most one lookup and one reply per `-interval` (default 5m) no matter how many nodes ask, so a hostile mesh cannot use it to flood wttr.in or the channel:
 
 ```
 go run ./examples/weatherbot

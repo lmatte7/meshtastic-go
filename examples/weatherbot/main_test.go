@@ -54,11 +54,11 @@ func nodesEvent(id string, gps bool) string {
 		me = `{"node_id":"!534c8a43","latitude_degrees":36.1,"longitude_degrees":-115.2}`
 	}
 	return `{"type":"nodes","id":"` + id + `","my_node":` + me + `,"nodes":[` +
-		`{"node_id":"!a","latitude_degrees":36.0,"longitude_degrees":-115.0,"hops_away":0,"via_mqtt":false,"last_heard_seconds_ago":600},` +
-		`{"node_id":"!b","latitude_degrees":36.2,"longitude_degrees":-115.4,"hops_away":1,"via_mqtt":false,"last_heard_seconds_ago":1200},` +
-		`{"node_id":"!c","latitude_degrees":40.0,"longitude_degrees":-100.0,"hops_away":0,"via_mqtt":true,"last_heard_seconds_ago":60},` +
-		`{"node_id":"!d","latitude_degrees":10.0,"longitude_degrees":10.0,"hops_away":5,"via_mqtt":false,"last_heard_seconds_ago":60},` +
-		`{"node_id":"!e","latitude_degrees":0,"longitude_degrees":0,"hops_away":0,"via_mqtt":false,"last_heard_seconds_ago":60}` +
+		`{"node_id":"!a","latitude_degrees":36.0,"longitude_degrees":-115.0,"hops_away":0,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":600},` +
+		`{"node_id":"!b","latitude_degrees":36.2,"longitude_degrees":-115.4,"hops_away":1,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":1200},` +
+		`{"node_id":"!c","latitude_degrees":40.0,"longitude_degrees":-100.0,"hops_away":0,"via_mqtt":true,"last_heard":"t","last_heard_seconds_ago":60},` +
+		`{"node_id":"!d","latitude_degrees":10.0,"longitude_degrees":10.0,"hops_away":5,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":60},` +
+		`{"node_id":"!e","latitude_degrees":0,"longitude_degrees":0,"hops_away":0,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":60}` +
 		`]}`
 }
 
@@ -93,17 +93,17 @@ func TestWeatherEstimatesPositionFromNearbyNodes(t *testing.T) {
 	}
 }
 
-func TestWeatherFallsBackToStaleNodes(t *testing.T) {
-	// Three nearby nodes, only one of them heard recently: too few recent
-	// ones, so all three are used and the reply says so.
+func TestWeatherFallsBackToUnheardNodes(t *testing.T) {
+	// Three nearby nodes, only one of them heard by the stream so far: too
+	// few recent ones, so all three are used and the reply says so.
 	b, commands, lookups := newTestBot()
 	_ = b.handle(weatherRequest)
 	id := decodeLines(t, commands)[0]["id"].(string)
 	commands.Reset()
 	stale := `{"type":"nodes","id":"` + id + `","my_node":{"node_id":"!534c8a43"},"nodes":[` +
-		`{"node_id":"!a","latitude_degrees":36.0,"longitude_degrees":-115.0,"hops_away":0,"last_heard_seconds_ago":600},` +
-		`{"node_id":"!b","latitude_degrees":36.2,"longitude_degrees":-115.2,"hops_away":1,"last_heard_seconds_ago":400000},` +
-		`{"node_id":"!c","latitude_degrees":36.4,"longitude_degrees":-115.4,"hops_away":2,"last_heard_seconds_ago":400000}` +
+		`{"node_id":"!a","latitude_degrees":36.0,"longitude_degrees":-115.0,"hops_away":0,"last_heard":"t","last_heard_seconds_ago":600},` +
+		`{"node_id":"!b","latitude_degrees":36.2,"longitude_degrees":-115.2,"hops_away":1},` +
+		`{"node_id":"!c","latitude_degrees":36.4,"longitude_degrees":-115.4,"hops_away":2}` +
 		`]}`
 	if err := b.handle(stale); err != nil {
 		t.Fatal(err)
