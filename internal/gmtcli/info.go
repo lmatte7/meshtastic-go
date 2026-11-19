@@ -3,6 +3,7 @@ package gmtcli
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
 	"reflect"
 	"time"
@@ -211,7 +212,7 @@ func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) 
 	// Meshtastic derives a node's id from its number, so one can always be
 	// given even when the radio has not received the node's user info.
 	meshNode.ID = nodeIDFromNumber(info.Num)
-	meshNode.SNR = float64(info.Snr)
+	meshNode.SNR = roundTo(float64(info.Snr), 2) // the radio reports quarter-dB steps
 	meshNode.HopsAway = int(info.HopsAway)
 	meshNode.ViaMQTT = info.ViaMqtt
 
@@ -237,11 +238,13 @@ func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) 
 		meshNode.MACAddress = macAddress(user)
 	}
 
+	// The radio's float32 readings carry far more digits than they mean;
+	// round to what is useful.
 	if metrics := info.GetDeviceMetrics(); metrics != nil {
 		meshNode.BatteryLevel = int(metrics.BatteryLevel)
-		meshNode.Voltage = float64(metrics.Voltage)
-		meshNode.ChannelUtilization = float64(metrics.ChannelUtilization)
-		meshNode.AirUtilTx = float64(metrics.AirUtilTx)
+		meshNode.Voltage = roundTo(float64(metrics.Voltage), 2)
+		meshNode.ChannelUtilization = roundTo(float64(metrics.ChannelUtilization), 1)
+		meshNode.AirUtilTx = roundTo(float64(metrics.AirUtilTx), 1)
 	}
 
 	if position := info.GetPosition(); position != nil {
@@ -265,6 +268,12 @@ func printNodesJSON(nodes []*gomeshproto.FromRadio_NodeInfo) error {
 	}
 	fmt.Println(string(out))
 	return nil
+}
+
+// roundTo rounds v to the given number of decimal places.
+func roundTo(v float64, places int) float64 {
+	scale := math.Pow(10, float64(places))
+	return math.Round(v*scale) / scale
 }
 
 // orNA returns "N/A" for empty values so the table never shows blank cells.

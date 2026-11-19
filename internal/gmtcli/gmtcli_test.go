@@ -29,9 +29,9 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 			},
 			DeviceMetrics: &gomeshproto.DeviceMetrics{
 				BatteryLevel:       100,
-				Voltage:            4.2,
-				ChannelUtilization: 18.5,
-				AirUtilTx:          2.9,
+				Voltage:            4.2169998,
+				ChannelUtilization: 18.366666793823242,
+				AirUtilTx:          2.9119999408721924,
 			},
 			Position: &gomeshproto.Position{
 				LatitudeI:  361758720,
@@ -56,6 +56,9 @@ func TestProtoNodeToMeshNode(t *testing.T) {
 		{"HardwareModel", mn.HardwareModel, "RAK4631"},
 		{"Role", mn.Role, "CLIENT_MUTE"},
 		{"BatteryLevel", mn.BatteryLevel, 100},
+		{"Voltage", mn.Voltage, 4.22},
+		{"ChannelUtilization", mn.ChannelUtilization, 18.4},
+		{"AirUtilTx", mn.AirUtilTx, 2.9},
 		{"AltitudeMeters", mn.AltitudeMeters, 750},
 		{"LatitudeDegrees", mn.LatitudeDegrees, 36.175872},
 		{"LongitudeDegrees", mn.LongitudeDegrees, -115.2385024},
