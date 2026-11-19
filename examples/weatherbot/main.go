@@ -288,11 +288,12 @@ func (b *bot) write(command map[string]interface{}) error {
 }
 
 // wttr returns a lookup function for wttr.in. units is "u" for US customary
-// or "m" for metric.
+// or "m" for metric. wttr.in occasionally drops a connection, so a lookup is
+// retried a few times before it is reported as failed.
 func wttr(units string) func(string) (string, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
-	return func(location string) (string, error) {
-		format := "%c %C %t (feels %f), wind %w, humidity %h"
+	format := "%c %C %t (feels %f), wind %w, humidity %h"
+	fetch := func(location string) (string, error) {
 		u := "https://wttr.in/" + url.PathEscape(location) + "?format=" + url.QueryEscape(format) + "&" + units
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		if err != nil {
@@ -313,6 +314,17 @@ func wttr(units string) func(string) (string, error) {
 			return "", fmt.Errorf("wttr.in returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
 		}
 		return strings.Join(strings.Fields(string(body)), " "), nil
+	}
+	return func(location string) (string, error) {
+		var err error
+		for attempt := 1; attempt <= 3; attempt++ {
+			var report string
+			if report, err = fetch(location); err == nil {
+				return report, nil
+			}
+			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+		}
+		return "", fmt.Errorf("after 3 attempts: %w", err)
 	}
 }
 
