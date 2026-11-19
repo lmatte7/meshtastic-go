@@ -393,7 +393,8 @@ three have been heard yet. `!weather <place>` looks up a named place
 instead. Replies go back the way the request came. The bot is throttled as a
 whole: at most one lookup and one reply per `-interval` (default 5m) no
 matter how many nodes ask, so a hostile mesh cannot use it to flood wttr.in
-or the channel:
+or the channel. The first sender turned away in a period is told the cooldown
+by direct message; further requests in that period get no answer at all:
 
 ```
 go run ./examples/weatherbot

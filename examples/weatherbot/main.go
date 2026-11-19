@@ -98,8 +98,12 @@ type bot struct {
 	// hostile mesh cannot turn the bot into a flood source.
 	interval  time.Duration
 	lastReply time.Time
-	pending   map[string]request
-	counter   int
+	// noticeSent records whether a throttled sender has been told the
+	// cooldown in the current period; only one such notice goes out per
+	// period, and further throttled requests are ignored silently.
+	noticeSent bool
+	pending    map[string]request
+	counter    int
 }
 
 func newBot(commands io.Writer, logger *log.Logger) *bot {
@@ -169,12 +173,22 @@ func (b *bot) onMessage(ev event) error {
 	}
 
 	// One request per interval, bot-wide. The slot is taken now, before the
-	// lookup, so a burst of requests cannot all get through.
+	// lookup, so a burst of requests cannot all get through. The first
+	// sender turned away in a period is told the cooldown, by direct message
+	// even if they asked on a channel; anyone after that is ignored silently.
 	if since := b.now().Sub(b.lastReply); since < b.interval {
-		b.log.Printf("ignoring !weather from %s: last reply %s ago, next allowed in %s", ev.From.NodeID, since.Round(time.Second), (b.interval - since).Round(time.Second))
-		return nil
+		b.log.Printf("throttled !weather from %s: last reply %s ago", ev.From.NodeID, since.Round(time.Second))
+		if b.noticeSent {
+			b.debugf("cooldown notice already sent this period; staying silent")
+			return nil
+		}
+		b.noticeSent = true
+		b.counter++
+		return b.send(ev.Reply.Direct, fmt.Sprintf("cooldown-%d", b.counter),
+			fmt.Sprintf("!weather is available once every %s.", b.interval))
 	}
 	b.lastReply = b.now()
+	b.noticeSent = false
 
 	reply := ev.Reply.Channel
 	if ev.Direct {

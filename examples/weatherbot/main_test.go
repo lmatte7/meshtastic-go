@@ -187,23 +187,35 @@ func TestWeatherLookupFailureAndThrottle(t *testing.T) {
 		t.Errorf("reply = %q", text)
 	}
 
-	// A flood of requests from other nodes within the interval is ignored
-	// entirely: no node list request, no lookup, no reply.
+	// A flood of requests from other nodes within the interval: the first
+	// sender is told the cooldown by direct message, the rest get nothing,
+	// and no lookup happens.
 	commands.Reset()
 	for i := 0; i < 20; i++ {
 		other := strings.ReplaceAll(weatherRequest, "!43b59594", fmt.Sprintf("!%08x", 1000+i))
 		_ = b.handle(other)
 	}
-	if commands.Len() != 0 || len(*lookups) != 1 {
-		t.Errorf("requests within the interval should be ignored, got commands %q and %d lookups", commands.String(), len(*lookups))
+	got := decodeLines(t, commands)
+	if len(got) != 1 || len(*lookups) != 1 {
+		t.Fatalf("expected exactly one cooldown notice and no lookups, got commands %q and %d lookups", commands.String(), len(*lookups))
+	}
+	if notice := got[0]; notice["to"] != "!000003e8" || notice["text"] != "!weather is available once every 5m0s." {
+		t.Errorf("cooldown notice should go to the first turned-away sender by DM, got %v", notice)
 	}
 
-	// Once the interval has passed, the next request is served.
+	// Once the interval has passed, the next request is served, and the
+	// first throttled sender in the new period gets a notice again.
 	base := b.now()
 	b.now = func() time.Time { return base.Add(b.interval) }
+	commands.Reset()
 	_ = b.handle(weatherRequest)
 	if got := decodeLines(t, commands); len(got) != 1 || got[0]["command"] != "nodes" {
 		t.Errorf("request after the interval should be served, got %v", got)
+	}
+	commands.Reset()
+	_ = b.handle(strings.ReplaceAll(weatherRequest, "!43b59594", "!00000777"))
+	if got := decodeLines(t, commands); len(got) != 1 || got[0]["to"] != "!00000777" {
+		t.Errorf("first throttled sender of the new period should get a notice, got %v", got)
 	}
 	commands.Reset()
 
