@@ -88,24 +88,24 @@ func printMessages(messages []*gomeshproto.FromRadio_Packet) {
 
 func printJsonMessages(messages []*gomeshproto.FromRadio_Packet) error {
 
+	// Field names and types match the previous hand-built JSON output: node
+	// numbers and the channel index are numbers, and channel 0 is always
+	// present.
 	type MeshTextMessage struct {
-		From         string           `json:"from,omitempty"`
-		To           string           `json:"to,omitempty"`
-		Portnum      string           `json:"portnum,omitempty"`
-		ChannelIndex string           `json:"channel,omitempty"`
-		Payload      string           `json:"Payload,omitempty"`
-		NodeInfo     *json.RawMessage `json:"node,omitempty"`
-		ChannelInfo  *json.RawMessage `json:"channelInfo,omitempty"`
+		From    uint32 `json:"from"`
+		To      uint32 `json:"to"`
+		Portnum string `json:"portnum"`
+		Channel uint32 `json:"channel"`
+		Payload string `json:"Payload"`
 	}
 
 	for _, message := range messages {
-
 		meshTextMessage := MeshTextMessage{
-			From:         fmt.Sprint(message.Packet.From),
-			To:           fmt.Sprint(message.Packet.To),
-			Portnum:      message.Packet.GetDecoded().GetPortnum().String(),
-			ChannelIndex: fmt.Sprint(message.Packet.Channel),
-			Payload:      string(message.Packet.GetDecoded().Payload),
+			From:    message.Packet.From,
+			To:      message.Packet.To,
+			Portnum: message.Packet.GetDecoded().GetPortnum().String(),
+			Channel: message.Packet.Channel,
+			Payload: string(message.Packet.GetDecoded().Payload),
 		}
 
 		output, err := json.Marshal(meshTextMessage)
