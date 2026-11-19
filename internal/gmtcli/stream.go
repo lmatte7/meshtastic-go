@@ -172,22 +172,30 @@ func (s *packetStream) resolveRecipient(raw json.RawMessage) (uint32, error) {
 	if err := json.Unmarshal(raw, &name); err != nil {
 		return 0, fmt.Errorf("to must be a node number, a \"!xxxxxxxx\" node id or a node name")
 	}
-	name = strings.TrimSpace(name)
-	if name == "" {
+	if strings.TrimSpace(name) == "" {
 		return 0, nil
 	}
+	return lookupNode(name, s.nodes)
+}
 
-	if strings.HasPrefix(name, "!") {
-		number64, err := strconv.ParseUint(name[1:], 16, 32)
+// lookupNode resolves a node given as a decimal node number, a "!xxxxxxxx"
+// node id, or a long or short name that matches exactly one known node.
+func lookupNode(ref string, nodes map[uint32]MeshNode) (uint32, error) {
+	ref = strings.TrimSpace(ref)
+	if number, err := strconv.ParseUint(ref, 10, 32); err == nil {
+		return uint32(number), nil
+	}
+	if strings.HasPrefix(ref, "!") {
+		number, err := strconv.ParseUint(ref[1:], 16, 32)
 		if err != nil {
-			return 0, fmt.Errorf("invalid node id %q", name)
+			return 0, fmt.Errorf("invalid node id %q", ref)
 		}
-		return uint32(number64), nil
+		return uint32(number), nil
 	}
 
 	var matches []uint32
-	for num, node := range s.nodes {
-		if strings.EqualFold(node.LongName, name) || strings.EqualFold(node.ShortName, name) {
+	for num, node := range nodes {
+		if strings.EqualFold(node.LongName, ref) || strings.EqualFold(node.ShortName, ref) {
 			matches = append(matches, num)
 		}
 	}
@@ -195,9 +203,9 @@ func (s *packetStream) resolveRecipient(raw json.RawMessage) (uint32, error) {
 	case 1:
 		return matches[0], nil
 	case 0:
-		return 0, fmt.Errorf("no known node named %q", name)
+		return 0, fmt.Errorf("no known node named %q", ref)
 	default:
-		return 0, fmt.Errorf("%d nodes are named %q; use the node id instead", len(matches), name)
+		return 0, fmt.Errorf("%d nodes are named %q; use the node id instead", len(matches), ref)
 	}
 }
 

@@ -2,6 +2,7 @@ package gmtcli
 
 import (
 	"os"
+	"time"
 
 	"github.com/urfave/cli/v2"
 )
@@ -337,6 +338,25 @@ func CLIEntry(version, commit, builddate string) {
 					&cli.BoolFlag{
 						Name:  "json",
 						Usage: "Output the position and contributing nodes as JSON",
+					},
+				},
+			},
+			{
+				Name:        "traceroute",
+				Usage:       "Trace the route to a node",
+				UsageText:   "traceroute [--timeout 30s] [--json] <node>",
+				Description: "Sends a traceroute request to a node, given as a node number, a !xxxxxxxx id, or a long or short name, and prints the relays and per-hop signal-to-noise ratios the request and the reply travelled through.",
+				ArgsUsage:   "<node>",
+				Action:      traceroute,
+				Flags: []cli.Flag{
+					&cli.DurationFlag{
+						Name:  "timeout",
+						Usage: "How long to wait for the reply",
+						Value: 30 * time.Second,
+					},
+					&cli.BoolFlag{
+						Name:  "json",
+						Usage: "Output the route as JSON",
 					},
 				},
 			},

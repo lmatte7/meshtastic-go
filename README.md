@@ -52,17 +52,18 @@ USAGE:
    meshtastic-go [global options] command [command options] [arguments...]
 
 COMMANDS:
-   info      Show radio information
-   message   Interact with radio messaging functionality
-   stream    Stream received messages to stdout as JSON lines
-   channel   Update channel information
-   config    Update radio config
-   location  Set location
-   locate    Show where the radio is
-   nodedb    Manage the radio's node database
-   reset     Factory reset the radio
-   modem     Set the modem mode
-   help, h   Shows a list of commands or help for one command
+   info        Show radio information
+   message     Interact with radio messaging functionality
+   stream      Stream received messages to stdout as JSON lines
+   channel     Update channel information
+   config      Update radio config
+   location    Set location
+   locate      Show where the radio is
+   traceroute  Trace the route to a node
+   nodedb      Manage the radio's node database
+   reset       Factory reset the radio
+   modem       Set the modem mode
+   help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --port value, -p value  serial port or IP address of the radio; on macOS defaults to the only /dev/cu.usb* device if there is exactly one [$MESHTASTIC_RADIO_DEV]
@@ -455,6 +456,21 @@ COMMANDS:
    options  show modem options
    set      set a modem option
    help, h  Shows a list of commands or help for one command
+```
+
+### `traceroute`
+
+`traceroute <node>` asks the mesh for the route to a node and waits up to
+`--timeout` (default 30s) for the reply. The node is a node number, a
+`!xxxxxxxx` id, or a long or short name. The output lists each relay the
+request passed through on its way out and the reply on its way back, with the
+signal-to-noise ratio each receiving node measured; `--json` gives the same
+as data. A routing error from the mesh (for example no route, or retransmits
+exhausted) ends the wait early with that reason.
+
+```
+meshtastic-go traceroute DvdGmz01
+meshtastic-go traceroute --timeout 2m !43b59594
 ```
 
 ### `nodedb`
