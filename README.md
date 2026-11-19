@@ -87,6 +87,24 @@ OPTIONS:
    --help, -h  show help (default: false)
 ```
 
+### `stream`
+
+The `stream` command is meant to be run as a long-lived subprocess by another program, for example a bot or web backend. It prints one JSON object per line (JSON Lines) to stdout and runs until it is interrupted or the radio link fails, in which case it exits non-zero.
+
+```
+meshtastic-go --port /dev/cu.usbmodem143101 stream
+```
+
+The first line has `"type": "ready"` and carries this radio's own node (`my_node`) and the configured channels. After that every text message the radio receives, direct or on a channel, is printed with `"type": "message"`, decrypted by the radio, with the sender (`from`), recipient (`to`, omitted for broadcasts) and `channel` resolved from the radio's node and channel database. `direct` is true for messages addressed to this radio, `broadcast` for channel messages.
+
+```json
+{"type":"message","received_at":"2026-11-19T04:12:08Z","id":1836540931,"rx_time":"2026-11-19T04:12:08Z","from":{"node_id":"!43b59594","node_number":1135973780,"longname":"DvdGmz01","shortname":"DG01","role":"CLIENT","hardware_model":"HELTEC_V3","is_licensed":false},"broadcast":true,"direct":false,"outgoing":false,"channel":{"index":0,"name":"","role":"PRIMARY"},"port":"TEXT_MESSAGE_APP","text":"hello mesh","snr_db":-1.75,"rssi_dbm":-110,"hop_limit":2,"hop_start":3,"hops_taken":1,"via_mqtt":false,"want_ack":false,"priority":"UNSET"}
+```
+
+With `--full`, every other packet is printed too with `"type": "packet"`: positions, telemetry, node info, routing and so on carry their payload as JSON under `payload` when the port is known, otherwise as `payload_base64`. Packets the radio could not decrypt have `"encrypted": true`.
+
+The node and channel database is re-requested from the radio every five minutes, which also keeps the firmware forwarding packets to the connection.
+
 ### `config`
 
 The `config` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.

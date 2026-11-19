@@ -136,6 +136,20 @@ func CLIEntry(version, commit, builddate string) {
 				},
 			},
 			{
+				Name:        "stream",
+				Usage:       "Stream received messages to stdout as JSON lines",
+				UsageText:   "stream [--full] - stream messages until interrupted",
+				Description: "Prints one JSON object per line for every text message (direct or channel, decrypted by the radio) until interrupted, after an initial \"ready\" line with this radio's node and channels. Every line carries the sender, recipient and channel details. With --full every other packet type is streamed as well. Intended to be run as a subprocess by other programs.",
+				ArgsUsage:   "",
+				Action:      streamMessages,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "full",
+						Usage: "Also stream positions, telemetry, node info, routing and undecryptable packets",
+					},
+				},
+			},
+			{
 				Name:        "channel",
 				Usage:       "Update channel information",
 				UsageText:   "channel [command] - Update channel parameters",
