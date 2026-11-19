@@ -1,12 +1,30 @@
 # Meshtastic Go
 
-Meshtastic Go is a CLI for meshtastic devices built in Go. This tool provides an easy interface for meshtastic devices that can be used on Windows, Linux or Mac. The only requirements for this tool are the ESP32 [drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers) if not already installed. Executables for different operating systems can be downloaded on the [releases](https://github.com/lmatte7/meshtastic-go/releases) page or can be built as needed with the standard Go tooling.
+Meshtastic Go is a CLI for [Meshtastic](https://meshtastic.org/) devices built
+in Go. It runs on Windows, Linux and macOS and talks to a radio over a serial
+port or TCP. ESP32 boards with a USB-to-serial bridge may need the
+[Silicon Labs drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers);
+boards with native USB (nRF52 devices such as the RAK4631 or T-Echo) need no
+driver.
+
+Executables can be downloaded from the
+[releases](https://github.com/lmatte7/meshtastic-go/releases) page or built
+from source with `make build`.
+
+The protobuf bindings are generated from the current
+[Meshtastic protobufs](https://github.com/meshtastic/protobufs) release (see
+[Protobufs](#protobufs) below), so the tool understands the fields reported
+by current firmware.
 
 ## Command syntax
 
-A full list of commands can be viewed by running `--help`. Each command also has its own `--help` flag that provides more information on its subcommands and flags.
+A full list of commands can be viewed by running `--help`. Each command also
+has its own `--help` flag that provides more information on its subcommands
+and flags.
 
-Every command requires the `--port` flag to be set to the port the radio is attached to. This can be set to a serial port (like `/dev/cu.SLAB_USBtoUART`) or an IP address depending on which communication method should be used to communicate with the radio. The CLI will automatically determine if TCP or serial communications should be used depending on what value is provided to `--port`.
+Every command requires the `--port` flag to be set to the port the radio is
+attached to. This can be a serial port (for example `/dev/cu.usbmodem143101`
+or `/dev/cu.SLAB_USBtoUART`) or an IP address, in which case TCP is used.
 
 ```
 NAME:
@@ -15,18 +33,14 @@ NAME:
 USAGE:
    meshtastic-go [global options] command [command options] [arguments...]
 
-VERSION:
-   v0.2
-
-AUTHOR:
-   Lucas Matte <lmatte7@gmail.com>
-
 COMMANDS:
    info      Show radio information
    message   Interact with radio messaging functionality
    channel   Update channel information
-   prefs     Update user preferences
+   config    Update radio config
    location  Set location
+   reset     Factory reset the radio
+   modem     Set the modem mode
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -39,7 +53,9 @@ GLOBAL OPTIONS:
 
 ### `info`
 
-The `info` command displays information about the radio. By default all informaiton is shown, but information can be restricted by using subcommands. It is also possible to chain together subcommands, for example `meshtastic-go info rc` to only display radio and channel information
+The `info` command displays information about the radio. By default all
+information is shown, but it can be restricted with subcommands. The `--json`
+flag on `info` prints the raw radio, channel and node packets as JSON.
 
 ```
 NAME:
@@ -47,9 +63,6 @@ NAME:
 
 USAGE:
    meshtastic-go info command [command options] [arguments...]
-
-DESCRIPTION:
-   Show node, preference and channel information for radio
 
 COMMANDS:
    radio, r     Show radio information
@@ -64,9 +77,55 @@ OPTIONS:
    --help, -h  show help (default: false)
 ```
 
+`info nodes` prints a table of every node the radio knows about. With
+`--json` it prints a list of node objects with resolved names and units,
+suitable for scripting:
+
+```
+meshtastic-go --port /dev/cu.usbmodem143101 info nodes --json
+```
+
+```json
+[
+  {
+    "node_id": "!43b59594",
+    "node_number": 1135973780,
+    "longname": "DvdGmz01",
+    "shortname": "DG01",
+    "altitude_meters": 471,
+    "latitude_degrees": 36.1824256,
+    "longitude_degrees": -115.1926272,
+    "mac_address": "48:ca:43:b5:95:94",
+    "public_key": "+wbec92kaoh/kIxrntNL75cAPf/r5iOfdoOrbacohBs=",
+    "is_licensed": false,
+    "role": "CLIENT",
+    "hardware_model": "HELTEC_V3",
+    "battery_level_percent": 101,
+    "battery_volts": 4.234000205993652,
+    "channel_utilization_percent": 12.451666831970215,
+    "air_utilization_transmit_percent": 0.11852778494358063,
+    "uptime_seconds": 121,
+    "snr_db": -1.75,
+    "hops_away": 1,
+    "via_mqtt": false,
+    "is_favorite": false,
+    "is_ignored": false,
+    "last_heard": "2026-11-14T17:46:01Z",
+    "last_heard_seconds_ago": 376594,
+    "last_heard_human": "4d8h36m"
+  }
+]
+```
+
+Fields the radio did not report are omitted.
+
 ### `message`
 
-The `message` subcommand provides the ability to send messages and listen for new messages on the mesh. The `recv` subcommand won't show any previously received messages from the radio, but will wait and display new messages as they are received.
+The `message` command sends messages and listens for new messages on the
+mesh. `receive` does not show previously received messages, but waits and
+displays new text messages as they arrive. With `--json` each message is
+printed as one JSON object per line, and `--exit` stops after the first
+message.
 
 ```
 NAME:
@@ -75,21 +134,16 @@ NAME:
 USAGE:
    meshtastic-go message command [command options] [arguments...]
 
-DESCRIPTION:
-   Send messages to other radios or wait for new messages
-
 COMMANDS:
    send     Send a text message
-   recv     Wait for new messages
+   receive  Wait for new messages
    help, h  Shows a list of commands or help for one command
-
-OPTIONS:
-   --help, -h  show help (default: false)
 ```
 
 ### `config`
 
-The `config` subcommand allows for different User Preferences (as defined in the [protobufs](https://github.com/lmatte7/goMesh/blob/6199a9555f0777b6f21456a1f5d1390bd324ba57/github.com/meshtastic/gomeshproto/radioconfig.pb.go#L422)) the be set and changed.
+The `config` command shows the radio and module configuration, and `config
+set` changes a single value by its field name as shown in the output.
 
 ```
 NAME:
@@ -98,52 +152,37 @@ NAME:
 USAGE:
    meshtastic-go config command [command options] [arguments...]
 
-DESCRIPTION:
-   Update radio config
-
 COMMANDS:
    set      Set a user preference
    owner    Set the radio owner
    help, h  Shows a list of commands or help for one command
-
-OPTIONS:
-   --help, -h  show help (default: false)
 ```
 
 ### `location`
 
-The `location` subcommand allows for the location to be manually set on the radio.
+The `location` command sets a fixed position on the radio. Coordinates are
+integers in units of 1e-7 degrees, altitude is in metres.
 
 ```
-meshtastic-go location --help
-
 NAME:
    meshtastic-go location - Set location
 
 USAGE:
    meshtastic-go location command [command options] [arguments...]
 
-DESCRIPTION:
-   Manually set the GPS coordinates for the radio
-
 COMMANDS:
    set      Set a location
    help, h  Shows a list of commands or help for one command
-
-OPTIONS:
-   --help, -h  show help (default: false)
 ```
 
-### `channel`  
+### `channel`
+
 ```
 NAME:
    meshtastic-go channel - Update channel information
 
 USAGE:
    meshtastic-go channel command [command options] [arguments...]
-
-DESCRIPTION:
-   Add, delete and update channel settings
 
 COMMANDS:
    url      Change settings with a url
@@ -152,65 +191,105 @@ COMMANDS:
    set      Set a channel parameter
    options  Show channel options
    help, h  Shows a list of commands or help for one command
+```
 
-OPTIONS:
-   --help, -h  show help (default: false)
-   ```
+### `modem`
 
-
-### `reset`
 ```
 NAME:
-   meshtastic-go reset - Factory reset the radio
+   meshtastic-go modem - Set the modem mode
 
 USAGE:
-   reset - Factory reset the radio
+   meshtastic-go modem command [command options] [arguments...]
 
-DESCRIPTION:
-   Reset the radio to default settings
+COMMANDS:
+   options  show modem options
+   set      set a modem option
+   help, h  Shows a list of commands or help for one command
+```
 
-OPTIONS:
-   --help, -h  show help (default: false)
-   ```
+### `reset`
+
+`reset` performs a factory reset of the radio. There is no confirmation.
 
 ## Examples
 
 Add a channel
 
 ```
-meshtastic-go channel add --port=/dev/cu.SLAB_USBtoUART -i 2 -name test2
+meshtastic-go --port /dev/cu.SLAB_USBtoUART channel add -i 2 -n test2
 ```
 
-Update the Region
+Update the region
 
 ```
-meshtastic-go config set -p /dev/cu.SLAB_USBtoUART -k Region -v 1
+meshtastic-go -p /dev/cu.SLAB_USBtoUART config set -k Region -v 1
 ```
 
 Set the radio location
 
 ```
-meshtastic-go -p "192.168.0.42" location set --lat 310481775 --long -815817755 --alt 20
+meshtastic-go -p 192.168.0.42 location set --lat 310481775 --long -815817755 --alt 20
 ```
 
 Send a message to all radios on the mesh
 
 ```
-meshtastic-go --port "192.168.42.1" message send -m "test"
+meshtastic-go --port 192.168.42.1 message send -m "test"
 ```
+
+Follow incoming text messages as JSON
+
+```
+meshtastic-go --port /dev/cu.usbmodem143101 message receive --json
+```
+
+## Building and testing
+
+The `Makefile` wraps the usual steps:
+
+| Target           | What it does                                           |
+| ---------------- | ------------------------------------------------------ |
+| `make build`     | runs the tests, then cross-compiles into `builds/`     |
+| `make test`      | runs the unit tests                                    |
+| `make fmt`       | formats the Go sources with `gofmt`                    |
+| `make fmt-check` | fails if any file is not `gofmt`-clean                 |
+| `make lint`      | runs `golangci-lint`                                   |
+| `make proto`     | regenerates the protobuf bindings (see below)          |
+| `make clean`     | removes `builds/`                                      |
+
+The radio library in `internal/gomesh` has a hardware test suite that is
+skipped unless a port is given:
+
+```
+go test ./internal/gomesh -args -port=/dev/cu.usbmodem143101
+```
+
+Those tests change settings on the attached radio (owner name, channels,
+modem preset, location), so only run them against a radio you can
+reconfigure.
+
+### Protobufs
+
+`internal/gomesh/gomeshproto` is generated from
+[meshtastic/protobufs](https://github.com/meshtastic/protobufs) by
+`genproto.sh`, which pins the upstream tag it generates from. To update to a
+newer release, change `PROTOBUFS_TAG` in the script and run `make proto`
+with `protoc` and `protoc-gen-go` installed, then fix anything the compiler
+complains about.
 
 ## Run smoke tests
 
 To run the smoke tests, plug in a device, and run the following:
 
 ```
-go build
+go build ./cmd/meshtastic-go
 cd smoke
 go build
 ./smoke
 ```
 
-
 ## Feedback
 
-This tool is still under development. Any issues or feedback can be submitted to the [issues](https://github.com/lmatte7/meshtastic-go/issues) page.
+This tool is still under development. Any issues or feedback can be submitted
+to the [issues](https://github.com/lmatte7/meshtastic-go/issues) page.
