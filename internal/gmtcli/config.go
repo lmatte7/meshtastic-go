@@ -40,62 +40,62 @@ func printConfig(r gomesh.Radio) error {
 	fmt.Printf("%-40s", "==============================================================================\n")
 	for _, config := range configSettings {
 		if deviceConfig := config.Config.GetDevice(); deviceConfig != nil {
-			printSection("Device Config Options", *deviceConfig)
+			printSection("Device Config Options", deviceConfig)
 		} else if deviceConfig := config.Config.GetPosition(); deviceConfig != nil {
-			printSection("Position Config Options", *deviceConfig)
+			printSection("Position Config Options", deviceConfig)
 		} else if deviceConfig := config.Config.GetPower(); deviceConfig != nil {
-			printSection("Power Config Options", *deviceConfig)
+			printSection("Power Config Options", deviceConfig)
 		} else if deviceConfig := config.Config.GetNetwork(); deviceConfig != nil {
-			printSection("Network Config Options", *deviceConfig)
+			printSection("Network Config Options", deviceConfig)
 		} else if deviceConfig := config.Config.GetDisplay(); deviceConfig != nil {
-			printSection("Display Config Options", *deviceConfig)
+			printSection("Display Config Options", deviceConfig)
 		} else if deviceConfig := config.Config.GetLora(); deviceConfig != nil {
-			printSection("Lora Config Options", *deviceConfig)
+			printSection("Lora Config Options", deviceConfig)
 		} else if deviceConfig := config.Config.GetBluetooth(); deviceConfig != nil {
-			printSection("Bluetooth Config Options", *deviceConfig)
+			printSection("Bluetooth Config Options", deviceConfig)
 		}
 	}
 
 	for _, module := range moduleSettings {
 
 		if moduleConfig := module.ModuleConfig.GetMqtt(); moduleConfig != nil {
-			printSection("Mqtt Module Options", *moduleConfig)
+			printSection("Mqtt Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetSerial(); moduleConfig != nil {
-			printSection("Serial Module Options", *moduleConfig)
+			printSection("Serial Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetExternalNotification(); moduleConfig != nil {
-			printSection("External Notification Module Options", *moduleConfig)
+			printSection("External Notification Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetStoreForward(); moduleConfig != nil {
-			printSection("Store Forward Module Options", *moduleConfig)
+			printSection("Store Forward Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetRangeTest(); moduleConfig != nil {
-			printSection("Range Test Module Options", *moduleConfig)
+			printSection("Range Test Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetTelemetry(); moduleConfig != nil {
-			printSection("Telemetry Module Options", *moduleConfig)
+			printSection("Telemetry Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetCannedMessage(); moduleConfig != nil {
-			printSection("Canned Message Module Options", *moduleConfig)
+			printSection("Canned Message Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetAudio(); moduleConfig != nil {
-			printSection("Audio Module Options", *moduleConfig)
+			printSection("Audio Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetRemoteHardware(); moduleConfig != nil {
-			printSection("Serial Module Options", *moduleConfig)
+			printSection("Serial Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetNeighborInfo(); moduleConfig != nil {
-			printSection("Neighbor Info Module Options", *moduleConfig)
+			printSection("Neighbor Info Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetAmbientLighting(); moduleConfig != nil {
-			printSection("Ambient Lighting Module Options", *moduleConfig)
+			printSection("Ambient Lighting Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetDetectionSensor(); moduleConfig != nil {
-			printSection("Detection Sensor Module Options", *moduleConfig)
+			printSection("Detection Sensor Module Options", moduleConfig)
 		}
 		if moduleConfig := module.ModuleConfig.GetPaxcounter(); moduleConfig != nil {
-			printSection("Pax Counter Module Options", *moduleConfig)
+			printSection("Pax Counter Module Options", moduleConfig)
 		}
 	}
 
@@ -109,8 +109,10 @@ func showRadioConfig(c *cli.Context) error {
 	return printConfig(radio)
 }
 
+// printSection prints the exported fields of a protobuf message, which is
+// passed by pointer so the message's internal state is not copied.
 func printSection(title string, t any) {
-	v := reflect.ValueOf(t)
+	v := reflect.ValueOf(t).Elem()
 	fmt.Printf("\n%-40s", "-------------------------------------------------\n")
 	fmt.Printf("%-48s|\n", title)
 	fmt.Printf("%-40s", "-------------------------------------------------\n")

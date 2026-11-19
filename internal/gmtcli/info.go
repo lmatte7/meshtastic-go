@@ -459,7 +459,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 			}
 			if deviceInfo := config.GetDevice(); deviceInfo != nil {
 				fmt.Printf("%s", "\nDevice Settings\n")
-				v := reflect.ValueOf(*deviceInfo)
+				v := reflect.ValueOf(deviceInfo).Elem()
 				for i := range v.NumField() {
 					if v.Field(i).CanInterface() {
 						fmt.Printf("%-25s", v.Type().Field(i).Name)
@@ -471,7 +471,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 
 		if metaInfo := packet.GetMetadata(); metaInfo != nil {
 			fmt.Printf("%s", "Radio Metadata\n")
-			v := reflect.ValueOf(*metaInfo)
+			v := reflect.ValueOf(metaInfo).Elem()
 			for i := range v.NumField() {
 				if v.Field(i).CanInterface() {
 					fmt.Printf("%-25s", v.Type().Field(i).Name)
@@ -481,7 +481,7 @@ func printRadioInfo(info []*gomeshproto.FromRadio) {
 		}
 		if nodeInfo := packet.GetNodeInfo(); nodeInfo != nil {
 			fmt.Printf("%s", "\n\nNode Info\n")
-			v := reflect.ValueOf(*nodeInfo)
+			v := reflect.ValueOf(nodeInfo).Elem()
 			for i := range v.NumField() {
 				if v.Field(i).CanInterface() {
 					fmt.Printf("%-25s", v.Type().Field(i).Name)
@@ -501,7 +501,7 @@ func displayPositionInfo(packet *gomeshproto.FromRadio) {
 	if config := packet.GetConfig(); config != nil {
 		if gpsConfig := config.GetPosition(); gpsConfig != nil {
 			fmt.Printf("%s", "\n\nPosition Settings\n")
-			v := reflect.ValueOf(*gpsConfig)
+			v := reflect.ValueOf(gpsConfig).Elem()
 			for i := range v.NumField() {
 				if v.Field(i).CanInterface() {
 					fmt.Printf("%-35s", v.Type().Field(i).Name)

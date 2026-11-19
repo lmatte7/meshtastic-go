@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 )
 
@@ -301,10 +300,10 @@ func TestSetLocation(t *testing.T) {
 		t.Fatalf("Error retreiving radio information: %v", err)
 	}
 
-	position := &gomeshproto.Position{}
+	position := &pb.Position{}
 
 	for _, packet := range radioResponses {
-		if nodeInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_NodeInfo); ok {
+		if nodeInfo, ok := packet.GetPayloadVariant().(*pb.FromRadio_NodeInfo); ok {
 			if nodeInfo.NodeInfo.Num == radio.nodeNum {
 				position = nodeInfo.NodeInfo.Position
 			}

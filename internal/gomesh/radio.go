@@ -17,9 +17,6 @@ const start1 = byte(0x94)
 const start2 = byte(0xc3)
 const headerLen = 4
 const maxToFromRadioSize = 512
-const broadcastAddr = "^all"
-const localAddr = "^local"
-const defaultHopLimit = 3
 const broadcastNum = 0xffffffff
 
 // configRequestID is sent with want_config_id; the radio echoes it back in
@@ -325,17 +322,15 @@ func (r *Radio) SetRadioOwnerNames(name, short string) error {
 // modemShortCodes are the short aliases accepted for modem presets alongside
 // the full preset names.
 var modemShortCodes = map[string]pb.Config_LoRaConfig_ModemPreset{
-	"lf":  pb.Config_LoRaConfig_LONG_FAST,
-	"ls":  pb.Config_LoRaConfig_LONG_SLOW,
-	"vls": pb.Config_LoRaConfig_VERY_LONG_SLOW,
-	"lm":  pb.Config_LoRaConfig_LONG_MODERATE,
-	"lt":  pb.Config_LoRaConfig_LONG_TURBO,
-	"ms":  pb.Config_LoRaConfig_MEDIUM_SLOW,
-	"mf":  pb.Config_LoRaConfig_MEDIUM_FAST,
-	"mt":  pb.Config_LoRaConfig_MEDIUM_TURBO,
-	"sl":  pb.Config_LoRaConfig_SHORT_SLOW,
-	"sf":  pb.Config_LoRaConfig_SHORT_FAST,
-	"st":  pb.Config_LoRaConfig_SHORT_TURBO,
+	"lf": pb.Config_LoRaConfig_LONG_FAST,
+	"lm": pb.Config_LoRaConfig_LONG_MODERATE,
+	"lt": pb.Config_LoRaConfig_LONG_TURBO,
+	"ms": pb.Config_LoRaConfig_MEDIUM_SLOW,
+	"mf": pb.Config_LoRaConfig_MEDIUM_FAST,
+	"mt": pb.Config_LoRaConfig_MEDIUM_TURBO,
+	"sl": pb.Config_LoRaConfig_SHORT_SLOW,
+	"sf": pb.Config_LoRaConfig_SHORT_FAST,
+	"st": pb.Config_LoRaConfig_SHORT_TURBO,
 }
 
 // ModemPresetShortCode returns the short alias for a preset, or "" if it has

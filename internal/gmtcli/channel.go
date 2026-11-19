@@ -30,7 +30,7 @@ func showChannelInfo(c *cli.Context) error {
 
 func printChannels(channels []*gomeshproto.Channel) error {
 
-	primaryChannelSettings := gomeshproto.ChannelSettings{}
+	primaryChannelSettings := &gomeshproto.ChannelSettings{}
 	allChannelSettings := []*gomeshproto.ChannelSettings{}
 	channelSet := gomeshproto.ChannelSet{}
 
@@ -54,7 +54,7 @@ func printChannels(channels []*gomeshproto.Channel) error {
 		}
 
 		if channelInfo.GetRole() == gomeshproto.Channel_PRIMARY {
-			primaryChannelSettings = *channelInfo.Settings
+			primaryChannelSettings = channelInfo.Settings
 		}
 
 		allChannelSettings = append(allChannelSettings, channelInfo.Settings)
@@ -107,7 +107,7 @@ func printChannels(channels []*gomeshproto.Channel) error {
 
 	channelSet.Settings = allChannelSettings
 
-	out, err := proto.Marshal(&primaryChannelSettings)
+	out, err := proto.Marshal(primaryChannelSettings)
 	if err != nil {
 		return cli.Exit("Error parsing channel URL", 0)
 	}
@@ -143,19 +143,19 @@ func showChannelOptions(c *cli.Context) error {
 		if channelInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_Channel); ok {
 			fmt.Printf("%s", "\nGeneric Channel Options\n")
 			printDoubleDivider()
-			v := reflect.ValueOf(*channelInfo.Channel)
+			v := reflect.ValueOf(channelInfo.Channel).Elem()
 			for i := range v.NumField() {
 				if v.Type().Field(i).IsExported() {
 					if v.Type().Field(i).Name == "Settings" {
 						fmt.Println("\nChannel Setting Options")
 						printDoubleDivider()
-						cv := reflect.ValueOf(*channelInfo.Channel.Settings)
+						cv := reflect.ValueOf(channelInfo.Channel.Settings).Elem()
 						for j := range cv.NumField() {
 							if cv.Type().Field(j).IsExported() {
 								if cv.Type().Field(j).Name == "ModuleSettings" {
 									fmt.Println("\nModule Setting Options")
 									printDoubleDivider()
-									mv := reflect.ValueOf(*channelInfo.Channel.Settings.ModuleSettings)
+									mv := reflect.ValueOf(channelInfo.Channel.Settings.ModuleSettings).Elem()
 									for k := range mv.NumField() {
 										if mv.Type().Field(k).IsExported() {
 											fmt.Printf("%v\n", mv.Type().Field(k).Name)

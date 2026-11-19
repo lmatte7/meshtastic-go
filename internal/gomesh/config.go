@@ -67,7 +67,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -88,7 +88,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -109,7 +109,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -130,7 +130,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -151,7 +151,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -172,7 +172,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -193,7 +193,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -223,7 +223,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -245,7 +245,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -267,7 +267,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -289,7 +289,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -311,7 +311,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -333,7 +333,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -355,7 +355,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -377,7 +377,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -399,7 +399,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -421,7 +421,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -443,7 +443,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -465,7 +465,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -487,7 +487,7 @@ func (r *Radio) SetRadioConfig(key string, value string) error {
 						},
 					},
 				}
-				err = sendAdminMessage(adminMessage, r)
+				err = sendAdminMessage(&adminMessage, r)
 				if err != nil {
 					return err
 				}
@@ -525,7 +525,7 @@ func setProtoValue(t any, key string, value string) error {
 }
 
 // enumType is implemented by every generated protobuf enum.
-var enumType = reflect.TypeOf((*protoreflect.Enum)(nil)).Elem()
+var enumType = reflect.TypeFor[protoreflect.Enum]()
 
 // setFieldValue parses value as text and stores it in a protobuf struct
 // field. Enums accept their value names (case-insensitive, for example "US"
@@ -536,7 +536,7 @@ func setFieldValue(fv reflect.Value, value string) error {
 		return errors.New("unknown Field")
 	}
 
-	if fv.Kind() == reflect.Ptr && fv.Type().Elem().Kind() != reflect.Struct {
+	if fv.Kind() == reflect.Pointer && fv.Type().Elem().Kind() != reflect.Struct {
 		target := reflect.New(fv.Type().Elem())
 		if err := setFieldValue(target.Elem(), value); err != nil {
 			return err
@@ -605,8 +605,8 @@ func setEnumValue(fv reflect.Value, value string) error {
 	return fmt.Errorf("unknown value %q; choose one of %s", value, strings.Join(names, ", "))
 }
 
-func sendAdminMessage(adminPacket pb.AdminMessage, r *Radio) error {
-	out, err := proto.Marshal(&adminPacket)
+func sendAdminMessage(adminPacket *pb.AdminMessage, r *Radio) error {
+	out, err := proto.Marshal(adminPacket)
 	if err != nil {
 		return err
 	}

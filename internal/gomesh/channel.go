@@ -10,7 +10,6 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
 )
 
@@ -26,7 +25,7 @@ func (r *Radio) GetChannels() (channels []*pb.Channel, err error) {
 		}
 
 		for _, packet := range info {
-			if channelInfo, ok := packet.GetPayloadVariant().(*gomeshproto.FromRadio_Channel); ok {
+			if channelInfo, ok := packet.GetPayloadVariant().(*pb.FromRadio_Channel); ok {
 				channels = append(channels, channelInfo.Channel)
 			}
 		}
