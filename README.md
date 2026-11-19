@@ -86,6 +86,7 @@ COMMANDS:
    locate      Show where the radio is
    traceroute  Trace the route to a node
    nodedb      Manage the radio's node database
+   reboot      Reboot the radio
    reset       Factory reset the radio
    modem       Set the modem mode
    help, h     Shows a list of commands or help for one command
@@ -515,6 +516,10 @@ confirmation.
 meshtastic-go nodedb list
 meshtastic-go nodedb reset
 ```
+
+### `reboot`
+
+`reboot` restarts the radio; settings and the node database are kept.
 
 ### `reset`
 

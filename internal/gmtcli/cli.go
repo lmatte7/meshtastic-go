@@ -393,6 +393,14 @@ func CLIEntry(version, commit, builddate string) {
 				},
 			},
 			{
+				Name:        "reboot",
+				Usage:       "Reboot the radio",
+				UsageText:   "reboot - reboot the radio",
+				Description: "Asks the radio to reboot. Settings and the node database are kept.",
+				ArgsUsage:   "",
+				Action:      rebootRadio,
+			},
+			{
 				Name:        "reset",
 				Usage:       "Factory reset the radio",
 				UsageText:   "reset - Factory reset the radio",
