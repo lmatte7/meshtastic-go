@@ -3,7 +3,9 @@ package gmtcli
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +30,10 @@ const broadcastNodeNumber = 0xffffffff
 // streamConfigID tags our want_config_id requests; the radio echoes it back
 // in config_complete_id when it has finished sending its database.
 const streamConfigID = 7
+
+// ackTimeout is how long a sent message waits for the radio to report its
+// fate before it is reported as failed.
+const ackTimeout = 5 * time.Minute
 
 // streamRefreshInterval is how often the radio is asked for its node and
 // channel database again while streaming. Besides picking up renamed nodes
@@ -182,16 +188,46 @@ func (s *packetStream) resolveRecipient(raw json.RawMessage) (uint32, error) {
 }
 
 // StreamSent reports the outcome of a StreamCommand. Type is "sent" when the
-// radio accepted the message and "error" otherwise.
+// message was handed to the radio and "error" otherwise. PacketID is the
+// mesh packet id, which later StreamDelivery events refer to.
 type StreamSent struct {
 	Type      string         `json:"type"`
 	At        time.Time      `json:"at"`
 	ID        string         `json:"id,omitempty"`
+	PacketID  uint32         `json:"packet_id,omitempty"`
 	To        *MeshNode      `json:"to,omitempty"`
 	Broadcast bool           `json:"broadcast"`
 	Channel   *StreamChannel `json:"channel,omitempty"`
 	Text      string         `json:"text,omitempty"`
 	Error     string         `json:"error,omitempty"`
+}
+
+// StreamDelivery reports what became of a message sent with --commands.
+// Type is "queued" once the radio has accepted the packet for transmission,
+// "delivered" when it was acknowledged, and "failed" otherwise. For
+// broadcasts, and whenever the acknowledgement comes from a node other than
+// the recipient, Implicit is true: a neighbour rebroadcast the packet, which
+// proves it left this radio but not that the recipient got it.
+type StreamDelivery struct {
+	Type      string         `json:"type"`
+	At        time.Time      `json:"at"`
+	ID        string         `json:"id,omitempty"`
+	PacketID  uint32         `json:"packet_id"`
+	To        *MeshNode      `json:"to,omitempty"`
+	Broadcast bool           `json:"broadcast"`
+	Channel   *StreamChannel `json:"channel,omitempty"`
+	// From is the node that sent the acknowledgement or error.
+	From     *MeshNode `json:"from,omitempty"`
+	Implicit bool      `json:"implicit,omitempty"`
+	Error    string    `json:"error,omitempty"`
+}
+
+// pendingSend is a message we sent and have not heard back about yet.
+type pendingSend struct {
+	id      string
+	to      uint32 // 0 for a broadcast
+	channel uint32
+	sentAt  time.Time
 }
 
 // packetStream turns FromRadio packets into JSON lines, keeping a cache of
@@ -203,25 +239,70 @@ type packetStream struct {
 	full     bool
 	out      *json.Encoder
 	now      func() time.Time
-	send     func(text string, to int64, channel int64) error
+	send     func(text string, to, channel uint32) (packetID uint32, err error)
 	commands <-chan string
 	myNode   uint32
 	nodes    map[uint32]MeshNode
 	channels map[uint32]StreamChannel
+	pending  map[uint32]pendingSend
 	ready    bool
 }
 
 func newPacketStream(radio gomesh.Radio, full bool, w io.Writer) *packetStream {
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	return &packetStream{
+	s := &packetStream{
 		radio:    radio,
 		full:     full,
 		out:      enc,
 		now:      time.Now,
-		send:     radio.SendTextMessage,
 		nodes:    make(map[uint32]MeshNode),
 		channels: make(map[uint32]StreamChannel),
+		pending:  make(map[uint32]pendingSend),
+	}
+	s.send = s.sendText
+	return s
+}
+
+// sendText builds and sends a text message with a packet id of our choosing,
+// so the radio's later queue status and acknowledgement can be matched back
+// to the command. A zero "to" broadcasts on the channel.
+func (s *packetStream) sendText(text string, to, channel uint32) (uint32, error) {
+	if len(text) > int(gomeshproto.Constants_DATA_PAYLOAD_LEN) {
+		return 0, fmt.Errorf("message too large: %d bytes, maximum %d", len(text), gomeshproto.Constants_DATA_PAYLOAD_LEN)
+	}
+	if to == 0 {
+		to = broadcastNodeNumber
+	}
+	id := s.newPacketID()
+
+	radioMessage := gomeshproto.ToRadio{PayloadVariant: &gomeshproto.ToRadio_Packet{Packet: &gomeshproto.MeshPacket{
+		To:      to,
+		Id:      id,
+		Channel: channel,
+		WantAck: true,
+		PayloadVariant: &gomeshproto.MeshPacket_Decoded{Decoded: &gomeshproto.Data{
+			Portnum: gomeshproto.PortNum_TEXT_MESSAGE_APP,
+			Payload: []byte(text),
+		}},
+	}}}
+	out, err := proto.Marshal(&radioMessage)
+	if err != nil {
+		return 0, err
+	}
+	return id, s.radio.SendPacket(out)
+}
+
+// newPacketID returns a random non-zero packet id not already in flight.
+func (s *packetStream) newPacketID() uint32 {
+	for {
+		var b [4]byte
+		// crypto/rand.Read never returns an error on supported platforms.
+		rand.Read(b[:])
+		id := binary.BigEndian.Uint32(b[:])
+		if _, inFlight := s.pending[id]; id != 0 && !inFlight {
+			return id
+		}
 	}
 }
 
@@ -285,6 +366,9 @@ func (s *packetStream) run(ctx context.Context) error {
 			// The parent closed our stdin, which is its way of asking us to
 			// stop.
 			return nil
+		}
+		if err := s.expirePending(); err != nil {
+			return err
 		}
 		if !s.now().Before(nextRefresh) {
 			if err := s.requestConfig(); err != nil {
@@ -352,11 +436,90 @@ func (s *packetStream) execute(line string) error {
 	case command.Channel > 7:
 		result.Type, result.Error = "error", "channel must be between 0 and 7"
 	default:
-		if err := s.send(command.Text, int64(to), int64(command.Channel)); err != nil {
+		packetID, err := s.send(command.Text, to, command.Channel)
+		if err != nil {
 			result.Type, result.Error = "error", err.Error()
+			break
 		}
+		result.PacketID = packetID
+		if result.Broadcast {
+			to = 0
+		}
+		s.pending[packetID] = pendingSend{id: command.ID, to: to, channel: command.Channel, sentAt: s.now()}
 	}
 	return s.out.Encode(result)
+}
+
+// deliveryEvent builds a StreamDelivery for a pending message.
+func (s *packetStream) deliveryEvent(eventType string, packetID uint32, p pendingSend) StreamDelivery {
+	event := StreamDelivery{
+		Type:      eventType,
+		At:        s.now().UTC(),
+		ID:        p.id,
+		PacketID:  packetID,
+		Broadcast: p.to == 0,
+		Channel:   s.channel(p.channel),
+	}
+	if !event.Broadcast {
+		event.To = s.node(p.to)
+	}
+	return event
+}
+
+// handleQueueStatus reports a pending message as queued once the radio has
+// taken it, or as failed if the radio's queue rejected it.
+func (s *packetStream) handleQueueStatus(status *gomeshproto.QueueStatus) error {
+	p, ok := s.pending[status.GetMeshPacketId()]
+	if !ok {
+		return nil
+	}
+	event := s.deliveryEvent("queued", status.GetMeshPacketId(), p)
+	if status.GetRes() != 0 {
+		event.Type = "failed"
+		event.Error = fmt.Sprintf("radio queue error %d", status.GetRes())
+		delete(s.pending, status.GetMeshPacketId())
+	}
+	return s.out.Encode(event)
+}
+
+// handleAck matches a routing packet to a pending message and reports it as
+// delivered or failed. Routing packets for other requests are ignored.
+func (s *packetStream) handleAck(packet *gomeshproto.MeshPacket, decoded *gomeshproto.Data) error {
+	p, ok := s.pending[decoded.GetRequestId()]
+	if !ok {
+		return nil
+	}
+	delete(s.pending, decoded.GetRequestId())
+
+	event := s.deliveryEvent("delivered", decoded.GetRequestId(), p)
+	event.From = s.node(packet.GetFrom())
+	event.Implicit = p.to == 0 || packet.GetFrom() != p.to
+
+	routing := &gomeshproto.Routing{}
+	if err := proto.Unmarshal(decoded.GetPayload(), routing); err == nil {
+		if reason := routing.GetErrorReason(); reason != gomeshproto.Routing_NONE {
+			event.Type = "failed"
+			event.Error = reason.String()
+			event.Implicit = false
+		}
+	}
+	return s.out.Encode(event)
+}
+
+// expirePending reports messages the radio never answered for as failed.
+func (s *packetStream) expirePending() error {
+	for packetID, p := range s.pending {
+		if s.now().Sub(p.sentAt) < ackTimeout {
+			continue
+		}
+		delete(s.pending, packetID)
+		event := s.deliveryEvent("failed", packetID, p)
+		event.Error = fmt.Sprintf("no acknowledgement within %s", ackTimeout)
+		if err := s.out.Encode(event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // requestConfig asks the radio to send its configuration, channel and node
@@ -398,6 +561,8 @@ func (s *packetStream) handle(response *gomeshproto.FromRadio) error {
 			s.ready = true
 			return s.out.Encode(s.readyEvent())
 		}
+	case *gomeshproto.FromRadio_QueueStatus:
+		return s.handleQueueStatus(payload.QueueStatus)
 	case *gomeshproto.FromRadio_Packet:
 		return s.handlePacket(payload.Packet)
 	}
@@ -430,6 +595,11 @@ func (s *packetStream) handlePacket(packet *gomeshproto.MeshPacket) error {
 
 	if decoded != nil && decoded.GetPortnum() == gomeshproto.PortNum_NODEINFO_APP {
 		s.learnUser(packet.GetFrom(), decoded.GetPayload())
+	}
+	if decoded != nil && decoded.GetPortnum() == gomeshproto.PortNum_ROUTING_APP {
+		if err := s.handleAck(packet, decoded); err != nil {
+			return err
+		}
 	}
 
 	isText := decoded != nil && decoded.GetPortnum() == gomeshproto.PortNum_TEXT_MESSAGE_APP

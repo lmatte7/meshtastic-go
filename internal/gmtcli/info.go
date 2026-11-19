@@ -185,6 +185,9 @@ func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) 
 	info := node.NodeInfo
 
 	meshNode.NodeNumber = info.Num
+	// Meshtastic derives a node's id from its number, so one can always be
+	// given even when the radio has not received the node's user info.
+	meshNode.ID = nodeIDFromNumber(info.Num)
 
 	if info.LastHeard != 0 {
 		lastSeen := time.Unix(int64(info.LastHeard), 0).UTC()
@@ -195,7 +198,9 @@ func protoNodeToMeshNodeAt(node *gomeshproto.FromRadio_NodeInfo, now time.Time) 
 	}
 
 	if user := info.GetUser(); user != nil {
-		meshNode.ID = user.Id
+		if user.Id != "" {
+			meshNode.ID = user.Id
+		}
 		meshNode.LongName = user.LongName
 		meshNode.ShortName = user.ShortName
 		meshNode.IsLicensed = user.IsLicensed

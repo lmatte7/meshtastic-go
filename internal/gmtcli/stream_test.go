@@ -254,15 +254,163 @@ func TestStreamReplyTemplates(t *testing.T) {
 	}
 }
 
-// fakeSender records the messages a stream asked the radio to send.
+// fakeSender records the messages a stream asked the radio to send and hands
+// out sequential packet ids starting at 1001.
 type fakeSender struct {
-	calls []string
-	err   error
+	calls  []string
+	err    error
+	nextID uint32
 }
 
-func (f *fakeSender) send(text string, to int64, channel int64) error {
+func (f *fakeSender) send(text string, to, channel uint32) (uint32, error) {
 	f.calls = append(f.calls, fmt.Sprintf("%s|%d|%d", text, to, channel))
-	return f.err
+	if f.err != nil {
+		return 0, f.err
+	}
+	if f.nextID == 0 {
+		f.nextID = 1000
+	}
+	f.nextID++
+	return f.nextID, nil
+}
+
+// routingPacket is an acknowledgement or error for requestID from a node.
+func routingPacket(from, requestID uint32, reason gomeshproto.Routing_Error) *gomeshproto.FromRadio {
+	payload, _ := proto.Marshal(&gomeshproto.Routing{Variant: &gomeshproto.Routing_ErrorReason{ErrorReason: reason}})
+	return &gomeshproto.FromRadio{PayloadVariant: &gomeshproto.FromRadio_Packet{Packet: &gomeshproto.MeshPacket{
+		From: from, To: testMyNode, Id: 99,
+		PayloadVariant: &gomeshproto.MeshPacket_Decoded{Decoded: &gomeshproto.Data{
+			Portnum: gomeshproto.PortNum_ROUTING_APP, RequestId: requestID, Payload: payload,
+		}},
+	}}}
+}
+
+func TestStreamDeliveryTracking(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	sender := &fakeSender{}
+	s.send = sender.send
+
+	// A DM: sent -> queued -> delivered by the recipient.
+	buf.Reset()
+	_ = s.execute(`{"id":"dm-1","to":"DG01","text":"ping"}`)
+	sent := lines(buf)[0]
+	if sent["packet_id"] != float64(1001) {
+		t.Fatalf("sent event should carry the packet id, got %v", sent)
+	}
+
+	buf.Reset()
+	queue := &gomeshproto.FromRadio{PayloadVariant: &gomeshproto.FromRadio_QueueStatus{QueueStatus: &gomeshproto.QueueStatus{MeshPacketId: 1001}}}
+	if err := s.handle(queue); err != nil {
+		t.Fatal(err)
+	}
+	queued := lines(buf)[0]
+	if queued["type"] != "queued" || queued["id"] != "dm-1" || queued["packet_id"] != float64(1001) {
+		t.Errorf("queued event = %v", queued)
+	}
+
+	buf.Reset()
+	if err := s.handle(routingPacket(testPeerNode, 1001, gomeshproto.Routing_NONE)); err != nil {
+		t.Fatal(err)
+	}
+	got := lines(buf)
+	if len(got) != 1 {
+		t.Fatalf("expected only the delivery event (routing packets are not messages), got %v", got)
+	}
+	delivered := got[0]
+	if delivered["type"] != "delivered" || delivered["id"] != "dm-1" || delivered["implicit"] != nil {
+		t.Errorf("delivered event = %v", delivered)
+	}
+	if delivered["from"].(map[string]interface{})["shortname"] != "DG01" || delivered["to"].(map[string]interface{})["shortname"] != "DG01" {
+		t.Errorf("delivered from/to = %v / %v", delivered["from"], delivered["to"])
+	}
+	if _, still := s.pending[1001]; still {
+		t.Error("acknowledged packet should no longer be pending")
+	}
+
+	// A broadcast acknowledged by a neighbour is only an implicit ack.
+	buf.Reset()
+	_ = s.execute(`{"id":"bc-1","channel":1,"text":"hello all"}`)
+	buf.Reset()
+	if err := s.handle(routingPacket(testOtherNode, 1002, gomeshproto.Routing_NONE)); err != nil {
+		t.Fatal(err)
+	}
+	implicit := lines(buf)[0]
+	if implicit["type"] != "delivered" || implicit["implicit"] != true || implicit["broadcast"] != true || implicit["id"] != "bc-1" {
+		t.Errorf("implicit ack event = %v", implicit)
+	}
+	if implicit["channel"].(map[string]interface{})["name"] != "bots" {
+		t.Errorf("implicit ack channel = %v", implicit["channel"])
+	}
+
+	// A routing error marks the message failed.
+	buf.Reset()
+	_ = s.execute(`{"id":"dm-2","to":"DG01","text":"anyone there?"}`)
+	buf.Reset()
+	if err := s.handle(routingPacket(testMyNode, 1003, gomeshproto.Routing_MAX_RETRANSMIT)); err != nil {
+		t.Fatal(err)
+	}
+	failed := lines(buf)[0]
+	if failed["type"] != "failed" || failed["error"] != "MAX_RETRANSMIT" || failed["id"] != "dm-2" {
+		t.Errorf("failed event = %v", failed)
+	}
+
+	// Routing packets for requests we did not make are ignored.
+	buf.Reset()
+	if err := s.handle(routingPacket(testPeerNode, 4242, gomeshproto.Routing_NONE)); err != nil {
+		t.Fatal(err)
+	}
+	if buf.Len() != 0 {
+		t.Errorf("unrelated routing packet produced output: %s", buf.String())
+	}
+
+	// Silence past the timeout is reported as a failure.
+	buf.Reset()
+	_ = s.execute(`{"id":"dm-3","to":"DG01","text":"hello?"}`)
+	buf.Reset()
+	base := s.now()
+	s.now = func() time.Time { return base.Add(ackTimeout + time.Second) }
+	if err := s.expirePending(); err != nil {
+		t.Fatal(err)
+	}
+	expired := lines(buf)[0]
+	if expired["type"] != "failed" || expired["id"] != "dm-3" || !strings.Contains(expired["error"].(string), "no acknowledgement") {
+		t.Errorf("expired event = %v", expired)
+	}
+	if len(s.pending) != 0 {
+		t.Errorf("pending should be empty after expiry, got %v", s.pending)
+	}
+}
+
+func TestStreamNodeWithoutUserStillHasID(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	// The radio lists some nodes with no user record at all.
+	bare := uint32(463898580)
+	if err := s.handle(&gomeshproto.FromRadio{PayloadVariant: &gomeshproto.FromRadio_NodeInfo{NodeInfo: &gomeshproto.NodeInfo{Num: bare}}}); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := s.handle(textPacket(bare, broadcastNodeNumber, 0, "😂")); err != nil {
+		t.Fatal(err)
+	}
+	m := lines(buf)[0]
+	if m["from"].(map[string]interface{})["node_id"] != "!1ba66ad4" {
+		t.Errorf("from = %v", m["from"])
+	}
+	direct := m["reply"].(map[string]interface{})["direct"].(map[string]interface{})
+	if direct["to"] != "!1ba66ad4" {
+		t.Errorf("reply.direct should address the sender, got %v", direct)
+	}
+}
+
+func TestStreamSendTextBuildsPacket(t *testing.T) {
+	s, _ := newTestStream(t, false)
+	if _, err := s.sendText(strings.Repeat("x", 238), 0, 0); err == nil {
+		t.Error("oversized message should be rejected before reaching the radio")
+	}
+	id1, id2 := s.newPacketID(), s.newPacketID()
+	if id1 == 0 || id2 == 0 || id1 == id2 {
+		t.Errorf("packet ids should be non-zero and distinct, got %d and %d", id1, id2)
+	}
 }
 
 func TestStreamCommands(t *testing.T) {

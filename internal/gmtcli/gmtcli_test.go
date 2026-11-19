@@ -73,10 +73,10 @@ func TestProtoNodeToMeshNodeSparse(t *testing.T) {
 	mn := ProtoNodeToMeshNode(&gomeshproto.FromRadio_NodeInfo{
 		NodeInfo: &gomeshproto.NodeInfo{Num: 42},
 	})
-	if mn.NodeNumber != 42 {
-		t.Errorf("NodeNumber = %d, want 42", mn.NodeNumber)
+	if mn.NodeNumber != 42 || mn.ID != "!0000002a" {
+		t.Errorf("NodeNumber/ID = %d/%q, want 42/!0000002a", mn.NodeNumber, mn.ID)
 	}
-	if mn.ID != "" || mn.Role != "" || mn.HardwareModel != "" || mn.MACAddress != "" {
+	if mn.LongName != "" || mn.Role != "" || mn.HardwareModel != "" || mn.MACAddress != "" {
 		t.Errorf("expected empty user fields, got %+v", mn)
 	}
 	if mn.LastHeard != "" || mn.LastHeardHuman != "" || mn.LastHeardSecondsAgo != 0 {

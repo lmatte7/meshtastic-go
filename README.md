@@ -115,6 +115,8 @@ With `--commands`, `stream` also reads JSON lines from stdin and sends each one 
 
 `to` is a node number, a `!xxxxxxxx` node id, or a node's long or short name (it must match exactly one node the radio knows); leave it out to broadcast on the channel. `channel` defaults to 0 and `id` is optional and echoed back. Each command produces one event, `{"type": "sent", ...}` with the resolved recipient and channel, or `{"type": "error", "error": "..."}` when the line was invalid or the radio refused it (for example a message over 240 bytes). When stdin is closed the stream exits with status 0.
 
+The `sent` event carries the mesh `packet_id`, and the stream then reports what became of the message, each event echoing the command's `id`: `{"type": "queued"}` once the radio has accepted it for transmission, `{"type": "delivered"}` when it was acknowledged, or `{"type": "failed", "error": "MAX_RETRANSMIT"}` when the radio gave up, the queue rejected it, or nothing was heard for five minutes. For broadcasts, and whenever the acknowledgement comes from a node other than the recipient, `delivered` has `"implicit": true`: a neighbour rebroadcast the message, which proves it left this radio but not that anyone in particular received it.
+
 Every message line also carries a `reply` object with two ready-made commands, so a bot answering something like `!weather` does not need to assemble addresses itself. `reply.direct` messages the sender privately and `reply.channel` answers publicly on the channel the message arrived on; copy one, add `text`, and write it back:
 
 ```json
