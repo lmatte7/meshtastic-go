@@ -167,6 +167,9 @@ type MeshNode struct {
 	LastHeard           string  `json:"last_heard,omitempty"`
 	LastHeardSecondsAgo int     `json:"last_heard_seconds_ago,omitempty"`
 	LastHeardHuman      string  `json:"last_heard_human,omitempty"`
+	// LastHeardSource is set in stream nodes events to say where the
+	// last-heard fields come from: "stream", "radio_corrected" or "radio".
+	LastHeardSource string `json:"last_heard_source,omitempty"`
 	// SNR is the signal-to-noise ratio of the last packet heard from the node.
 	SNR float64 `json:"snr_db,omitempty"`
 	// HopsAway is how many hops away the node was last heard; 0 means heard

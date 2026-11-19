@@ -54,6 +54,9 @@ type StreamReady struct {
 	ReceivedAt time.Time       `json:"received_at"`
 	MyNode     *MeshNode       `json:"my_node,omitempty"`
 	Channels   []StreamChannel `json:"channels"`
+	// RadioClockOffset is wall-clock time minus the radio's clock, in
+	// seconds, once observed. Radios without a time source can be days off.
+	RadioClockOffset *int `json:"radio_clock_offset_seconds,omitempty"`
 }
 
 // StreamPacket is one received packet. Type is "message" for a text message
@@ -95,6 +98,9 @@ type StreamPacket struct {
 	ViaMQTT   bool    `json:"via_mqtt"`
 	WantAck   bool    `json:"want_ack"`
 	Priority  string  `json:"priority,omitempty"`
+	// RadioClockOffset is wall-clock time minus the radio's clock in
+	// seconds, once observed; add it to RxTime to get real time.
+	RadioClockOffset *int `json:"radio_clock_offset_seconds,omitempty"`
 }
 
 // portPayloadTypes maps application ports to the protobuf message carried in
@@ -136,6 +142,11 @@ type StreamNodes struct {
 	ID     string     `json:"id,omitempty"`
 	MyNode *MeshNode  `json:"my_node,omitempty"`
 	Nodes  []MeshNode `json:"nodes"`
+	// RadioClockOffset is wall-clock time minus the radio's clock in
+	// seconds, once observed. Each node's last_heard_source says whether its
+	// last-heard fields come from the stream's own receipt of a packet, the
+	// radio's stamp corrected by this offset, or the radio's stamp as is.
+	RadioClockOffset *int `json:"radio_clock_offset_seconds,omitempty"`
 }
 
 // StreamReply is attached to every message so a bot can answer without
@@ -257,6 +268,14 @@ type packetStream struct {
 	channels map[uint32]StreamChannel
 	pending  map[uint32]pendingSend
 	ready    bool
+
+	// Radio clock tracking. Radios without a time source run a clock that
+	// is offset from real time, so every timestamp they produce is wrong by
+	// the same amount. clockOffset is wall-clock time minus radio time once
+	// it has been observed; see observeClock.
+	clockOffset    *time.Duration
+	lastPacketAt   map[uint32]time.Time // wall-clock receipt of the latest packet per node
+	radioLastHeard map[uint32]uint32    // last_heard per node as the radio stamped it
 }
 
 func newPacketStream(radio gomesh.Radio, full bool, w io.Writer) *packetStream {
@@ -270,9 +289,77 @@ func newPacketStream(radio gomesh.Radio, full bool, w io.Writer) *packetStream {
 		nodes:    make(map[uint32]MeshNode),
 		channels: make(map[uint32]StreamChannel),
 		pending:  make(map[uint32]pendingSend),
+
+		lastPacketAt:   make(map[uint32]time.Time),
+		radioLastHeard: make(map[uint32]uint32),
 	}
 	s.send = s.sendText
 	return s
+}
+
+// Where a node's last_heard in a nodes event comes from.
+const (
+	// lastHeardFromStream: the stream itself received a packet from the node
+	// and timed it with the wall clock. Exact, and independent of the radio's
+	// clock.
+	lastHeardFromStream = "stream"
+	// lastHeardRadioCorrected: the radio's stamp moved by the observed clock
+	// offset.
+	lastHeardRadioCorrected = "radio_corrected"
+	// lastHeardFromRadio: the radio's stamp as is, because no offset is known
+	// or it would place the stamp in the future.
+	lastHeardFromRadio = "radio"
+)
+
+// observeClock records a measurement of the radio's clock offset from a
+// packet's rx_time, which the radio stamps at receipt, against our own
+// receipt time. The latest measurement wins. A radio that considers its clock
+// invalid sends rx_time 0 and also stops updating last_heard in its database,
+// so nothing can be inferred from the database in that state; only packets the
+// stream has timed itself carry trustworthy ages then.
+func (s *packetStream) observeClock(offset time.Duration) {
+	offset = offset.Round(time.Second)
+	s.clockOffset = &offset
+}
+
+// clockOffsetSeconds returns the known offset for inclusion in events, or
+// nil when it has not been observed yet.
+func (s *packetStream) clockOffsetSeconds() *int {
+	if s.clockOffset == nil {
+		return nil
+	}
+	seconds := int(s.clockOffset.Seconds())
+	return &seconds
+}
+
+// correctedNode returns a copy of a cached node with its last-heard fields in
+// wall-clock time where that is possible: from the stream's own receipt of
+// the node's latest packet, else from the radio's stamp moved by the observed
+// clock offset, else the radio's stamp as is. LastHeardSource says which.
+func (s *packetStream) correctedNode(node MeshNode) MeshNode {
+	now := s.now()
+	raw := s.radioLastHeard[node.NodeNumber]
+
+	var lastSeen time.Time
+	switch {
+	case !s.lastPacketAt[node.NodeNumber].IsZero():
+		lastSeen = s.lastPacketAt[node.NodeNumber]
+		node.LastHeardSource = lastHeardFromStream
+	case raw != 0 && s.clockOffset != nil && !time.Unix(int64(raw), 0).Add(*s.clockOffset).After(now):
+		lastSeen = time.Unix(int64(raw), 0).Add(*s.clockOffset)
+		node.LastHeardSource = lastHeardRadioCorrected
+	case raw != 0:
+		node.LastHeardSource = lastHeardFromRadio
+		return node
+	default:
+		return node
+	}
+
+	since := now.Sub(lastSeen)
+	node.LastHeard = lastSeen.UTC().Format(time.RFC3339)
+	node.LastHeardSecondsAgo = int(since.Seconds())
+	node.LastHeardHuman = since.Round(time.Second).String()
+	return node
 }
 
 // sendText sends a text message and returns the packet id the library
@@ -441,14 +528,15 @@ func (s *packetStream) execute(line string) error {
 // node number order.
 func (s *packetStream) nodesEvent(id string) StreamNodes {
 	event := StreamNodes{
-		Type:   "nodes",
-		At:     s.now().UTC(),
-		ID:     id,
-		MyNode: s.node(s.myNode),
-		Nodes:  make([]MeshNode, 0, len(s.nodes)),
+		Type:             "nodes",
+		At:               s.now().UTC(),
+		ID:               id,
+		MyNode:           s.node(s.myNode),
+		Nodes:            make([]MeshNode, 0, len(s.nodes)),
+		RadioClockOffset: s.clockOffsetSeconds(),
 	}
 	for _, node := range s.nodes {
-		event.Nodes = append(event.Nodes, node)
+		event.Nodes = append(event.Nodes, s.correctedNode(node))
 	}
 	sort.Slice(event.Nodes, func(i, j int) bool { return event.Nodes[i].NodeNumber < event.Nodes[j].NodeNumber })
 	return event
@@ -549,6 +637,9 @@ func (s *packetStream) handle(response *gomeshproto.FromRadio) error {
 	case *gomeshproto.FromRadio_NodeInfo:
 		node := ProtoNodeToMeshNode(payload)
 		s.nodes[node.NodeNumber] = node
+		if raw := payload.NodeInfo.GetLastHeard(); raw != 0 {
+			s.radioLastHeard[node.NodeNumber] = raw
+		}
 	case *gomeshproto.FromRadio_Channel:
 		channel := payload.Channel
 		if channel.GetRole() == gomeshproto.Channel_DISABLED {
@@ -575,10 +666,11 @@ func (s *packetStream) handle(response *gomeshproto.FromRadio) error {
 
 func (s *packetStream) readyEvent() StreamReady {
 	ready := StreamReady{
-		Type:       "ready",
-		ReceivedAt: s.now().UTC(),
-		MyNode:     s.node(s.myNode),
-		Channels:   make([]StreamChannel, 0, len(s.channels)),
+		Type:             "ready",
+		ReceivedAt:       s.now().UTC(),
+		MyNode:           s.node(s.myNode),
+		Channels:         make([]StreamChannel, 0, len(s.channels)),
+		RadioClockOffset: s.clockOffsetSeconds(),
 	}
 	for i := uint32(0); i < 8; i++ {
 		if channel, ok := s.channels[i]; ok {
@@ -596,6 +688,15 @@ func (s *packetStream) handlePacket(packet *gomeshproto.MeshPacket) error {
 		return nil
 	}
 	decoded := packet.GetDecoded()
+
+	// Every received packet, printed or not, is timed: the receipt time is
+	// the node's true last-heard, and a non-zero rx_time measures the
+	// radio's clock offset.
+	receivedAt := s.now()
+	s.lastPacketAt[packet.GetFrom()] = receivedAt
+	if packet.GetRxTime() != 0 {
+		s.observeClock(receivedAt.Sub(time.Unix(int64(packet.GetRxTime()), 0)))
+	}
 
 	if decoded != nil && decoded.GetPortnum() == gomeshproto.PortNum_NODEINFO_APP {
 		s.learnUser(packet.GetFrom(), decoded.GetPayload())
@@ -655,6 +756,8 @@ func (s *packetStream) packetEvent(packet *gomeshproto.MeshPacket) StreamPacket 
 		ViaMQTT:    packet.GetViaMqtt(),
 		WantAck:    packet.GetWantAck(),
 		Priority:   packet.GetPriority().String(),
+
+		RadioClockOffset: s.clockOffsetSeconds(),
 	}
 	if !event.Broadcast {
 		event.To = s.node(packet.GetTo())

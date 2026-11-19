@@ -511,6 +511,108 @@ func TestStreamNodesCommand(t *testing.T) {
 	}
 }
 
+func TestStreamRadioClockOffsetFromRxTime(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	if got := lines(buf)[0]; got["radio_clock_offset_seconds"] != nil {
+		t.Errorf("ready should not claim an offset before any packet, got %v", got["radio_clock_offset_seconds"])
+	}
+	buf.Reset()
+
+	// The radio stamps the packet 107 hours behind our clock.
+	behind := 107 * time.Hour
+	packet := textPacket(testPeerNode, broadcastNodeNumber, 0, "hi")
+	packet.GetPacket().RxTime = uint32(s.now().Add(-behind).Unix())
+	if err := s.handle(packet); err != nil {
+		t.Fatal(err)
+	}
+	m := lines(buf)[0]
+	if m["radio_clock_offset_seconds"] != float64(behind/time.Second) {
+		t.Errorf("message offset = %v, want %v", m["radio_clock_offset_seconds"], behind/time.Second)
+	}
+
+	// Node records in the nodes event: a node the stream heard itself gets
+	// its real receipt time; one only the radio knows about, stamped with
+	// the radio's clock, is corrected by the offset; and a stamp that the
+	// offset would place in the future is left as the radio gave it.
+	radioNow := s.now().Add(-behind)
+	feed := []*gomeshproto.FromRadio{
+		{PayloadVariant: &gomeshproto.FromRadio_NodeInfo{NodeInfo: &gomeshproto.NodeInfo{
+			Num: testPeerNode, LastHeard: uint32(radioNow.Add(-3 * time.Hour).Unix()), User: &gomeshproto.User{Id: "!43b59594", ShortName: "DG01"},
+		}}},
+		{PayloadVariant: &gomeshproto.FromRadio_NodeInfo{NodeInfo: &gomeshproto.NodeInfo{
+			Num: testOtherNode, LastHeard: uint32(radioNow.Add(-2 * time.Hour).Unix()),
+		}}},
+		{PayloadVariant: &gomeshproto.FromRadio_NodeInfo{NodeInfo: &gomeshproto.NodeInfo{
+			Num: 77, LastHeard: uint32(radioNow.Add(time.Hour).Unix()),
+		}}},
+	}
+	for _, f := range feed {
+		_ = s.handle(f)
+	}
+	buf.Reset()
+	_ = s.execute(`{"id":"n","command":"nodes"}`)
+	nodes := lines(buf)[0]
+	if nodes["radio_clock_offset_seconds"] != float64(behind/time.Second) {
+		t.Errorf("nodes offset = %v", nodes["radio_clock_offset_seconds"])
+	}
+	for _, n := range nodes["nodes"].([]interface{}) {
+		node := n.(map[string]interface{})
+		ago, _ := node["last_heard_seconds_ago"].(float64) // omitted when 0
+		switch node["node_number"] {
+		case float64(testPeerNode):
+			if node["last_heard_source"] != lastHeardFromStream || ago != 0 {
+				t.Errorf("heard node: source %v age %v, want stream 0", node["last_heard_source"], ago)
+			}
+		case float64(testOtherNode):
+			if node["last_heard_source"] != lastHeardRadioCorrected || ago != 2*3600 {
+				t.Errorf("radio-only node: source %v age %v, want radio_corrected 7200", node["last_heard_source"], ago)
+			}
+		case float64(77):
+			// Correcting this stamp would put it in the future, so it is
+			// left exactly as the radio gave it.
+			if node["last_heard_source"] != lastHeardFromRadio || node["last_heard"] != radioNow.Add(time.Hour).UTC().Format(time.RFC3339) {
+				t.Errorf("future-stamped node: source %v last_heard %v, want radio %v", node["last_heard_source"], node["last_heard"], radioNow.Add(time.Hour).UTC().Format(time.RFC3339))
+			}
+		}
+	}
+}
+
+func TestStreamNoOffsetWithoutRxTime(t *testing.T) {
+	s, buf := newTestStream(t, false)
+	buf.Reset()
+
+	// A radio with an invalid clock sends rx_time 0 and freezes last_heard
+	// in its database, so no offset can be inferred; but the stream knows
+	// exactly when it heard the node.
+	packet := textPacket(testOtherNode, broadcastNodeNumber, 0, "hi")
+	packet.GetPacket().RxTime = 0
+	if err := s.handle(packet); err != nil {
+		t.Fatal(err)
+	}
+	if m := lines(buf)[0]; m["radio_clock_offset_seconds"] != nil {
+		t.Errorf("no offset should be known from a packet without rx_time, got %v", m["radio_clock_offset_seconds"])
+	}
+	_ = s.handle(&gomeshproto.FromRadio{PayloadVariant: &gomeshproto.FromRadio_NodeInfo{NodeInfo: &gomeshproto.NodeInfo{
+		Num: testOtherNode, LastHeard: uint32(s.now().Add(-4 * 24 * time.Hour).Unix()),
+	}}})
+	buf.Reset()
+	_ = s.execute(`{"command":"nodes"}`)
+	nodes := lines(buf)[0]
+	if nodes["radio_clock_offset_seconds"] != nil {
+		t.Errorf("offset should stay unknown, got %v", nodes["radio_clock_offset_seconds"])
+	}
+	for _, n := range nodes["nodes"].([]interface{}) {
+		node := n.(map[string]interface{})
+		if node["node_number"] != float64(testOtherNode) {
+			continue
+		}
+		ago, _ := node["last_heard_seconds_ago"].(float64)
+		if node["last_heard_source"] != lastHeardFromStream || ago != 0 || node["last_heard"] != s.now().UTC().Format(time.RFC3339) {
+			t.Errorf("heard node should carry the stream's receipt time, got %v", node)
+		}
+	}
+}
+
 func TestStreamStopsWhenStdinCloses(t *testing.T) {
 	s, _ := newTestStream(t, false)
 	lines := make(chan string)
