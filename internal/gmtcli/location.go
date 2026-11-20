@@ -1,4 +1,4 @@
-package main
+package gmtcli
 
 import (
 	"github.com/urfave/cli/v2"

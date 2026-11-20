@@ -1,10 +1,10 @@
-package main
+package gmtcli
 
 import (
 	"fmt"
 
-	"github.com/lmatte7/gomesh"
-	"github.com/lmatte7/gomesh/github.com/meshtastic/gomeshproto"
+	"github.com/lmatte7/meshtastic-go/pkg/gomesh"
+	"github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 	"github.com/urfave/cli/v2"
 )
 
@@ -48,10 +48,11 @@ func printMetrics(nodes []*gomeshproto.FromRadio_NodeInfo) {
 	for _, node := range nodes {
 		if node.NodeInfo.DeviceMetrics != nil {
 			fmt.Printf("| %-15s| ", fmt.Sprint(node.NodeInfo.Num))
-			fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.BatteryLevel))
-			fmt.Printf("%-15s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.Voltage))
-			fmt.Printf("%-20s| ", fmt.Sprint(node.NodeInfo.DeviceMetrics.ChannelUtilization))
-			fmt.Printf("%-15s| \n", fmt.Sprint(node.NodeInfo.DeviceMetrics.AirUtilTx))
+			metrics := node.NodeInfo.DeviceMetrics
+			fmt.Printf("%-15s| ", fmt.Sprint(metrics.GetBatteryLevel()))
+			fmt.Printf("%-15s| ", fmt.Sprint(metrics.GetVoltage()))
+			fmt.Printf("%-20s| ", fmt.Sprint(metrics.GetChannelUtilization()))
+			fmt.Printf("%-15s| \n", fmt.Sprint(metrics.GetAirUtilTx()))
 		}
 	}
 	printDoubleDivider()
