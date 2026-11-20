@@ -77,13 +77,7 @@ func (r *Radio) SetChannelURL(url string) error {
 		return err
 	}
 
-	// The default pre-shared key
-	// PskByte := []byte{0xd4, 0xf1, 0xbb, 0x3a, 0x20, 0x29, 0x07, 0x59, 0xf0, 0xbc, 0xff, 0xab, 0xcf, 0x4e, 0x69, 0xbf}
-
-	var protoChannel *pb.ChannelSettings
-	for i, cSet := range encChannels.Settings {
-		protoChannel = cSet
-
+	for i, settings := range encChannels.Settings {
 		var role pb.Channel_Role
 		if i == 0 {
 			role = pb.Channel_PRIMARY
@@ -91,16 +85,15 @@ func (r *Radio) SetChannelURL(url string) error {
 			role = pb.Channel_SECONDARY
 		}
 
-		// Send settings to Radio
+		// Send the decoded settings to the radio as they are: the name, id,
+		// MQTT flags and authentication setting are part of the channel's
+		// identity, not just the key.
 		adminPacket := pb.AdminMessage{
 			PayloadVariant: &pb.AdminMessage_SetChannel{
 				SetChannel: &pb.Channel{
-					Index: int32(i),
-					Role:  role,
-					Settings: &pb.ChannelSettings{
-						Psk:            protoChannel.Psk,
-						ModuleSettings: protoChannel.ModuleSettings,
-					},
+					Index:    int32(i),
+					Role:     role,
+					Settings: settings,
 				},
 			},
 		}
