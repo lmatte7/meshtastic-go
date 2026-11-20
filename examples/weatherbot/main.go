@@ -112,7 +112,7 @@ func newBot(commands io.Writer, logger *log.Logger) *bot {
 		commands: commands,
 		log:      logger,
 		now:      time.Now,
-		weather:  wttr("u"),
+		weather:  wttr(),
 		maxHops:  2,
 		maxAge:   24 * time.Hour,
 		interval: 5 * time.Minute,
@@ -302,14 +302,14 @@ func (b *bot) write(command map[string]any) error {
 	return err
 }
 
-// wttr returns a lookup function for wttr.in. units is "u" for US customary
-// or "m" for metric. wttr.in occasionally drops a connection, so a lookup is
-// retried a few times before it is reported as failed.
-func wttr(units string) func(string) (string, error) {
+// wttr returns a lookup function for wttr.in, always in metric units.
+// wttr.in occasionally drops a connection, so a lookup is retried a few
+// times before it is reported as failed.
+func wttr() func(string) (string, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
 	format := "%c %C %t (feels %f), wind %w, humidity %h"
 	fetch := func(location string) (string, error) {
-		u := "https://wttr.in/" + url.PathEscape(location) + "?format=" + url.QueryEscape(format) + "&" + units
+		u := "https://wttr.in/" + url.PathEscape(location) + "?format=" + url.QueryEscape(format) + "&m"
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		if err != nil {
 			return "", err
@@ -346,7 +346,6 @@ func wttr(units string) func(string) (string, error) {
 func main() {
 	port := flag.String("port", "", "serial port or IP address of the radio; defaults to MESHTASTIC_RADIO_DEV or, on macOS, the only attached USB radio")
 	bin := flag.String("bin", "meshtastic-go", "path to the meshtastic-go binary")
-	units := flag.String("units", "u", "wttr.in units: u (US customary) or m (metric)")
 	maxHops := flag.Int("max-hops", 2, "only use nodes at most this many hops away to estimate the position")
 	maxAge := flag.Duration("max-age", 24*time.Hour, "only use nodes heard within this long to estimate the position")
 	interval := flag.Duration("interval", 5*time.Minute, "answer at most one !weather (one lookup, one reply) per this interval")
@@ -382,7 +381,6 @@ func main() {
 	}()
 
 	b := newBot(stdin, log.New(os.Stderr, "weatherbot: ", log.LstdFlags))
-	b.weather = wttr(*units)
 	b.maxHops = *maxHops
 	b.maxAge = *maxAge
 	b.interval = *interval

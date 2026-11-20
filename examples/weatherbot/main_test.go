@@ -20,7 +20,7 @@ func newTestBot() (*bot, *bytes.Buffer, *[]string) {
 	b.now = func() time.Time { return clock }
 	b.weather = func(location string) (string, error) {
 		lookups = append(lookups, location)
-		return "☀️ Sunny +72°F (feels +70°F), wind ↗5mph, humidity 20%", nil
+		return "☀️ Sunny +22°C (feels +21°C), wind ↗8km/h, humidity 20%", nil
 	}
 	return b, &commands, &lookups
 }
@@ -105,7 +105,7 @@ func TestWeatherEstimatesPositionFromNearbyNodes(t *testing.T) {
 		t.Errorf("channel request should get a channel reply, got %v", reply)
 	}
 	// The reply is the report alone: no coordinates, node counts or notes.
-	if text := reply["text"].(string); text != "☀️ Sunny +72°F (feels +70°F), wind ↗5mph, humidity 20%" {
+	if text := reply["text"].(string); text != "☀️ Sunny +22°C (feels +21°C), wind ↗8km/h, humidity 20%" {
 		t.Errorf("reply text = %q", text)
 	}
 }
