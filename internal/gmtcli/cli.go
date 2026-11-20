@@ -1,20 +1,21 @@
-package main
+package gmtcli
 
 import (
 	"os"
+	"time"
 
 	"github.com/urfave/cli/v2"
 )
 
-// Init starts the CLI and determines flags
-func Init() {
+// CLIEntry starts the CLI and determines flags
+func CLIEntry(version, commit, builddate string) {
 
 	app := &cli.App{
 		Name:    "meshtastic-go",
-		Version: "v0.2",
+		Version: version + " (" + commit + ") on " + builddate,
 		Authors: []*cli.Author{
 			{
-				Name: "Lucas Matte",
+				Name: "Lucas Matte and contributors",
 			},
 		},
 		Usage: "Interface with meshtastic radios",
@@ -51,6 +52,13 @@ func Init() {
 						Aliases: []string{"n"},
 						Usage:   "Show all nodes on the mesh",
 						Action:  showNodeInfo,
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:     "json",
+								Usage:    "Output nodes in JSON",
+								Required: false,
+							},
+						},
 					},
 					{
 						Name:    "position",
@@ -125,6 +133,24 @@ func Init() {
 								Value:    false,
 							},
 						},
+					},
+				},
+			},
+			{
+				Name:        "stream",
+				Usage:       "Stream received messages to stdout as JSON lines",
+				UsageText:   "stream [--full] - stream messages until interrupted",
+				Description: "Prints one JSON object per line for every text message (direct or channel, decrypted by the radio) until interrupted, after an initial \"ready\" line with this radio's node and channels. Every line carries the sender, recipient and channel details. With --full every other packet type is streamed as well. Intended to be run as a subprocess by other programs.",
+				ArgsUsage:   "",
+				Action:      streamMessages,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "full",
+						Usage: "Also stream positions, telemetry, node info, routing and undecryptable packets",
+					},
+					&cli.BoolFlag{
+						Name:  "commands",
+						Usage: "Read JSON lines from stdin ({\"to\": node, \"channel\": index, \"text\": \"...\"}) and send them as text messages; exit when stdin closes",
 					},
 				},
 			},
@@ -235,35 +261,40 @@ func Init() {
 				Subcommands: []*cli.Command{
 					{
 						Name:        "set",
-						Usage:       "Set a user preference",
-						Description: "Sets a user preference using the provided key/value combination",
+						Usage:       "Set a config value",
+						Description: "Sets one radio or module config value by the field name shown in \"config\" output. Enum values are given by name (for example Region US, Role CLIENT, ModemPreset LONG_FAST).",
 						Action:      setConfig,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "key",
 								Aliases:  []string{"k"},
-								Usage:    "Key of the user preferences to be changed",
+								Usage:    "Field name as shown by \"config\", for example Region or HopLimit",
 								Required: true,
 							},
 							&cli.StringFlag{
 								Name:     "value",
 								Aliases:  []string{"v"},
-								Usage:    "Value of the parameter",
+								Usage:    "The value: a number, true/false, text, or an enum name",
 								Required: true,
 							},
 						},
 					},
 					{
 						Name:        "owner",
-						Usage:       "Set the radio owner",
-						Description: "Sets the owner of the radio that is sent out over the network",
+						Usage:       "Set the radio's long and short name",
+						Description: "Sets the names other nodes see for this radio. The short name is at most four characters and defaults to the first four of the long name.",
 						Action:      setOwner,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "name",
 								Aliases:  []string{"n"},
-								Usage:    "The owner name",
+								Usage:    "The long name",
 								Required: true,
+							},
+							&cli.StringFlag{
+								Name:    "short",
+								Aliases: []string{"s"},
+								Usage:   "The short name, up to 4 characters",
 							},
 						},
 					},
@@ -302,6 +333,74 @@ func Init() {
 				},
 			},
 			{
+				Name:        "locate",
+				Usage:       "Show where the radio is",
+				UsageText:   "locate [--json] - show the radio's GPS fix, or estimate its position",
+				Description: "Prints the radio's GPS position if it has a fix. Otherwise estimates its position from the nodes it heard directly (not via MQTT) in the last 15 minutes that report a position, weighting each by its signal strength.",
+				ArgsUsage:   "",
+				Action:      locateRadio,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "json",
+						Usage: "Output the position and contributing nodes as JSON",
+					},
+				},
+			},
+			{
+				Name:        "traceroute",
+				Usage:       "Trace the route to a node",
+				UsageText:   "traceroute [--timeout 30s] [--json] <node>",
+				Description: "Sends a traceroute request to a node, given as a node number, a !xxxxxxxx id, or a long or short name, and prints the relays and per-hop signal-to-noise ratios the request and the reply travelled through.",
+				ArgsUsage:   "<node>",
+				Action:      traceroute,
+				Flags: []cli.Flag{
+					&cli.DurationFlag{
+						Name:  "timeout",
+						Usage: "How long to wait for the reply",
+						Value: 30 * time.Second,
+					},
+					&cli.BoolFlag{
+						Name:  "json",
+						Usage: "Output the route as JSON",
+					},
+				},
+			},
+			{
+				Name:        "nodedb",
+				Usage:       "Manage the radio's node database",
+				UsageText:   "nodedb [command]",
+				Description: "The radio keeps a table of the nodes it has heard, which has a fixed size and can fill up with stale entries.",
+				ArgsUsage:   "",
+				Subcommands: []*cli.Command{
+					{
+						Name:        "list",
+						Usage:       "List the nodes in the database",
+						Description: "Prints every node the radio knows about, as a table or with --json as node records.",
+						Action:      showNodeInfo,
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "json",
+								Usage: "Output nodes in JSON",
+							},
+						},
+					},
+					{
+						Name:        "reset",
+						Usage:       "Clear the node database",
+						Description: "Asks the radio to forget every node it knows about. It rebuilds the table from the nodes it hears from then on. There is no confirmation.",
+						Action:      resetNodeDB,
+					},
+				},
+			},
+			{
+				Name:        "reboot",
+				Usage:       "Reboot the radio",
+				UsageText:   "reboot - reboot the radio",
+				Description: "Asks the radio to reboot. Settings and the node database are kept.",
+				ArgsUsage:   "",
+				Action:      rebootRadio,
+			},
+			{
 				Name:        "reset",
 				Usage:       "Factory reset the radio",
 				UsageText:   "reset - Factory reset the radio",
@@ -315,7 +414,7 @@ func Init() {
 				UsageText:   "modem [command] - set modem mode",
 				Description: "Set the modem mode for the radio",
 				ArgsUsage:   "",
-				Action:      factoryResetRadio,
+				Action:      showModemOptions,
 				Subcommands: []*cli.Command{
 					{
 						Name:        "options",
@@ -332,7 +431,7 @@ func Init() {
 							&cli.StringFlag{
 								Name:     "option",
 								Aliases:  []string{"o"},
-								Usage:    "The modem option",
+								Usage:    "Modem preset short code or name, see 'modem options'",
 								Required: true,
 							},
 						},
@@ -344,7 +443,8 @@ func Init() {
 			&cli.StringFlag{
 				Name:    "port",
 				Aliases: []string{"p"},
-				Usage:   "specify a port",
+				Usage:   "serial port or IP address of the radio; on macOS defaults to the only /dev/cu.usb* device if there is exactly one",
+				EnvVars: []string{"MESHTASTIC_RADIO_DEV"},
 			},
 		},
 	}

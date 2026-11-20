@@ -3,3 +3,11 @@ example.py
 builds
 meshtastic-go
 smoke/smoke
+.aider*
+.env
+# local Go workspace pointing at a sibling goMesh checkout
+go.work
+go.work.sum
+# binaries from "go build" inside the example directories
+examples/pingbot/pingbot
+examples/weatherbot/weatherbot
