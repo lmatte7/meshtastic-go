@@ -37,6 +37,10 @@ const configRetryInterval = 3 * time.Second
 type Radio struct {
 	streamer streamer
 	nodeNum  uint32
+	// frame holds the bytes of a packet that has started arriving but is not
+	// complete yet, so an idle timeout in the middle of a packet does not
+	// lose it.
+	frame []byte
 }
 
 // Init initializes the Serial connection for the radio
@@ -79,11 +83,12 @@ func (r *Radio) SendPacket(protobufPacket []byte) (err error) {
 //
 // Each packet arrives framed as [START1, START2, length (2 bytes, big endian),
 // protobuf]. Bytes outside a frame (for example boot or debug text) are
-// skipped until the next START1/START2 pair. The timeout argument is kept for
-// compatibility; the read always returns when the link is idle.
+// skipped until the next START1/START2 pair. A packet that is only partly
+// received when the link goes idle is kept and completed on the next call.
+// The timeout argument is kept for compatibility; the read always returns
+// when the link is idle.
 func (r *Radio) ReadResponse(timeout bool) (packets []*pb.FromRadio, err error) {
 	b := make([]byte, 1)
-	var frame []byte
 
 	for {
 		n, err := r.streamer.Read(b)
@@ -96,24 +101,34 @@ func (r *Radio) ReadResponse(timeout bool) (packets []*pb.FromRadio, err error) 
 			return packets, err
 		}
 
-		frame = append(frame, b[0])
-
-		switch {
-		case len(frame) == 1 && frame[0] != start1:
-			frame = frame[:0]
-		case len(frame) == 2 && frame[1] != start2:
-			frame = frame[:0]
-		case len(frame) == headerLen && frameLength(frame) > maxToFromRadioSize:
-			// Not a real header; resynchronise on the next start byte.
-			frame = frame[:0]
-		case len(frame) > headerLen && len(frame) == headerLen+frameLength(frame):
-			packet := &pb.FromRadio{}
-			if err := proto.Unmarshal(frame[headerLen:], packet); err == nil {
-				packets = append(packets, packet)
-			}
-			frame = frame[:0]
+		if packet := r.feedFrame(b[0]); packet != nil {
+			packets = append(packets, packet)
 		}
 	}
+}
+
+// feedFrame adds one received byte to the frame being assembled and returns
+// the decoded packet when it completes the frame, or nil.
+func (r *Radio) feedFrame(c byte) *pb.FromRadio {
+	r.frame = append(r.frame, c)
+
+	switch {
+	case len(r.frame) == 1 && r.frame[0] != start1:
+		r.frame = r.frame[:0]
+	case len(r.frame) == 2 && r.frame[1] != start2:
+		r.frame = r.frame[:0]
+	case len(r.frame) == headerLen && frameLength(r.frame) > maxToFromRadioSize:
+		// Not a real header; resynchronise on the next start byte.
+		r.frame = r.frame[:0]
+	case len(r.frame) > headerLen && len(r.frame) == headerLen+frameLength(r.frame):
+		packet := &pb.FromRadio{}
+		err := proto.Unmarshal(r.frame[headerLen:], packet)
+		r.frame = r.frame[:0]
+		if err == nil {
+			return packet
+		}
+	}
+	return nil
 }
 
 // frameLength returns the payload length encoded in a frame header.
