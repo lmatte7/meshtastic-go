@@ -115,6 +115,30 @@ func (r *Radio) SetChannelURL(url string) error {
 		}
 	}
 
+	// A URL may also carry the mesh's LoRa configuration (modem preset,
+	// frequency slot, region). Without it the radio would have the right
+	// keys but be tuned to the wrong mesh.
+	if lora := encChannels.GetLoraConfig(); lora != nil {
+		adminPacket := pb.AdminMessage{
+			PayloadVariant: &pb.AdminMessage_SetConfig{
+				SetConfig: &pb.Config{
+					PayloadVariant: &pb.Config_Lora{Lora: lora},
+				},
+			},
+		}
+		out, err := proto.Marshal(&adminPacket)
+		if err != nil {
+			return err
+		}
+		packet, err := r.createAdminPacket(r.nodeNum, out)
+		if err != nil {
+			return err
+		}
+		if err := r.SendPacket(packet); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
