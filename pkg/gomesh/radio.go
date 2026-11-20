@@ -78,23 +78,26 @@ func (r *Radio) SendPacket(protobufPacket []byte) (err error) {
 
 }
 
-// ReadResponse reads whatever the radio is currently sending, decodes it into
-// FromRadio packets and returns once the link goes idle.
+// ReadResponse reads from the radio until one FromRadio packet is complete,
+// which it returns, or until the link goes idle, in which case it returns no
+// packets. Callers loop; returning each packet as it completes keeps a busy
+// link (such as TCP with packets arriving faster than the read deadline)
+// from holding up output, commands, cancellation and timeouts.
 //
 // Each packet arrives framed as [START1, START2, length (2 bytes, big endian),
 // protobuf]. Bytes outside a frame (for example boot or debug text) are
 // skipped until the next START1/START2 pair. A packet that is only partly
 // received when the link goes idle is kept and completed on the next call.
-// The timeout argument is kept for compatibility; the read always returns
-// when the link is idle.
-func (r *Radio) ReadResponse(timeout bool) (packets []*pb.FromRadio, err error) {
+// The timeout argument is kept for compatibility and ignored. The result is a
+// slice so existing callers keep working; it holds at most one packet.
+func (r *Radio) ReadResponse(timeout bool) ([]*pb.FromRadio, error) {
 	b := make([]byte, 1)
 
 	for {
 		n, err := r.streamer.Read(b)
 		if n > 0 {
 			if packet := r.feedFrame(b[0]); packet != nil {
-				packets = append(packets, packet)
+				return []*pb.FromRadio{packet}, nil
 			}
 		}
 
@@ -103,15 +106,15 @@ func (r *Radio) ReadResponse(timeout bool) (packets []*pb.FromRadio, err error) 
 			continue
 		case err == nil, errors.Is(err, os.ErrDeadlineExceeded):
 			// Idle: a zero-byte read, or the TCP read deadline expired.
-			return packets, nil
+			return nil, nil
 		case errors.Is(err, io.EOF) && !r.streamer.isTCP:
 			// Idle: the serial driver reports the inter-character timeout
 			// as a zero-byte read, which os.File turns into io.EOF.
-			return packets, nil
+			return nil, nil
 		default:
 			// On TCP, io.EOF means the radio closed the connection; any
 			// other error on either transport means the link is gone.
-			return packets, err
+			return nil, err
 		}
 	}
 }

@@ -73,7 +73,8 @@ func TestReadResponseReportsClosedTCPConnection(t *testing.T) {
 	radio := &Radio{streamer: streamer{netPort: client, isTCP: true}}
 
 	// A packet followed by the radio closing the connection: the packet is
-	// delivered and the closed link is reported as an error, not idleness.
+	// delivered first, then the closed link is reported as an error rather
+	// than as the link being idle.
 	frame := frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_ConfigCompleteId{ConfigCompleteId: 3}})
 	go func() {
 		server.Write(frame)
@@ -81,11 +82,28 @@ func TestReadResponseReportsClosedTCPConnection(t *testing.T) {
 	}()
 
 	packets, err := radio.ReadResponse(false)
-	if err == nil {
+	if err != nil || len(packets) != 1 || packets[0].GetConfigCompleteId() != 3 {
+		t.Fatalf("first read = %v, %v; want the packet", packets, err)
+	}
+	if _, err := radio.ReadResponse(false); err == nil {
 		t.Fatal("a closed TCP connection should be reported as an error")
 	}
-	if len(packets) != 1 || packets[0].GetConfigCompleteId() != 3 {
-		t.Errorf("packets received before the close should still be returned, got %v", packets)
+}
+
+func TestReadResponseYieldsEachPacketPromptly(t *testing.T) {
+	first := frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_ConfigCompleteId{ConfigCompleteId: 1}})
+	second := frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_ConfigCompleteId{ConfigCompleteId: 2}})
+	// Both frames arrive back to back with no idle gap between them.
+	radio, _ := testRadio(append(append([]byte{}, first...), second...))
+
+	for want := uint32(1); want <= 2; want++ {
+		packets, err := radio.ReadResponse(false)
+		if err != nil || len(packets) != 1 || packets[0].GetConfigCompleteId() != want {
+			t.Fatalf("read %d = %v, %v; want exactly packet %d", want, packets, err, want)
+		}
+	}
+	if packets, _ := radio.ReadResponse(false); len(packets) != 0 {
+		t.Errorf("idle link should yield no packets, got %v", packets)
 	}
 }
 
