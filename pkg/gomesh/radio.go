@@ -26,8 +26,9 @@ const configRequestID = 42
 
 // configTimeout bounds how long GetRadioInfo waits for the radio to finish
 // answering a configuration request. ESP32 boards reboot when the serial port
-// is opened and need several seconds before they respond at all.
-const configTimeout = 30 * time.Second
+// is opened and need several seconds before they respond at all. It is a
+// variable so tests can shorten it.
+var configTimeout = 30 * time.Second
 
 // configRetryInterval is how often the configuration request is repeated
 // while the radio has not answered yet.
@@ -189,6 +190,9 @@ func (r *Radio) getNodeNum() error {
 			r.nodeNum = info.MyInfo.MyNodeNum
 		}
 	}
+	if r.nodeNum == 0 {
+		return errors.New("radio configuration did not include its node number")
+	}
 
 	return nil
 }
@@ -237,7 +241,10 @@ func (r *Radio) GetRadioInfo() ([]*pb.FromRadio, error) {
 		return nil, errors.New("no response from radio")
 	}
 
-	return responses, nil
+	// Traffic arrived but the radio never confirmed the dump complete, so
+	// the configuration (and possibly MyInfo) may be missing. Callers must
+	// not act on it.
+	return nil, fmt.Errorf("radio did not finish sending its configuration within %s (%d packets received)", configTimeout, len(responses))
 }
 
 // SendTextMessage sends a free form text message to other radios

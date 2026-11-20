@@ -3,7 +3,9 @@ package gomesh
 import (
 	"io"
 	"net"
+	"strings"
 	"testing"
+	"time"
 
 	pb "github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 	"google.golang.org/protobuf/proto"
@@ -104,6 +106,33 @@ func TestReadResponseYieldsEachPacketPromptly(t *testing.T) {
 	}
 	if packets, _ := radio.ReadResponse(false); len(packets) != 0 {
 		t.Errorf("idle link should yield no packets, got %v", packets)
+	}
+}
+
+func TestGetRadioInfoRequiresConfigComplete(t *testing.T) {
+	saved := configTimeout
+	configTimeout = 300 * time.Millisecond
+	defer func() { configTimeout = saved }()
+
+	myInfo := frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_MyInfo{MyInfo: &pb.MyNodeInfo{MyNodeNum: 77}}})
+	complete := frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_ConfigCompleteId{ConfigCompleteId: configRequestID}})
+
+	// A complete dump is returned, and Init learns the node number from it.
+	radio, _ := testRadio(append(append([]byte{}, myInfo...), complete...))
+	if err := radio.getNodeNum(); err != nil || radio.nodeNum != 77 {
+		t.Fatalf("complete dump: nodeNum %d, err %v", radio.nodeNum, err)
+	}
+
+	// Unrelated traffic without config_complete_id must not count as success.
+	radio, _ = testRadio(frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_NodeInfo{NodeInfo: &pb.NodeInfo{Num: 5}}}))
+	if _, err := radio.GetRadioInfo(); err == nil || !strings.Contains(err.Error(), "did not finish") {
+		t.Fatalf("incomplete dump should be an error, got %v", err)
+	}
+
+	// Silence is reported as no response.
+	radio, _ = testRadio()
+	if _, err := radio.GetRadioInfo(); err == nil || !strings.Contains(err.Error(), "no response") {
+		t.Fatalf("silence should be an error, got %v", err)
 	}
 }
 
