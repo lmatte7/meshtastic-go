@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	pb "github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 	"google.golang.org/protobuf/proto"
@@ -309,20 +310,22 @@ func (r *Radio) SetRadioOwner(name string) error {
 	return r.SetRadioOwnerNames(name, "")
 }
 
+// maxShortNameBytes is the firmware's limit on the short name (the protobuf
+// field holds four bytes plus a terminator).
+const maxShortNameBytes = 4
+
 // SetRadioOwnerNames sets the radio's long and short name. The short name is
-// at most four characters; when empty it is derived from the long name.
+// at most four bytes (four ASCII characters, fewer if accented or CJK); when
+// empty it is derived from the long name.
 func (r *Radio) SetRadioOwnerNames(name, short string) error {
 	if len(name) <= 2 {
 		return errors.New("name too short")
 	}
 	if short == "" {
-		short = name
-		if len(short) > 4 {
-			short = short[:4]
-		}
+		short = defaultShortName(name)
 	}
-	if len(short) > 4 {
-		return errors.New("short name must be at most 4 characters")
+	if len(short) > maxShortNameBytes {
+		return fmt.Errorf("short name must be at most %d bytes (%d ASCII characters)", maxShortNameBytes, maxShortNameBytes)
 	}
 
 	adminPacket := pb.AdminMessage{
@@ -388,6 +391,20 @@ func ParseModemPreset(mode string) (pb.Config_LoRaConfig_ModemPreset, error) {
 		return pb.Config_LoRaConfig_ModemPreset(value), nil
 	}
 	return 0, fmt.Errorf("unknown modem preset %q", mode)
+}
+
+// defaultShortName derives a short name from a long name: as many whole
+// characters from its start as fit in the byte limit, so a multi-byte
+// character is never cut in half.
+func defaultShortName(name string) string {
+	end := 0
+	for i, c := range name {
+		if i+utf8.RuneLen(c) > maxShortNameBytes {
+			break
+		}
+		end = i + utf8.RuneLen(c)
+	}
+	return name[:end]
 }
 
 // SetModemMode sets the LoRa modem preset. The mode is a short code or a
