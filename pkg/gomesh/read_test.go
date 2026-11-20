@@ -2,6 +2,7 @@ package gomesh
 
 import (
 	"io"
+	"net"
 	"testing"
 
 	pb "github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
@@ -64,6 +65,27 @@ func TestReadResponseKeepsPartialFrameAcrossCalls(t *testing.T) {
 	second, err := radio.ReadResponse(false)
 	if err != nil || len(second) != 1 || second[0].GetConfigCompleteId() != 7 {
 		t.Fatalf("second read = %v, %v; want the completed packet", second, err)
+	}
+}
+
+func TestReadResponseReportsClosedTCPConnection(t *testing.T) {
+	client, server := net.Pipe()
+	radio := &Radio{streamer: streamer{netPort: client, isTCP: true}}
+
+	// A packet followed by the radio closing the connection: the packet is
+	// delivered and the closed link is reported as an error, not idleness.
+	frame := frameFor(t, &pb.FromRadio{PayloadVariant: &pb.FromRadio_ConfigCompleteId{ConfigCompleteId: 3}})
+	go func() {
+		server.Write(frame)
+		server.Close()
+	}()
+
+	packets, err := radio.ReadResponse(false)
+	if err == nil {
+		t.Fatal("a closed TCP connection should be reported as an error")
+	}
+	if len(packets) != 1 || packets[0].GetConfigCompleteId() != 3 {
+		t.Errorf("packets received before the close should still be returned, got %v", packets)
 	}
 }
 

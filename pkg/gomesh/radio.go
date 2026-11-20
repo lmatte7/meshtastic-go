@@ -92,17 +92,26 @@ func (r *Radio) ReadResponse(timeout bool) (packets []*pb.FromRadio, err error) 
 
 	for {
 		n, err := r.streamer.Read(b)
-		if n == 0 || errors.Is(err, io.EOF) || errors.Is(err, os.ErrDeadlineExceeded) {
-			// Idle: the serial inter-character timeout or TCP read deadline
-			// expired without data.
-			return packets, nil
-		}
-		if err != nil {
-			return packets, err
+		if n > 0 {
+			if packet := r.feedFrame(b[0]); packet != nil {
+				packets = append(packets, packet)
+			}
 		}
 
-		if packet := r.feedFrame(b[0]); packet != nil {
-			packets = append(packets, packet)
+		switch {
+		case err == nil && n > 0:
+			continue
+		case err == nil, errors.Is(err, os.ErrDeadlineExceeded):
+			// Idle: a zero-byte read, or the TCP read deadline expired.
+			return packets, nil
+		case errors.Is(err, io.EOF) && !r.streamer.isTCP:
+			// Idle: the serial driver reports the inter-character timeout
+			// as a zero-byte read, which os.File turns into io.EOF.
+			return packets, nil
+		default:
+			// On TCP, io.EOF means the radio closed the connection; any
+			// other error on either transport means the link is gone.
+			return packets, err
 		}
 	}
 }
