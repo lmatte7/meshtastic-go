@@ -168,9 +168,11 @@ func (r *Radio) AddChannel(name string, cIndex int) error {
 				Index: int32(cIndex),
 				Role:  role,
 				Settings: &pb.ChannelSettings{
-					Psk:            genPSK256(),
-					Name:           name,
-					ModuleSettings: curChannel.Settings.ModuleSettings,
+					Psk:  genPSK256(),
+					Name: name,
+					// A disabled slot may have no settings at all; the
+					// getters are nil-safe.
+					ModuleSettings: curChannel.GetSettings().GetModuleSettings(),
 				},
 			},
 		},
