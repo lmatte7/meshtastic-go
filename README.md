@@ -585,11 +585,11 @@ The `Makefile` wraps the usual steps:
 | `make proto`     | regenerates the protobuf bindings (see below)          |
 | `make clean`     | removes `builds/`                                      |
 
-The radio library in `internal/gomesh` has a hardware test suite that is
+The radio library in `pkg/gomesh` has a hardware test suite that is
 skipped unless a port is given:
 
 ```
-go test ./internal/gomesh -args -port=/dev/cu.usbmodem143101
+go test ./pkg/gomesh -args -port=/dev/cu.usbmodem143101
 ```
 
 Those tests change settings on the attached radio (owner name, channels,
@@ -598,7 +598,7 @@ reconfigure.
 
 ### Protobufs
 
-`internal/gomesh/gomeshproto` is generated from
+`pkg/gomesh/gomeshproto` is generated from
 [meshtastic/protobufs](https://github.com/meshtastic/protobufs) by
 `genproto.sh`, which pins the upstream tag it generates from. To update to a
 newer release, change `PROTOBUFS_TAG` in the script and run `make proto`

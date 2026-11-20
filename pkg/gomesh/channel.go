@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
+	pb "github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 )
 
 // GetChannelInfo returns the current chanels settings for the radio

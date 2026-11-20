@@ -1,5 +1,5 @@
 #!/bin/bash
-# Regenerates internal/gomesh/gomeshproto and internal/gomesh/nanopb from the
+# Regenerates pkg/gomesh/gomeshproto and pkg/gomesh/nanopb from the
 # Meshtastic protobuf definitions (https://github.com/meshtastic/protobufs).
 #
 # Requires protoc and protoc-gen-go on the PATH, for example:
@@ -11,8 +11,8 @@ set -euo pipefail
 
 PROTOBUFS_TAG="${PROTOBUFS_TAG:-v2.8.3}"
 MODULE="github.com/lmatte7/meshtastic-go"
-PROTO_PKG="$MODULE/internal/gomesh/gomeshproto"
-NANOPB_PKG="$MODULE/internal/gomesh/nanopb"
+PROTO_PKG="$MODULE/pkg/gomesh/gomeshproto"
+NANOPB_PKG="$MODULE/pkg/gomesh/nanopb"
 
 cd "$(dirname "$0")"
 
@@ -31,7 +31,7 @@ for f in "$SRC"/meshtastic/*.proto; do
 	OPTS+=(--go_opt="Mmeshtastic/$(basename "$f")=$PROTO_PKG;gomeshproto")
 done
 
-rm -rf internal/gomesh/gomeshproto internal/gomesh/nanopb
+rm -rf pkg/gomesh/gomeshproto pkg/gomesh/nanopb
 protoc -I "$SRC" --go_out=. "${OPTS[@]}" "$SRC/nanopb.proto" "$SRC"/meshtastic/*.proto
 
-echo "generated internal/gomesh/gomeshproto from meshtastic/protobufs $PROTOBUFS_TAG"
+echo "generated pkg/gomesh/gomeshproto from meshtastic/protobufs $PROTOBUFS_TAG"

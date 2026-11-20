@@ -7,7 +7,7 @@
 package gomeshproto
 
 import (
-	_ "github.com/lmatte7/meshtastic-go/internal/gomesh/nanopb"
+	_ "github.com/lmatte7/meshtastic-go/pkg/gomesh/nanopb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

@@ -3,7 +3,7 @@ package gmtcli
 import (
 	"testing"
 
-	"github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
+	"github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 	"google.golang.org/protobuf/proto"
 )
 

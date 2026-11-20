@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
+	pb "github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 )
 
 func TestSetFieldValue(t *testing.T) {

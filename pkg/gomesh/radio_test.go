@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/lmatte7/meshtastic-go/internal/gomesh/gomeshproto"
+	pb "github.com/lmatte7/meshtastic-go/pkg/gomesh/gomeshproto"
 )
 
 var port = flag.String("port", "", "port the radio is connected to")
