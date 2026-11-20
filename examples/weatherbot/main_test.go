@@ -47,7 +47,8 @@ const weatherRequest = `{"type":"message","text":"!weather","direct":false,"outg
 
 // nodesEvent answers request id with a node list: our own node without GPS,
 // two direct neighbours with positions, an MQTT node and a far node that must
-// both be ignored, and one node without a position.
+// both be ignored, one node without a position, and one whose hop count the
+// radio did not report, which must be ignored too.
 func nodesEvent(id string, gps bool) string {
 	me := `{"node_id":"!534c8a43","latitude_degrees":0,"longitude_degrees":0}`
 	if gps {
@@ -58,7 +59,8 @@ func nodesEvent(id string, gps bool) string {
 		`{"node_id":"!b","latitude_degrees":36.2,"longitude_degrees":-115.4,"hops_away":1,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":1200},` +
 		`{"node_id":"!c","latitude_degrees":40.0,"longitude_degrees":-100.0,"hops_away":0,"via_mqtt":true,"last_heard":"t","last_heard_seconds_ago":60},` +
 		`{"node_id":"!d","latitude_degrees":10.0,"longitude_degrees":10.0,"hops_away":5,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":60},` +
-		`{"node_id":"!e","latitude_degrees":0,"longitude_degrees":0,"hops_away":0,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":60}` +
+		`{"node_id":"!e","latitude_degrees":0,"longitude_degrees":0,"hops_away":0,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":60},` +
+		`{"node_id":"!f","latitude_degrees":50.0,"longitude_degrees":-120.0,"via_mqtt":false,"last_heard":"t","last_heard_seconds_ago":60}` +
 		`]}`
 }
 

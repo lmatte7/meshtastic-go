@@ -39,7 +39,7 @@ type node struct {
 	LongName            string  `json:"longname"`
 	Latitude            float64 `json:"latitude_degrees"`
 	Longitude           float64 `json:"longitude_degrees"`
-	HopsAway            int     `json:"hops_away"`
+	HopsAway            *int    `json:"hops_away"` // nil when the radio did not say
 	ViaMQTT             bool    `json:"via_mqtt"`
 	LastHeard           string  `json:"last_heard"` // empty if the stream has not heard the node
 	LastHeardSecondsAgo int     `json:"last_heard_seconds_ago"`
@@ -242,7 +242,9 @@ func (b *bot) locate(me *node, nodes []node) (location, source string, ok bool) 
 	// Candidates: positioned nodes heard over the air within the hop limit.
 	var candidates, recent []node
 	for _, n := range nodes {
-		if !n.hasPosition() || n.ViaMQTT || n.HopsAway > b.maxHops {
+		// A node whose hop count the radio did not report could be anywhere,
+		// so it cannot be used to estimate where we are.
+		if !n.hasPosition() || n.ViaMQTT || n.HopsAway == nil || *n.HopsAway > b.maxHops {
 			continue
 		}
 		if me != nil && n.NodeID == me.NodeID {
