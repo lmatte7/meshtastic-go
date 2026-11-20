@@ -57,7 +57,9 @@ func (s *streamer) Init(addr string) error {
 func (s *streamer) Write(p []byte) error {
 
 	if s.isTCP {
-		s.netPort.SetReadDeadline(time.Now().Add(1 * time.Second))
+		// Bound the write so a radio that has stopped reading cannot block
+		// the caller forever once the socket's send buffer fills.
+		s.netPort.SetWriteDeadline(time.Now().Add(1 * time.Second))
 		_, err := s.netPort.Write(p)
 		if err != nil {
 			return err
