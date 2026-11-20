@@ -227,9 +227,12 @@ func (r *Radio) SetChannel(chIndex int, key string, value string) error {
 		if err != nil {
 			return err
 		}
-		channelSettings.ModuleSettings = &pb.ModuleSettings{
-			PositionPrecision: uint32(uintValue),
+		// Change only the precision: replacing the whole ModuleSettings
+		// would reset its other fields, such as IsMuted.
+		if channelSettings.ModuleSettings == nil {
+			channelSettings.ModuleSettings = &pb.ModuleSettings{}
 		}
+		channelSettings.ModuleSettings.PositionPrecision = uint32(uintValue)
 	} else {
 		return errors.New("unknown Field")
 	}
